@@ -1,0 +1,29 @@
+package main
+
+import (
+	"crypto/tls"
+	"fmt"
+	"log"
+)
+
+func main() {
+
+	cfg := tls.Config{}
+	conn, err := tls.Dial("tcp", "google.com:443", &cfg)
+	if err != nil {
+		log.Fatalln("TLS connection failed: " + err.Error())
+	}
+	// certificate chain presented by remote peer
+	certChain := conn.ConnectionState().PeerCertificates
+
+	for _, certificate := range certChain {
+		fmt.Printf(
+			"Cert:\n\tName: %s\n\tSANs entries: %s\n\tIssuer: %s\n\tExpires: %v\n",
+			certificate.Subject,
+			certificate.DNSNames,
+			certificate.Issuer,
+			certificate.NotAfter,
+		)
+	}
+
+}
