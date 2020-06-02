@@ -50,6 +50,10 @@ var Usage = func() {
 	flag.PrintDefaults()
 }
 
+func Branding() {
+
+}
+
 func (nes NagiosExitState) ReturnCheckResults() {
 	fmt.Println(nes.ServiceOutput)
 	if nes.LastError != nil {
