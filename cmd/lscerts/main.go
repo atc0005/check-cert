@@ -185,26 +185,30 @@ func main() {
 		switch {
 		case certificate.NotAfter.Before(time.Now()):
 			expiresText = fmt.Sprintf(
-				"EXPIRED: %s",
+				"Expiration (EXPIRED): EXPIRED on %s",
 				certificate.NotAfter.String(),
 			)
 		case certificate.NotAfter.Before(AgeCritical):
 			expiresText = fmt.Sprintf(
-				"CRITICAL: %s",
+				"Expiration (CRITICAL): Expires on %s",
 				certificate.NotAfter.String(),
 			)
 		case certificate.NotAfter.Before(AgeWarning):
 			expiresText = fmt.Sprintf(
-				"WARNING: %s",
+				"Expiration (WARNING): Expires on %s",
 				certificate.NotAfter.String(),
 			)
 		default:
-			expiresText = certificate.NotAfter.String()
+			expiresText = fmt.Sprintf(
+				// "Expiration (OK): Expires on %s",
+				"Expiration (OK): %s",
+				certificate.NotAfter.String(),
+			)
 
 		}
 
 		fmt.Printf(
-			"\nCertificate %d of %d (%s):\n\tName: %s\n\tKeyID: %v\n\tSANs entries: %s\n\tIssuer: %s\n\tIssuerKeyID: %v\n\tSerial: %s\n\tExpires: %v\n",
+			"\nCertificate %d of %d (%s):\n\tName: %s\n\tKeyID: %v\n\tSANs entries: %s\n\tIssuer: %s\n\tIssuerKeyID: %v\n\tSerial: %s\n\t%s\n",
 			idx+1,
 			certsTotal,
 			certPosition,
