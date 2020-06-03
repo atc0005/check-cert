@@ -160,6 +160,8 @@ func main() {
 		fmt.Printf("- WARNING: %d certificates expired", count)
 	}
 
+	// TODO: Add IsExpiringSoon() function and emit results of the check here
+
 	printHeader("CERTIFICATES | CHAIN DETAILS")
 
 	// FIXME: Stub values
