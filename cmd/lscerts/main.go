@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -155,7 +156,16 @@ func main() {
 
 	}
 
+	if expired, count := certs.HasExpiredCert(certChain); expired {
+		fmt.Printf("- WARNING: %d certificates expired", count)
+	}
+
 	printHeader("CERTIFICATES | CHAIN DETAILS")
+
+	// FIXME: Stub values
+	// TODO: Implement default values for number of days warning/critical
+	AgeWarning := time.Now().Add(time.Hour * 24 * 120)
+	AgeCritical := time.Now().Add(time.Hour * 24 * 100)
 
 	var certPosition string
 	for idx, certificate := range certChain {
@@ -171,6 +181,28 @@ func main() {
 			certPosition = "UNKNOWN: Please submit a bug report"
 		}
 
+		var expiresText string
+		switch {
+		case certificate.NotAfter.Before(time.Now()):
+			expiresText = fmt.Sprintf(
+				"EXPIRED: %s",
+				certificate.NotAfter.String(),
+			)
+		case certificate.NotAfter.Before(AgeCritical):
+			expiresText = fmt.Sprintf(
+				"CRITICAL: %s",
+				certificate.NotAfter.String(),
+			)
+		case certificate.NotAfter.Before(AgeWarning):
+			expiresText = fmt.Sprintf(
+				"WARNING: %s",
+				certificate.NotAfter.String(),
+			)
+		default:
+			expiresText = certificate.NotAfter.String()
+
+		}
+
 		fmt.Printf(
 			"\nCertificate %d of %d (%s):\n\tName: %s\n\tKeyID: %v\n\tSANs entries: %s\n\tIssuer: %s\n\tIssuerKeyID: %v\n\tSerial: %s\n\tExpires: %v\n",
 			idx+1,
@@ -182,7 +214,7 @@ func main() {
 			certificate.Issuer,
 			certs.ConvertKeyIdToHexStr(certificate.AuthorityKeyId),
 			certificate.SerialNumber,
-			certificate.NotAfter,
+			expiresText,
 		)
 
 	}

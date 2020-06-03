@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
 )
 
 // ConvertKeyIdToHexStr converts a provided byte slice format of a X509v3
@@ -71,5 +72,25 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 	}
 
 	return certChain, rest, err
+
+}
+
+// HasExpiredCert received a slice of x509 certificates and returns a boolean
+// value indicating whether any certificates in the chain are expired along
+// with a count of how many.
+func HasExpiredCert(certChain []*x509.Certificate) (bool, int) {
+
+	var expiredCertsPresent bool
+	var expiredCertsCount int
+	for idx := range certChain {
+
+		if certChain[idx].NotAfter.Before(time.Now()) {
+			expiredCertsPresent = true
+			expiredCertsCount++
+		}
+
+	}
+
+	return expiredCertsPresent, expiredCertsCount
 
 }
