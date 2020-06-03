@@ -41,7 +41,7 @@ func main() {
 
 	// Display application branding info and exit
 	if config.EmitBranding {
-		Branding()
+		fmt.Println(Branding())
 		os.Exit(0)
 	}
 
@@ -79,8 +79,13 @@ func main() {
 
 	printHeader("CERTIFICATES | SUMMARY")
 
+	if certsTotal < 0 {
+		log.Err(err).Msg("no certificates found")
+		os.Exit(1)
+	}
+
 	fmt.Printf(
-		"\n\u2713 %d certs found for service running on %s at port %d\n",
+		"\n- OK: %d certs found for service running on %s at port %d\n",
 		certsTotal,
 		config.Server,
 		config.Port,
@@ -94,7 +99,7 @@ func main() {
 				config.Server,
 			)
 		} else {
-			fmt.Println("\u2713 OK: Provided hostname matches discovered certificate")
+			fmt.Println("- OK: Provided hostname matches discovered certificate")
 		}
 	}
 

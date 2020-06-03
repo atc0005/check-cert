@@ -103,14 +103,14 @@ type Config struct {
 // Usage is a custom override for the default Help text provided by the flag
 // package. Here we prepend some additional metadata to the existing output.
 var Usage = func() {
-	fmt.Fprintf(flag.CommandLine.Output(), "%s %s\n%s\n\n", myAppName, version, myAppURL)
+	fmt.Fprintf(flag.CommandLine.Output(), Branding())
 	fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", os.Args[0])
 	flag.PrintDefaults()
 }
 
 // Branding emits application name, version and repo location.
-func Branding() {
-	fmt.Printf("\n%s (%s)\n%s\n", myAppName, version, myAppURL)
+func Branding() string {
+	return fmt.Sprintf("\n%s (%s)\n%s\n", myAppName, version, myAppURL)
 }
 
 func (c *Config) handleFlagsConfig() {
