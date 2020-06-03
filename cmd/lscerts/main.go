@@ -11,6 +11,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -20,6 +21,17 @@ import (
 	"github.com/atc0005/check-certs/internal/certs"
 	"github.com/atc0005/check-certs/internal/logging"
 )
+
+// TODO: Move to a better location?
+func printHeader(headerText string) {
+	headerBorderStr := strings.Repeat("=", len(headerText))
+	fmt.Printf(
+		"\n\n%s\n%s\n%s\n",
+		headerBorderStr,
+		headerText,
+		headerBorderStr,
+	)
+}
 
 func main() {
 
@@ -65,8 +77,10 @@ func main() {
 	certChain := conn.ConnectionState().PeerCertificates
 	certsTotal := len(certChain)
 
+	printHeader("CERTIFICATES | SUMMARY")
+
 	fmt.Printf(
-		"\n%d certs found for service running on %s at port %d\n",
+		"\n\u2713 %d certs found for service running on %s at port %d\n",
 		certsTotal,
 		config.Server,
 		config.Port,
@@ -80,11 +94,11 @@ func main() {
 				config.Server,
 			)
 		} else {
-			fmt.Println("OK: Provided hostname matches discovered certificate")
+			fmt.Println("\u2713 OK: Provided hostname matches discovered certificate")
 		}
 	}
 
-	fmt.Printf("\nCERTIFICATES | SUMMARY\n")
+	printHeader("CERTIFICATES | CHAIN DETAILS")
 
 	var certPosition string
 	for idx, certificate := range certChain {
@@ -112,25 +126,25 @@ func main() {
 			certificate.NotAfter,
 		)
 
-		if config.EmitCertText {
-			fmt.Printf("\nCERTIFICATES | DETAILS\n")
+	}
 
-			for idx, certificate := range certChain {
+	if config.EmitCertText {
+		printHeader("CERTIFICATES | OpenSSL Text Format")
 
-				// generate text version of the certificate
-				certText, err := certinfo.CertificateText(certificate)
-				if err != nil {
-					certText = err.Error()
-				}
+		for idx, certificate := range certChain {
 
-				fmt.Printf(
-					"\nCertificate %d of %d:\n%s\n",
-					idx+1,
-					certsTotal,
-					certText,
-				)
-
+			// generate text version of the certificate
+			certText, err := certinfo.CertificateText(certificate)
+			if err != nil {
+				certText = err.Error()
 			}
+
+			fmt.Printf(
+				"\nCertificate %d of %d:\n%s\n",
+				idx+1,
+				certsTotal,
+				certText,
+			)
 
 		}
 
