@@ -8,10 +8,40 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/atc0005/check-certs/logging"
+)
+
+// Updated via Makefile builds. Setting placeholder value here so that
+// something resembling a version string will be provided for non-Makefile
+// builds.
+var version string = "x.y.z"
+
+const myAppName string = "check_cert"
+const myAppURL string = "https://github.com/atc0005/check-cert"
+
+const (
+	sansEntriesHelp  string = "Subject Alternate Names (SANs) expected for the certifciate used by the remote service. This value is provided as a comma-separated list."
+	logLevelFlagHelp string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
+	serverHelp       string = "The fully-qualified domain name of the remote system whose cert(s) will be monitored."
+	portHelp         string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
+	ageWarningHelp   string = "The number of days remaining before certificate expiration when Nagios will return a WARNING state"
+	ageCriticalHelp  string = "The number of days remaining before certificate expiration when Nagios will return a CRITICAL state"
+	brandingFlagHelp string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
+)
+
+// Default flag settings if not overridden by user input
+const (
+	defaultLogLevel    string = "info"
+	defaultServer      string = "localhost"
+	defaultPort        int    = 993
+	defaultAgeWarning  int    = 30
+	defaultAgeCritical int    = 15
+	defaultBranding    bool   = false
 )
 
 // multiValueFlag is a custom type that satisfies the flag.Value interface in
@@ -87,6 +117,32 @@ type Config struct {
 	// output from other tools such as atc0005/send2teams which also insert
 	// their own branding output.
 	EmitBranding bool
+}
+
+// Usage is a custom override for the default Help text provided by the flag
+// package. Here we prepend some additional metadata to the existing output.
+var Usage = func() {
+	fmt.Fprintf(flag.CommandLine.Output(), "%s %s\n%s\n\n", myAppName, version, myAppURL)
+	fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", os.Args[0])
+	flag.PrintDefaults()
+}
+
+func (c *Config) handleFlagsConfig() {
+
+	flag.Var(&c.SANsEntries, "sans-entries", sansEntriesHelp)
+	flag.IntVar(&c.AgeWarning, "age-warning", defaultAgeWarning, ageWarningHelp)
+	flag.IntVar(&c.AgeCritical, "age-critical", defaultAgeCritical, ageCriticalHelp)
+	flag.StringVar(&c.Server, "server", defaultServer, serverHelp)
+	flag.IntVar(&c.Port, "port", defaultPort, portHelp)
+	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
+	flag.BoolVar(&c.EmitBranding, "branding", defaultBranding, brandingFlagHelp)
+
+	// Allow our function to override the default Help output
+	flag.Usage = Usage
+
+	// parse flag definitions from the argument list
+	flag.Parse()
+
 }
 
 // Validate verifies all Config struct fields have been provided acceptable
