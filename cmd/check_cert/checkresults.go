@@ -58,7 +58,7 @@ type NagiosExitState struct {
 // intended plugin exit state. Since this codeblock runs as the last step
 // in the application, it can safely call os.Exit() to set the desired
 // exit code without blocking other deferred functions from running.
-func (nes NagiosExitState) ReturnCheckResults(emitBranding bool) {
+func (nes NagiosExitState) ReturnCheckResults() {
 
 	// One-line output used as the summary or short explanation for the
 	// specific Nagios state that we are returning.
