@@ -152,12 +152,14 @@ func main() {
 	for idx, certificate := range certChain {
 
 		switch {
-		case idx == 0:
-			certPosition = "leaf"
 		case certificate.Issuer.String() == certificate.Subject.String():
 			certPosition = "root"
-		default:
+		case certificate.IsCA:
 			certPosition = "intermediate"
+		case !certificate.IsCA:
+			certPosition = "leaf"
+		default:
+			certPosition = "UNKNOWN: Please submit a bug report"
 		}
 
 		fmt.Printf(
