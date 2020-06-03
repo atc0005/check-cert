@@ -110,7 +110,7 @@ var Usage = func() {
 
 // Branding emits application name, version and repo location.
 func Branding() string {
-	return fmt.Sprintf("\n%s (%s)\n%s\n", myAppName, version, myAppURL)
+	return fmt.Sprintf("\n%s (%s)\n%s\n\n", myAppName, version, myAppURL)
 }
 
 func (c *Config) handleFlagsConfig() {
