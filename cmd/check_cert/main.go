@@ -15,7 +15,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/atc0005/check-certs/logging"
+	"github.com/atc0005/check-certs/internal/logging"
 	"github.com/atc0005/go-nagios"
 )
 

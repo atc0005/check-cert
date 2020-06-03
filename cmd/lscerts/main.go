@@ -15,7 +15,10 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/atc0005/check-certs/logging"
+	"github.com/grantae/certinfo"
+
+	"github.com/atc0005/check-certs/internal/certs"
+	"github.com/atc0005/check-certs/internal/logging"
 )
 
 func main() {
@@ -81,6 +84,8 @@ func main() {
 		}
 	}
 
+	fmt.Printf("\nCERTIFICATES | SUMMARY\n")
+
 	var certPosition string
 	for idx, certificate := range certChain {
 
@@ -94,16 +99,40 @@ func main() {
 		}
 
 		fmt.Printf(
-			"\nCertificate %d of %d (%s):\n\tName: %s\n\tSANs entries: %s\n\tIssuer: %s\n\tSerial: %s\n\tExpires: %v\n",
+			"\nCertificate %d of %d (%s):\n\tName: %s\n\tKeyID: %v\n\tSANs entries: %s\n\tIssuer: %s\n\tIssuerKeyID: %v\n\tSerial: %s\n\tExpires: %v\n",
 			idx+1,
 			certsTotal,
 			certPosition,
 			certificate.Subject,
+			certs.ConvertKeyIdToHexStr(certificate.SubjectKeyId),
 			certificate.DNSNames,
 			certificate.Issuer,
+			certs.ConvertKeyIdToHexStr(certificate.AuthorityKeyId),
 			certificate.SerialNumber,
 			certificate.NotAfter,
 		)
+
+		if config.EmitCertText {
+			fmt.Printf("\nCERTIFICATES | DETAILS\n")
+
+			for idx, certificate := range certChain {
+
+				// generate text version of the certificate
+				certText, err := certinfo.CertificateText(certificate)
+				if err != nil {
+					certText = err.Error()
+				}
+
+				fmt.Printf(
+					"\nCertificate %d of %d:\n%s\n",
+					idx+1,
+					certsTotal,
+					certText,
+				)
+
+			}
+
+		}
 
 	}
 

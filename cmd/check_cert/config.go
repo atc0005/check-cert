@@ -13,7 +13,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/atc0005/check-certs/logging"
+	"github.com/atc0005/check-certs/internal/logging"
 )
 
 // Updated via Makefile builds. Setting placeholder value here so that
