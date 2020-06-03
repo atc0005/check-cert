@@ -49,9 +49,9 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 		if block != nil {
 
-			fmt.Println("Type of block:", block.Type)
-			fmt.Println("size of file content:", len(pemData))
-			fmt.Println("size of rest:", len(rest))
+			// fmt.Println("Type of block:", block.Type)
+			// fmt.Println("size of file content:", len(pemData))
+			// fmt.Println("size of rest:", len(rest))
 
 			cert, err := x509.ParseCertificate(block.Bytes)
 			if err != nil {
