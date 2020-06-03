@@ -69,7 +69,7 @@ func main() {
 		Int("port", config.Port).
 		Int("age_warning", config.AgeWarning).
 		Int("age_critical", config.AgeCritical).
-		Str("sans_entries", config.SANsEntries.String()).Logger()
+		Str("expected_sans_entries", config.SANsEntries.String()).Logger()
 
 	if err := logging.SetLoggingLevel(config.LoggingLevel); err != nil {
 		log.Err(err).Msg("configuring logging level")
@@ -85,9 +85,9 @@ func main() {
 	cfg := tls.Config{}
 	conn, err := tls.Dial("tcp", server, &cfg)
 	if err != nil {
-		log.Error().Err(err).Msgf("error connecting to server")
+		log.Error().Err(err).Msg("error connecting to server")
 		nagiosExitState.LastError = err
-		nagiosExitState.ServiceOutput = fmt.Sprintf("Error connecting to %s", server)
+		nagiosExitState.ServiceOutput = "Error connecting to " + server
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICAL
 		nagiosExitState.ReturnCheckResults()
 	}
@@ -97,11 +97,6 @@ func main() {
 	certChain := conn.ConnectionState().PeerCertificates
 
 	for _, certificate := range certChain {
-		// if err := certificate.VerifyHostname("www.lib.auburn.edu"); err == nil {
-		// 	//sansEntries := certificate.DNSNames
-		// 	// fmt.Printf("Found %d SANs entries: %v",
-		// 	// 	len(sansEntries), sansEntries)
-		// }
 
 		fmt.Printf(
 			"Cert:\n\tName: %s\n\tSANs entries: %s\n\tIssuer: %s\n\tSerial: %s\n\tExpires: %v\n",
