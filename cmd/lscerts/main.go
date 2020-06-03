@@ -98,7 +98,12 @@ func main() {
 
 		server := fmt.Sprintf("%s:%d", config.Server, config.Port)
 
-		log.Debug().Msg("Connecting to remote server")
+		// log.Debug().Msg("Connecting to remote server")
+		fmt.Printf(
+			"\nConnecting to remote server %q at port %d\n",
+			config.Server,
+			config.Port,
+		)
 		cfg := tls.Config{}
 		conn, err := tls.Dial("tcp", server, &cfg)
 		if err != nil {
@@ -115,18 +120,6 @@ func main() {
 			config.Server,
 			config.Port,
 		)
-
-		if len(certChain) > 0 {
-			// verify leaf certificate is valid for the provided server FQDN
-			if err := certChain[0].VerifyHostname(config.Server); err != nil {
-				log.Warn().Err(err).Msgf(
-					"provided hostname %q does not match server certificate",
-					config.Server,
-				)
-			} else {
-				fmt.Println("- OK: Provided hostname matches discovered certificate")
-			}
-		}
 
 	}
 
@@ -145,6 +138,22 @@ func main() {
 		certsTotal,
 		certChainSource,
 	)
+
+	if config.Server != "" {
+
+		if len(certChain) > 0 {
+			// verify leaf certificate is valid for the provided server FQDN
+			if err := certChain[0].VerifyHostname(config.Server); err != nil {
+				log.Warn().Err(err).Msgf(
+					"provided hostname %q does not match server certificate",
+					config.Server,
+				)
+			} else {
+				fmt.Println("- OK: Provided hostname matches discovered certificate")
+			}
+		}
+
+	}
 
 	printHeader("CERTIFICATES | CHAIN DETAILS")
 
