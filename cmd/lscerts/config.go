@@ -30,15 +30,17 @@ const (
 	portHelp             string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
 	emitBrandingFlagHelp string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
 	emitCertTextFlagHelp string = "Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default."
+	filenameFlagHelp     string = "Fully-qualified path to a file containing one or more certificates"
 )
 
 // Default flag settings if not overridden by user input
 const (
 	defaultLogLevel     string = "info"
-	defaultServer       string = "localhost"
+	defaultServer       string = ""
 	defaultPort         int    = 443
 	defaultEmitBranding bool   = false
 	defaultEmitCertText bool   = false
+	defaultFilename     string = ""
 )
 
 // multiValueFlag is a custom type that satisfies the flag.Value interface in
@@ -76,6 +78,10 @@ func (i *multiValueFlag) Set(value string) error {
 // Config represents the application configuration as specified via
 // command-line flags.
 type Config struct {
+
+	// Filename is the fully-qualified path to a file containing one or more
+	// certificates
+	Filename string
 
 	// Server is the fully-qualified domain name of the system running a
 	// certificate-enabled service.
@@ -115,6 +121,7 @@ func Branding() string {
 
 func (c *Config) handleFlagsConfig() {
 
+	flag.StringVar(&c.Filename, "filename", defaultFilename, filenameFlagHelp)
 	flag.StringVar(&c.Server, "server", defaultServer, serverHelp)
 	flag.IntVar(&c.Port, "port", defaultPort, portHelp)
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
@@ -133,12 +140,33 @@ func (c *Config) handleFlagsConfig() {
 // values.
 func (c Config) Validate() error {
 
-	if c.Port < 0 {
-		return fmt.Errorf("invalid TCP port number %d", c.Port)
+	// TODO: How to implement validation for optional filename using standard
+	// library "flag" package (e.g., where we can't check for nil)?
+	//
+	// if c.Filename == "" {
+	// 	return fmt.Errorf("invalid filename specified: %q", c.Filename)
+	// }
+
+	// User can specify one of filename or server, but not both (mostly in
+	// order to keep the logic simpler)
+
+	switch {
+	case c.Filename == "" && c.Server == "":
+		return fmt.Errorf(
+			"one of %q or %q flags must be specified",
+			"server",
+			"filename",
+		)
+	case c.Filename != "" && c.Server != "":
+		return fmt.Errorf(
+			"only one of %q or %q flags may be specified",
+			"server",
+			"filename",
+		)
 	}
 
-	if c.Server == "" {
-		return fmt.Errorf("server FQDN not provided")
+	if c.Port < 0 {
+		return fmt.Errorf("invalid TCP port number %d", c.Port)
 	}
 
 	requestedLoggingLevel := strings.ToLower(c.LoggingLevel)
