@@ -15,6 +15,8 @@ import (
 	"math"
 	"strings"
 	"time"
+
+	"github.com/atc0005/check-certs/internal/textutils"
 )
 
 const (
@@ -289,5 +291,51 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 	}
 
 	return certsReport
+
+}
+
+// CheckSANsEntries receives a x509 certificate and a list of expected SANs
+// entries that should be present for the certificate. A slice of SANs entries
+// NOT found on the specified certificate is returned along with an error if
+// validation failed.
+func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) ([]string, error) {
+
+	unmatchedSANsEntries := make([]string, 0, len(expectedEntries))
+
+	// Assuming that the DNSNames slice is NOT already lowercase, so forcing
+	// them to be so first before comparing against the user-provided slice of
+	// SANs entries.
+	lcDNSNames := textutils.LowerCaseStringSlice(cert.DNSNames)
+
+	// if equal length, there is no special requirement to match in a
+	// particular direction
+	if len(cert.DNSNames) == len(expectedEntries) {
+		for idx := range expectedEntries {
+			if !textutils.InList(strings.ToLower(expectedEntries[idx]), lcDNSNames) {
+				unmatchedSANsEntries = append(unmatchedSANsEntries, expectedEntries[idx])
+				continue
+			}
+		}
+	}
+
+	if len(unmatchedSANsEntries) > 0 {
+
+		// unmatched entries are a problem
+		return unmatchedSANsEntries, fmt.Errorf(
+			"specified SANs entries missing from certificate: %v",
+			unmatchedSANsEntries,
+		)
+
+	}
+
+	// best case, everything checks out
+	return unmatchedSANsEntries, nil
+
+	// if len(unmatchedSANsEntries) > 0 {
+
+	// }
+
+	// 	return fmt.Errorf("one or more SANs entries not provided")
+	// }
 
 }

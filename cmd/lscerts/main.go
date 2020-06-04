@@ -33,7 +33,7 @@ func main() {
 
 	// Display application branding info and exit
 	if config.EmitBranding {
-		fmt.Println(Branding())
+		fmt.Println(Version())
 		os.Exit(0)
 	}
 
@@ -100,7 +100,7 @@ func main() {
 			// chain also to potentially catch any intermediates which may
 			// also be expired. Also, ignore security (gosec) linting warnings
 			// re this choice.
-			// nosec
+			// nolint:gosec
 			InsecureSkipVerify: true,
 		}
 		conn, err := tls.Dial("tcp", server, &cfg)

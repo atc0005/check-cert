@@ -23,6 +23,20 @@ func InList(needle string, haystack []string) bool {
 	return false
 }
 
+// LowerCaseStringSlice is a helper function to convert all provided string
+// slice elements to lowercase.
+//
+// FIXME: There is likely a better way to do this already; replace with that
+// better way.
+func LowerCaseStringSlice(xs []string) []string {
+	lxs := make([]string, 0, len(xs))
+	for idx := range xs {
+		lxs = append(lxs, strings.ToLower(xs[idx]))
+	}
+
+	return lxs
+}
+
 func PrintHeader(headerText string) {
 	headerBorderStr := strings.Repeat("=", len(headerText))
 	fmt.Printf(
