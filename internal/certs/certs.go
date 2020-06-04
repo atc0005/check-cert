@@ -111,7 +111,7 @@ func HasExpiredCert(certChain []*x509.Certificate) (bool, int) {
 
 // HasExpiringCert receives a slice of x509 certificates, CRITICAL age
 // threshold and WARNING age threshold values and ignoring any certificates
-// already expired uses the provided thresholds to determine if any
+// already expired, uses the provided thresholds to determine if any
 // certificates are about to expire. A boolean value is returned to indicate
 // the results of this check along with a count of expiring certificates.
 func HasExpiringCert(certChain []*x509.Certificate, ageCritical time.Time, ageWarning time.Time) (bool, int) {
@@ -240,4 +240,53 @@ func ChainPosition(cert *x509.Certificate) string {
 	}
 
 	return certPosition
+}
+
+// GenerateCertsReport receives a slice of x509 certificates, CRITICAL age
+// threshold and WARNING age threshold values generates a formatted report
+// suitable for display on the console or (potentially) via Microsoft Teams
+// provided suitable conversion is performed on the output.
+func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, ageWarning time.Time) string {
+
+	var certsReport string
+
+	certsTotal := len(certChain)
+
+	for idx, certificate := range certChain {
+
+		certPosition := ChainPosition(certificate)
+
+		expiresText := ExpirationStatus(
+			certificate,
+			ageCritical,
+			ageWarning,
+		)
+
+		certsReport += fmt.Sprintf(
+			"\nCertificate %d of %d (%s):"+
+				"\n\tName: %s"+
+				"\n\tKeyID: %v"+
+				"\n\tSANs entries: %s"+
+				"\n\tIssuer: %s"+
+				"\n\tIssuerKeyID: %v"+
+				"\n\tSerial: %s"+
+				"\n\tExpiration: %s"+
+				"\n\tStatus: %s\n\n",
+			idx+1,
+			certsTotal,
+			certPosition,
+			certificate.Subject,
+			ConvertKeyIdToHexStr(certificate.SubjectKeyId),
+			certificate.DNSNames,
+			certificate.Issuer,
+			ConvertKeyIdToHexStr(certificate.AuthorityKeyId),
+			certificate.SerialNumber,
+			certificate.NotAfter.String(),
+			expiresText,
+		)
+
+	}
+
+	return certsReport
+
 }

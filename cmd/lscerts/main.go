@@ -173,32 +173,11 @@ func main() {
 
 	printHeader("CERTIFICATES | CHAIN DETAILS")
 
-	for idx, certificate := range certChain {
-
-		certPosition := certs.ChainPosition(certificate)
-
-		expiresText := certs.ExpirationStatus(
-			certificate,
-			certsExpireAgeCritical,
-			certsExpireAgeWarning,
-		)
-
-		fmt.Printf(
-			"\nCertificate %d of %d (%s):\n\tName: %s\n\tKeyID: %v\n\tSANs entries: %s\n\tIssuer: %s\n\tIssuerKeyID: %v\n\tSerial: %s\n\tExpiration: %s\n\tStatus: %s\n\n",
-			idx+1,
-			certsTotal,
-			certPosition,
-			certificate.Subject,
-			certs.ConvertKeyIdToHexStr(certificate.SubjectKeyId),
-			certificate.DNSNames,
-			certificate.Issuer,
-			certs.ConvertKeyIdToHexStr(certificate.AuthorityKeyId),
-			certificate.SerialNumber,
-			certificate.NotAfter.String(),
-			expiresText,
-		)
-
-	}
+	fmt.Println(certs.GenerateCertsReport(
+		certChain,
+		certsExpireAgeCritical,
+		certsExpireAgeWarning,
+	))
 
 	if config.EmitCertText {
 		printHeader("CERTIFICATES | OpenSSL Text Format")
