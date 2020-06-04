@@ -164,56 +164,21 @@ func main() {
 
 	printHeader("CERTIFICATES | CHAIN DETAILS")
 
-	// FIXME: Stub values
-	// TODO: Implement default values for number of days warning/critical
 	certsExpireAgeWarning := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeWarning))
 	certsExpireAgeCritical := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeCritical))
 
-	var certPosition string
 	for idx, certificate := range certChain {
 
-		switch {
-		case certificate.Issuer.String() == certificate.Subject.String():
-			certPosition = "root"
-		case certificate.IsCA:
-			certPosition = "intermediate"
-		case !certificate.IsCA:
-			certPosition = "leaf"
-		default:
-			certPosition = "UNKNOWN: Please submit a bug report"
-		}
+		certPosition := certs.ChainPosition(certificate)
 
-		var expiresText string
-		switch {
-		case certificate.NotAfter.Before(time.Now()):
-			expiresText = fmt.Sprintf(
-				"Expiration (EXPIRED): %s (%s)",
-				certs.FormattedTimeUntilExpiration(certificate.NotAfter),
-				certificate.NotAfter.String(),
-			)
-		case certificate.NotAfter.Before(certsExpireAgeCritical):
-			expiresText = fmt.Sprintf(
-				"Expiration (CRITICAL): %s (%s)",
-				certs.FormattedTimeUntilExpiration(certificate.NotAfter),
-				certificate.NotAfter.String(),
-			)
-		case certificate.NotAfter.Before(certsExpireAgeWarning):
-			expiresText = fmt.Sprintf(
-				"Expiration (WARNING): %s (%s)",
-				certs.FormattedTimeUntilExpiration(certificate.NotAfter),
-				certificate.NotAfter.String(),
-			)
-		default:
-			expiresText = fmt.Sprintf(
-				"Expiration (OK): %s (%s)",
-				certs.FormattedTimeUntilExpiration(certificate.NotAfter),
-				certificate.NotAfter.String(),
-			)
-
-		}
+		expiresText := certs.ExpirationStatus(
+			certificate,
+			certsExpireAgeCritical,
+			certsExpireAgeWarning,
+		)
 
 		fmt.Printf(
-			"\nCertificate %d of %d (%s):\n\tName: %s\n\tKeyID: %v\n\tSANs entries: %s\n\tIssuer: %s\n\tIssuerKeyID: %v\n\tSerial: %s\n\t%s\n",
+			"\nCertificate %d of %d (%s):\n\tName: %s\n\tKeyID: %v\n\tSANs entries: %s\n\tIssuer: %s\n\tIssuerKeyID: %v\n\tSerial: %s\n\tExpiration: %s\n\tStatus: %s\n",
 			idx+1,
 			certsTotal,
 			certPosition,
@@ -223,6 +188,7 @@ func main() {
 			certificate.Issuer,
 			certs.ConvertKeyIdToHexStr(certificate.AuthorityKeyId),
 			certificate.SerialNumber,
+			certificate.NotAfter.String(),
 			expiresText,
 		)
 
@@ -251,7 +217,7 @@ func main() {
 	}
 
 	if len(parseAttemptLeftovers) > 0 {
-		printHeader("CERTIFICATES | Unparsable text")
+		printHeader("CERTIFICATES | UNKNOWN text in cert file")
 
 		fmt.Printf("The following text was found in the %q file"+
 			" and is provided here in case it is useful for"+

@@ -17,6 +17,13 @@ import (
 	"time"
 )
 
+const (
+	certChainPositionLeaf         string = "leaf"
+	certChainPositionIntermediate string = "intermediate"
+	certChainPositionRoot         string = "root"
+	certChainPositionUnknown      string = "UNKNOWN: Please submit a bug report"
+)
+
 // ConvertKeyIdToHexStr converts a provided byte slice format of a X509v3
 // Authority Key Identifier or X509v3 Subject Key Identifier to a hex-encoded
 // string to reflect what is shown in the OpenSSL "text" format.
@@ -102,12 +109,38 @@ func HasExpiredCert(certChain []*x509.Certificate) (bool, int) {
 
 }
 
+// HasExpiringCert receives a slice of x509 certificates, CRITICAL age
+// threshold and WARNING age threshold values and ignoring any certificates
+// already expired uses the provided thresholds to determine if any
+// certificates are about to expire. A boolean value is returned to indicate
+// the results of this check along with a count of expiring certificates.
+func HasExpiringCert(certChain []*x509.Certificate, ageCritical time.Time, ageWarning time.Time) (bool, int) {
+
+	var expiringCertsPresent bool
+	var expiringCertsCount int
+	for idx := range certChain {
+
+		switch {
+		case !IsExpiredCert(cert) && cert.NotAfter.Before(ageCritical):
+			expiringCertsPresent = true
+			expiringCertsCount++
+		case !IsExpiredCert(cert) && cert.NotAfter.Before(ageWarning):
+			expiringCertsPresent = true
+			expiringCertsCount++
+
+
+	}
+
+	return expiringCertsPresent, expiringCertsCount
+
+}
+
 // FormattedTimeUntilExpiration receives a Time value and converts it to a
 // string representing the largest useful whole units of time in days and
 // hours. For example, if a certificate has 1 year, 2 days and 3 hours
 // remaining, this function will return the string 367d 3h, but if only 3
 // hours remain then 3h will be returned.
-func FormattedTimeUntilExpiration(expireTime time.Time) string {
+func FormattedExpiration(expireTime time.Time) string {
 
 	// hoursRemaining := time.Until(certificate.NotAfter)/time.Hour)/24,
 	timeRemaining := time.Until(expireTime).Hours()
@@ -137,20 +170,75 @@ func FormattedTimeUntilExpiration(expireTime time.Time) string {
 	// simplified
 	hoursRemaining := math.Trunc(timeRemaining - (daysRemaining * 24))
 
-	if hoursRemaining > 0 {
-		hoursRemainingStr = fmt.Sprintf("%dh", int64(hoursRemaining))
-	}
+	//if hoursRemaining > 0 {
+	hoursRemainingStr = fmt.Sprintf("%dh", int64(hoursRemaining))
+	//}
 
 	formattedTimeRemainingStr = strings.Join([]string{
 		daysRemainingStr, hoursRemainingStr}, " ")
 
 	switch {
 	case !certExpired:
-		formattedTimeRemainingStr += " remaining"
+		formattedTimeRemainingStr = strings.Join([]string{formattedTimeRemainingStr, "remaining"}, " ")
 	case certExpired:
-		formattedTimeRemainingStr += " ago"
+		formattedTimeRemainingStr = strings.Join([]string{formattedTimeRemainingStr, "ago"}, " ")
 	}
 
 	return formattedTimeRemainingStr
 
+}
+
+// ExpirationStatus receives a certificate and the expiration threshold values
+// for CRITICAL and WARNING states and returns a human-readable string
+// indicating the overall status at a glance.
+func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning time.Time) string {
+
+	var expiresText string
+	switch {
+	case cert.NotAfter.Before(time.Now()):
+		expiresText = fmt.Sprintf(
+			"[EXPIRED] %s",
+			FormattedExpiration(cert.NotAfter),
+		)
+	case cert.NotAfter.Before(ageCritical):
+		expiresText = fmt.Sprintf(
+			"[CRITICAL] %s",
+			FormattedExpiration(cert.NotAfter),
+		)
+	case cert.NotAfter.Before(ageWarning):
+		expiresText = fmt.Sprintf(
+			"[WARNING] %s",
+			FormattedExpiration(cert.NotAfter),
+		)
+	default:
+		expiresText = fmt.Sprintf(
+			// "[OK] | %s (%s)",
+			"[OK] %s",
+			FormattedExpiration(cert.NotAfter),
+		)
+
+	}
+
+	return expiresText
+
+}
+
+// ChainChainPosition receives a cert and returns a string indicating what
+// position or "role" it occurpies in the certificate chain
+func ChainPosition(cert *x509.Certificate) string {
+
+	var certPosition string
+
+	switch {
+	case cert.Issuer.String() == cert.Subject.String():
+		certPosition = certChainPositionRoot
+	case cert.IsCA:
+		certPosition = certChainPositionIntermediate
+	case !cert.IsCA:
+		certPosition = certChainPositionLeaf
+	default:
+		certPosition = certChainPositionUnknown
+	}
+
+	return certPosition
 }
