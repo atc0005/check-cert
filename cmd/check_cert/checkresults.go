@@ -71,26 +71,37 @@ type NagiosExitState struct {
 // exit code without blocking other deferred functions from running.
 func (nes NagiosExitState) ReturnCheckResults() {
 
+	// ##################################################################
+	// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
+	// interpret them literally instead of emitting an actual newline.
+	// We work around that by using fmt.Printf() for output that is
+	// intended for display within the Nagios web UI.
+	// ##################################################################
+
 	// One-line output used as the summary or short explanation for the
 	// specific Nagios state that we are returning.
-	fmt.Println(nes.ServiceOutput)
+	fmt.Printf(nes.ServiceOutput)
 
 	if nes.LongServiceOutput != "" || nes.LastError != nil {
 
 		// fmt.Printf("\nAdditional details:\n\n")
-		fmt.Printf("\n**ERRORS**\n")
+		fmt.Printf("\r\n\r\n**ERRORS**\r\n")
 
 		// If an error occurred or if there are additional details to share ...
 
 		if nes.LastError != nil {
-			fmt.Printf("\n* %v\n", nes.LastError)
+			fmt.Printf("\r\n* %v\r\n", nes.LastError)
 		}
 
 		if nes.LongServiceOutput != "" {
 
-			fmt.Printf("\n**DETAILED INFO**\n")
+			fmt.Printf("\r\n**DETAILED INFO**\r\n")
 
-			fmt.Println(nes.LongServiceOutput)
+			// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
+			// interpret them literally instead of emitting an actual newline.
+			// We work around that by using fmt.Printf() for output that is
+			// intended for display within the Nagios web UI.
+			fmt.Printf(nes.LongServiceOutput)
 		}
 
 	}

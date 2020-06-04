@@ -265,16 +265,20 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 			ageWarning,
 		)
 
+		// FWIW: Nagios seems to display `\n` literally, but interpret `\r\n`
+		// as the intended newline. Using `\r\n` seems to work normally when
+		// testing with Ubuntu console output, so presumably this is fine
+		// elsewhere too?
 		certsReport += fmt.Sprintf(
-			"\nCertificate %d of %d (%s):"+
-				"\n\tName: %s"+
-				"\n\tSANs entries: %s"+
-				"\n\tKeyID: %v"+
-				"\n\tIssuer: %s"+
-				"\n\tIssuerKeyID: %v"+
-				"\n\tSerial: %s"+
-				"\n\tExpiration: %s"+
-				"\n\tStatus: %s\n\n",
+			"\r\nCertificate %d of %d (%s):"+
+				"\r\n\tName: %s"+
+				"\r\n\tSANs entries: %s"+
+				"\r\n\tKeyID: %v"+
+				"\r\n\tIssuer: %s"+
+				"\r\n\tIssuerKeyID: %v"+
+				"\r\n\tSerial: %s"+
+				"\r\n\tExpiration: %s"+
+				"\r\n\tStatus: %s\r\n",
 			idx+1,
 			certsTotal,
 			certPosition,
