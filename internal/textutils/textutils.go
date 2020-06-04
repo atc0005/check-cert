@@ -7,6 +7,11 @@
 
 package textutils
 
+import (
+	"fmt"
+	"strings"
+)
+
 // InList is a helper function to emulate Python's `if "x"
 // in list:` functionality
 func InList(needle string, haystack []string) bool {
@@ -16,4 +21,14 @@ func InList(needle string, haystack []string) bool {
 		}
 	}
 	return false
+}
+
+func PrintHeader(headerText string) {
+	headerBorderStr := strings.Repeat("=", len(headerText))
+	fmt.Printf(
+		"\n\n%s\n%s\n%s\n",
+		headerBorderStr,
+		headerText,
+		headerBorderStr,
+	)
 }

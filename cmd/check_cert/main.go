@@ -140,7 +140,7 @@ func main() {
 	validCertsCount := certsTotal - expiredCertsCount - expiringCertsCount
 
 	certsSummary := fmt.Sprintf(
-		"[EXPIRED: %d, OK: %d, EXPIRING: %d]",
+		"[EXPIRED: %d, EXPIRING: %d, OK: %d]",
 		expiredCertsCount,
 		expiringCertsCount,
 		validCertsCount,
@@ -158,19 +158,36 @@ func main() {
 			certsExpireAgeWarning,
 		)
 
-		if hasExpiredCerts {
-			nagiosExitState.ServiceOutput = "CRITICAL: " + certsSummary
-			nagiosExitState.ExitStatusCode = nagios.StateCRITICAL
-			log.Error().
+		// cert validation for %s failed
+		// CRITICAL - Certificate 'quay1.lib.auburn.edu' expired on Wed 25 Mar 2020 12:59:00 AM CDT
+
+		certValidationFailureTmpl := "%s: Invalid certs chain for %q %s"
+
+		if hasExpiringCerts {
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				certValidationFailureTmpl,
+				"WARNING",
+				config.Server,
+				certsSummary,
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateWARNING
+			log.Warn().
 				Err(nagiosExitState.LastError).
-				Int("expired_certs", expiredCertsCount).
+				Int("expiring_certs", expiringCertsCount).
 				Msg("expired certs present in chain")
 		}
 
-		if hasExpiringCerts {
-			nagiosExitState.ServiceOutput = "WARNING: " + certsSummary
-			nagiosExitState.ExitStatusCode = nagios.StateWARNING
-			log.Warn().
+		// intentionally overwrite/override "warning" status from the last
+		// check; expired certs are more of a concern than expiring certs
+		if hasExpiredCerts {
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				certValidationFailureTmpl,
+				"CRITICAL",
+				config.Server,
+				certsSummary,
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICAL
+			log.Error().
 				Err(nagiosExitState.LastError).
 				Int("expired_certs", expiredCertsCount).
 				Msg("expired certs present in chain")

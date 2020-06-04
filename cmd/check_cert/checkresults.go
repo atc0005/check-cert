@@ -10,6 +10,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/atc0005/check-certs/internal/textutils"
 )
 
 // NagiosExitState represents the last known execution state of the
@@ -64,14 +66,24 @@ func (nes NagiosExitState) ReturnCheckResults() {
 	// specific Nagios state that we are returning.
 	fmt.Println(nes.ServiceOutput)
 
-	fmt.Printf("\nAdditional details:\n\n")
+	if nes.LongServiceOutput != "" || nes.LastError != nil {
 
-	// If an error occurred or if there are additional details to share ...
-	switch {
-	case nes.LastError != nil:
-		fmt.Printf("* Error: %v\n", nes.LastError)
-	case nes.LongServiceOutput != "":
-		fmt.Printf("* %v\n", nes.LongServiceOutput)
+		// fmt.Printf("\nAdditional details:\n\n")
+		textutils.PrintHeader("ERRORS")
+
+		// If an error occurred or if there are additional details to share ...
+
+		if nes.LastError != nil {
+			fmt.Printf("\n* %v\n", nes.LastError)
+		}
+
+		if nes.LongServiceOutput != "" {
+
+			textutils.PrintHeader("DETAILED INFO")
+
+			fmt.Println(nes.LongServiceOutput)
+		}
+
 	}
 
 	os.Exit(nes.ExitStatusCode)

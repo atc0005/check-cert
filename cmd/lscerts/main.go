@@ -13,7 +13,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -23,18 +22,8 @@ import (
 
 	"github.com/atc0005/check-certs/internal/certs"
 	"github.com/atc0005/check-certs/internal/logging"
+	"github.com/atc0005/check-certs/internal/textutils"
 )
-
-// TODO: Move to a better location?
-func printHeader(headerText string) {
-	headerBorderStr := strings.Repeat("=", len(headerText))
-	fmt.Printf(
-		"\n\n%s\n%s\n%s\n",
-		headerBorderStr,
-		headerText,
-		headerBorderStr,
-	)
-}
 
 func main() {
 
@@ -129,7 +118,7 @@ func main() {
 	certsExpireAgeWarning := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeWarning))
 	certsExpireAgeCritical := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeCritical))
 
-	printHeader("CERTIFICATES | SUMMARY")
+	textutils.PrintHeader("CERTIFICATES | SUMMARY")
 
 	if certsTotal < 0 {
 		errMsg := fmt.Errorf("no certificates found")
@@ -171,7 +160,7 @@ func main() {
 		fmt.Printf("- WARNING: %d certificates expiring soon\n", count)
 	}
 
-	printHeader("CERTIFICATES | CHAIN DETAILS")
+	textutils.PrintHeader("CERTIFICATES | CHAIN DETAILS")
 
 	fmt.Println(certs.GenerateCertsReport(
 		certChain,
@@ -180,7 +169,7 @@ func main() {
 	))
 
 	if config.EmitCertText {
-		printHeader("CERTIFICATES | OpenSSL Text Format")
+		textutils.PrintHeader("CERTIFICATES | OpenSSL Text Format")
 
 		for idx, certificate := range certChain {
 
@@ -202,7 +191,7 @@ func main() {
 	}
 
 	if len(parseAttemptLeftovers) > 0 {
-		printHeader("CERTIFICATES | UNKNOWN text in cert file")
+		textutils.PrintHeader("CERTIFICATES | UNKNOWN text in cert file")
 
 		fmt.Printf("The following text was found in the %q file"+
 			" and is provided here in case it is useful for"+
