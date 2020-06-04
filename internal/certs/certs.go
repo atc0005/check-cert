@@ -121,14 +121,13 @@ func HasExpiringCert(certChain []*x509.Certificate, ageCritical time.Time, ageWa
 	for idx := range certChain {
 
 		switch {
-		case !IsExpiredCert(cert) && cert.NotAfter.Before(ageCritical):
+		case !IsExpiredCert(certChain[idx]) && certChain[idx].NotAfter.Before(ageCritical):
 			expiringCertsPresent = true
 			expiringCertsCount++
-		case !IsExpiredCert(cert) && cert.NotAfter.Before(ageWarning):
+		case !IsExpiredCert(certChain[idx]) && certChain[idx].NotAfter.Before(ageWarning):
 			expiringCertsPresent = true
 			expiringCertsCount++
-
-
+		}
 	}
 
 	return expiringCertsPresent, expiringCertsCount

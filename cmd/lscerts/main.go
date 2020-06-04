@@ -126,6 +126,9 @@ func main() {
 
 	certsTotal := len(certChain)
 
+	certsExpireAgeWarning := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeWarning))
+	certsExpireAgeCritical := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeCritical))
+
 	printHeader("CERTIFICATES | SUMMARY")
 
 	if certsTotal < 0 {
@@ -157,15 +160,18 @@ func main() {
 	}
 
 	if expired, count := certs.HasExpiredCert(certChain); expired {
-		fmt.Printf("- WARNING: %d certificates expired", count)
+		fmt.Printf("- WARNING: %d certificates expired\n", count)
 	}
 
-	// TODO: Add IsExpiringSoon() function and emit results of the check here
+	if expiring, count := certs.HasExpiringCert(
+		certChain,
+		certsExpireAgeCritical,
+		certsExpireAgeWarning,
+	); expiring {
+		fmt.Printf("- WARNING: %d certificates expiring soon\n", count)
+	}
 
 	printHeader("CERTIFICATES | CHAIN DETAILS")
-
-	certsExpireAgeWarning := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeWarning))
-	certsExpireAgeCritical := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeCritical))
 
 	for idx, certificate := range certChain {
 
