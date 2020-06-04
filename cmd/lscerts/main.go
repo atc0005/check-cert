@@ -96,8 +96,11 @@ func main() {
 		)
 		cfg := tls.Config{
 			// Allow insecure connection so that we can check not only the
-			// initial certificate, but others in the chain also
-			// nolint
+			// initial certificate (which may be expired), but others in the
+			// chain also to potentially catch any intermediates which may
+			// also be expired. Also, ignore security (gosec) linting warnings
+			// re this choice.
+			// nosec
 			InsecureSkipVerify: true,
 		}
 		conn, err := tls.Dial("tcp", server, &cfg)

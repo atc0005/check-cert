@@ -23,15 +23,11 @@ import (
 
 func main() {
 
+	// Setup configuration by parsing user-provided flags
 	config := Config{}
-
 	config.handleFlagsConfig()
 
-	if config.EmitBranding {
-		defer Branding()
-	}
-
-	// Start off assuming all is well, adjust as we go.
+	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = NagiosExitState{
 		LastError:      nil,
 		ExitStatusCode: nagios.StateOK,
@@ -43,6 +39,11 @@ func main() {
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICAL
 		log.Err(err).Msg("Error validating configuration")
 		nagiosExitState.ReturnCheckResults()
+	}
+
+	if config.EmitBranding {
+		// If enabled, show application details at end of notification
+		nagiosExitState.BrandingCallback = Branding
 	}
 
 	// Use provided threshold values to calculate the expiration times that
@@ -84,8 +85,10 @@ func main() {
 	log.Debug().Msg("Connecting to remote server")
 	cfg := tls.Config{
 		// Allow insecure connection so that we can check not only the initial
-		// certificate, but others in the chain also
-		// nolint
+		// certificate (which may be expired), but others in the chain also to
+		// potentially catch any intermediates which may also be expired.
+		// Also, ignore security (gosec) linting warnings re this choice.
+		// nosec
 		InsecureSkipVerify: true,
 	}
 	conn, err := tls.Dial("tcp", server, &cfg)

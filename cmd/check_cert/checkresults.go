@@ -12,6 +12,12 @@ import (
 	"os"
 )
 
+// NagiosExitCallBackFunc represents a function that is called as a final step
+// before application termination so that branding information can be emitted
+// for inclusion in the notification. This helps identify which specific
+// application (and its version) that is responsible for the notification.
+type NagiosExitCallBackFunc func() string
+
 // NagiosExitState represents the last known execution state of the
 // application, including the most recent error and the final intended plugin
 // state.
@@ -37,6 +43,11 @@ type NagiosExitState struct {
 	// LongServiceOutput is the full text output (aside from the first line)
 	// from the last service check.
 	LongServiceOutput string
+
+	// BrandingCallback is a function that is called before application
+	// termination to emit branding details at the end of the notification.
+	// See also NagiosExitCallBackFunc.
+	BrandingCallback NagiosExitCallBackFunc
 }
 
 // ReturnCheckResults is intended to be called with the defer keyword. Nagios
@@ -82,6 +93,12 @@ func (nes NagiosExitState) ReturnCheckResults() {
 			fmt.Println(nes.LongServiceOutput)
 		}
 
+	}
+
+	// If set, call user-provided branding function just before exiting
+	// application
+	if nes.BrandingCallback != nil {
+		fmt.Println(nes.BrandingCallback())
 	}
 
 	os.Exit(nes.ExitStatusCode)
