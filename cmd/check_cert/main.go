@@ -166,9 +166,6 @@ func main() {
 			certsExpireAgeWarning,
 		)
 
-		// cert validation for %s failed
-		// CRITICAL - Certificate 'quay1.lib.auburn.edu' expired on Wed 25 Mar 2020 12:59:00 AM CDT
-
 		certValidationFailureTmpl := "%s: Invalid certificate chain for %q %s"
 
 		if hasExpiringCerts {
