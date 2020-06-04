@@ -59,7 +59,7 @@ func main() {
 
 	var certChain []*x509.Certificate
 
-	// Anything from the specified file that couldn't be coverted to a
+	// Anything from the specified file that couldn't be converted to a
 	// certificate chain. While likely not of high value, it could help
 	// identify why a certificate isn't being properly trusted by a client
 	// application, so emitting it may be useful to the user of this

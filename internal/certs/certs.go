@@ -27,12 +27,13 @@ const (
 // ConvertKeyIDToHexStr converts a provided byte slice format of a X509v3
 // Authority Key Identifier or X509v3 Subject Key Identifier to a hex-encoded
 // string to reflect what is shown in the OpenSSL "text" format.
-func ConvertKeyIDToHexStr(keyId []byte) string {
-	var hexStrKeyId []string
-	for _, field := range keyId {
-		hexStrKeyId = append(hexStrKeyId, fmt.Sprintf("%X", field))
+func ConvertKeyIDToHexStr(keyID []byte) string {
+
+	hexStrKeyID := make([]string, 0, len(keyID))
+	for _, field := range keyID {
+		hexStrKeyID = append(hexStrKeyID, fmt.Sprintf("%X", field))
 	}
-	return strings.Join(hexStrKeyId, ":")
+	return strings.Join(hexStrKeyID, ":")
 }
 
 // GetGetCertsFromFile is a helper function for retrieving a certificates
