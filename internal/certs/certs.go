@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"strings"
 	"time"
 )
@@ -75,7 +76,13 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 }
 
-// HasExpiredCert received a slice of x509 certificates and returns a boolean
+// IsIsExpiredCert receives a x509 certificate and returns a boolean value
+// indicating whether the cert has expired.
+func IsExpiredCert(cert *x509.Certificate) bool {
+	return cert.NotAfter.Before(time.Now())
+}
+
+// HasExpiredCert receives a slice of x509 certificates and returns a boolean
 // value indicating whether any certificates in the chain are expired along
 // with a count of how many.
 func HasExpiredCert(certChain []*x509.Certificate) (bool, int) {
@@ -92,5 +99,58 @@ func HasExpiredCert(certChain []*x509.Certificate) (bool, int) {
 	}
 
 	return expiredCertsPresent, expiredCertsCount
+
+}
+
+// FormattedTimeUntilExpiration receives a Time value and converts it to a
+// string representing the largest useful whole units of time in days and
+// hours. For example, if a certificate has 1 year, 2 days and 3 hours
+// remaining, this function will return the string 367d 3h, but if only 3
+// hours remain then 3h will be returned.
+func FormattedTimeUntilExpiration(expireTime time.Time) string {
+
+	// hoursRemaining := time.Until(certificate.NotAfter)/time.Hour)/24,
+	timeRemaining := time.Until(expireTime).Hours()
+
+	var certExpired bool
+	var formattedTimeRemainingStr string
+	var daysRemainingStr string
+	var hoursRemainingStr string
+
+	// Flip sign back to positive, note that cert is expired for later use
+	if timeRemaining < 0 {
+		certExpired = true
+		timeRemaining *= -1
+	}
+
+	// Toss remainder so that we only get the whole number of days
+	daysRemaining := math.Trunc(timeRemaining / 24)
+
+	if daysRemaining > 0 {
+		daysRemainingStr = fmt.Sprintf("%dd", int64(daysRemaining))
+	}
+
+	// Multiply the whole number of days by 24 to get the hours value, then
+	// subtract from the original number of hours until cert expiration to get
+	// the number of hours leftover from the days calculation
+	// FIXME: math is not my strong suit, so this logic can likely be greatly
+	// simplified
+	hoursRemaining := math.Trunc(timeRemaining - (daysRemaining * 24))
+
+	if hoursRemaining > 0 {
+		hoursRemainingStr = fmt.Sprintf("%dh", int64(hoursRemaining))
+	}
+
+	formattedTimeRemainingStr = strings.Join([]string{
+		daysRemainingStr, hoursRemainingStr}, " ")
+
+	switch {
+	case !certExpired:
+		formattedTimeRemainingStr += " remaining"
+	case certExpired:
+		formattedTimeRemainingStr += " ago"
+	}
+
+	return formattedTimeRemainingStr
 
 }

@@ -166,8 +166,8 @@ func main() {
 
 	// FIXME: Stub values
 	// TODO: Implement default values for number of days warning/critical
-	AgeWarning := time.Now().Add(time.Hour * 24 * 120)
-	AgeCritical := time.Now().Add(time.Hour * 24 * 100)
+	certsExpireAgeWarning := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeWarning))
+	certsExpireAgeCritical := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeCritical))
 
 	var certPosition string
 	for idx, certificate := range certChain {
@@ -187,23 +187,26 @@ func main() {
 		switch {
 		case certificate.NotAfter.Before(time.Now()):
 			expiresText = fmt.Sprintf(
-				"Expiration (EXPIRED): EXPIRED on %s",
+				"Expiration (EXPIRED): %s (%s)",
+				certs.FormattedTimeUntilExpiration(certificate.NotAfter),
 				certificate.NotAfter.String(),
 			)
-		case certificate.NotAfter.Before(AgeCritical):
+		case certificate.NotAfter.Before(certsExpireAgeCritical):
 			expiresText = fmt.Sprintf(
-				"Expiration (CRITICAL): Expires on %s",
+				"Expiration (CRITICAL): %s (%s)",
+				certs.FormattedTimeUntilExpiration(certificate.NotAfter),
 				certificate.NotAfter.String(),
 			)
-		case certificate.NotAfter.Before(AgeWarning):
+		case certificate.NotAfter.Before(certsExpireAgeWarning):
 			expiresText = fmt.Sprintf(
-				"Expiration (WARNING): Expires on %s",
+				"Expiration (WARNING): %s (%s)",
+				certs.FormattedTimeUntilExpiration(certificate.NotAfter),
 				certificate.NotAfter.String(),
 			)
 		default:
 			expiresText = fmt.Sprintf(
-				// "Expiration (OK): Expires on %s",
-				"Expiration (OK): %s",
+				"Expiration (OK): %s (%s)",
+				certs.FormattedTimeUntilExpiration(certificate.NotAfter),
 				certificate.NotAfter.String(),
 			)
 
