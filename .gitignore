@@ -25,5 +25,5 @@
 scratch/
 
 # Ignore plugin name in its multiple (potential) variations
-check_certs
-check-certs
+check_cert
+check-cert
