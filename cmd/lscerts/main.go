@@ -184,7 +184,7 @@ func main() {
 		)
 
 		fmt.Printf(
-			"\nCertificate %d of %d (%s):\n\tName: %s\n\tKeyID: %v\n\tSANs entries: %s\n\tIssuer: %s\n\tIssuerKeyID: %v\n\tSerial: %s\n\tExpiration: %s\n\tStatus: %s\n",
+			"\nCertificate %d of %d (%s):\n\tName: %s\n\tKeyID: %v\n\tSANs entries: %s\n\tIssuer: %s\n\tIssuerKeyID: %v\n\tSerial: %s\n\tExpiration: %s\n\tStatus: %s\n\n",
 			idx+1,
 			certsTotal,
 			certPosition,
