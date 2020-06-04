@@ -162,6 +162,7 @@ func main() {
 			Int("sans_entries_requested", len(config.SANsEntries)).
 			Int("sans_entries_found", len(certChain)).
 			Msg("SANs entires mismatch")
+		nagiosExitState.ReturnCheckResults()
 
 	}
 
