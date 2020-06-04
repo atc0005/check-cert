@@ -140,10 +140,29 @@ func main() {
 	}
 
 	// check SANS entries
-	if match := certs.SANsEntriesValid(certChain[0], config.SANsEntries); !match {
+	if err := certs.CheckSANsEntries(certChain[0], config.SANsEntries); err != nil {
 
-		// placeholder
-		fmt.Println(match)
+		nagiosExitState.LastError = err
+
+		nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
+			certChain,
+			certsExpireAgeCritical,
+			certsExpireAgeWarning,
+		)
+
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"CRITICAL: %s for %s",
+			err.Error(),
+			config.Server,
+		)
+
+		nagiosExitState.ExitStatusCode = nagios.StateWARNING
+		log.Warn().
+			Err(nagiosExitState.LastError).
+			Int("sans_entries_requested", len(config.SANsEntries)).
+			Int("sans_entries_found", len(certChain)).
+			Msg("SANs entires mismatch")
+
 	}
 
 	hasExpiredCerts, expiredCertsCount := certs.HasExpiredCert(certChain)

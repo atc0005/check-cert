@@ -158,10 +158,6 @@ func (c *Config) handleFlagsConfig() {
 // values.
 func (c Config) Validate() error {
 
-	if c.SANsEntries == nil {
-		return fmt.Errorf("one or more SANs entries not provided")
-	}
-
 	if c.Port < 0 {
 		return fmt.Errorf("invalid TCP port number %d", c.Port)
 	}

@@ -298,12 +298,10 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 // entries that should be present for the certificate. A slice of SANs entries
 // NOT found on the specified certificate is returned along with an error if
 // validation failed.
-func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) ([]string, error) {
+func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) error {
 
-	// if all goes well this will remain nil
-	var err error
-
-	unmatchedSANsEntries := make([]string, 0, len(expectedEntries))
+	unmatchedSANsEntriesFromList := make([]string, 0, len(expectedEntries))
+	unmatchedSANsEntriesFromCert := make([]string, 0, len(cert.DNSNames))
 
 	// Assuming that the DNSNames slice is NOT already lowercase, so forcing
 	// them to be so first before comparing against the user-provided slice of
@@ -313,20 +311,20 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) ([]strin
 	switch {
 
 	// more entries than is on the cert
-	case len(expectedEntries) > len(lcDNSNames):
+	case len(expectedEntries) >= len(lcDNSNames):
 		for idx := range expectedEntries {
 			if !textutils.InList(strings.ToLower(expectedEntries[idx]), lcDNSNames) {
-				unmatchedSANsEntries = append(unmatchedSANsEntries, expectedEntries[idx])
+				unmatchedSANsEntriesFromList = append(unmatchedSANsEntriesFromList, expectedEntries[idx])
 				continue
 			}
 		}
 
-		if len(unmatchedSANsEntries) > 0 {
-			err = fmt.Errorf(
+		if len(unmatchedSANsEntriesFromList) > 0 {
+			return fmt.Errorf(
 				"%d specified SANs entries missing from %s certificate: %v",
-				len(unmatchedSANsEntries),
+				len(unmatchedSANsEntriesFromList),
 				ChainPosition(cert),
-				unmatchedSANsEntries,
+				unmatchedSANsEntriesFromList,
 			)
 		}
 
@@ -335,38 +333,21 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) ([]strin
 
 		for idx := range lcDNSNames {
 			if !textutils.InList(strings.ToLower(lcDNSNames[idx]), expectedEntries) {
-				unmatchedSANsEntries = append(unmatchedSANsEntries, lcDNSNames[idx])
+				unmatchedSANsEntriesFromCert = append(unmatchedSANsEntriesFromCert, lcDNSNames[idx])
 				continue
 			}
 		}
 
-		err = fmt.Errorf(
-			"%d SANs entries on certificate not specified in provided list: %v",
-			len(unmatchedSANsEntries),
+		return fmt.Errorf(
+			"%d SANs entries on %s certificate not specified in provided list: %v",
+			len(unmatchedSANsEntriesFromCert),
 			ChainPosition(cert),
-			unmatchedSANsEntries,
+			unmatchedSANsEntriesFromCert,
 		)
 
-	}
-
-	// entries requested that are missing from the cert are a problem
-	if len(unmatchedSANsEntries) > 0 {
-		return unmatchedSANsEntries, fmt.Errorf(
-			"%d specified SANs entries missing from %s certificate: %v",
-			len(unmatchedSANsEntries),
-			ChainPosition(cert),
-			unmatchedSANsEntries,
-		)
 	}
 
 	// best case, everything checks out
-	return unmatchedSANsEntries, nil
-
-	// if len(unmatchedSANsEntries) > 0 {
-
-	// }
-
-	// 	return fmt.Errorf("one or more SANs entries not provided")
-	// }
+	return nil
 
 }
