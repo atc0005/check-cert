@@ -295,10 +295,9 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 }
 
 // CheckSANsEntries receives a x509 certificate and a list of expected SANs
-// entries that should be present for the certificate. A slice of SANs entries
-// NOT found on the specified certificate is returned along with an error if
-// validation failed.
-func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) error {
+// entries that should be present for the certificate. The number of unmatched
+// SANs entries is returned along with an error if validation failed.
+func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) (int, error) {
 
 	unmatchedSANsEntriesFromList := make([]string, 0, len(expectedEntries))
 	unmatchedSANsEntriesFromCert := make([]string, 0, len(cert.DNSNames))
@@ -320,7 +319,7 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) error {
 		}
 
 		if len(unmatchedSANsEntriesFromList) > 0 {
-			return fmt.Errorf(
+			return len(unmatchedSANsEntriesFromList), fmt.Errorf(
 				"%d specified SANs entries missing from %s certificate: %v",
 				len(unmatchedSANsEntriesFromList),
 				ChainPosition(cert),
@@ -338,7 +337,7 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) error {
 			}
 		}
 
-		return fmt.Errorf(
+		return len(unmatchedSANsEntriesFromCert), fmt.Errorf(
 			"%d SANs entries on %s certificate not specified in provided list: %v",
 			len(unmatchedSANsEntriesFromCert),
 			ChainPosition(cert),
@@ -348,6 +347,6 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) error {
 	}
 
 	// best case, everything checks out
-	return nil
+	return 0, nil
 
 }

@@ -140,7 +140,7 @@ func main() {
 	}
 
 	// check SANS entries
-	if err := certs.CheckSANsEntries(certChain[0], config.SANsEntries); err != nil {
+	if mismatched, err := certs.CheckSANsEntries(certChain[0], config.SANsEntries); err != nil {
 
 		nagiosExitState.LastError = err
 
@@ -151,8 +151,8 @@ func main() {
 		)
 
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
-			"CRITICAL: %s for %s",
-			err.Error(),
+			"CRITICAL: Mismatch of %d SANs entries for certificate %q",
+			mismatched,
 			config.Server,
 		)
 
