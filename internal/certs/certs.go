@@ -300,6 +300,9 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 // validation failed.
 func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) ([]string, error) {
 
+	// if all goes well this will remain nil
+	var err error
+
 	unmatchedSANsEntries := make([]string, 0, len(expectedEntries))
 
 	// Assuming that the DNSNames slice is NOT already lowercase, so forcing
@@ -307,25 +310,53 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) ([]strin
 	// SANs entries.
 	lcDNSNames := textutils.LowerCaseStringSlice(cert.DNSNames)
 
-	// if equal length, there is no special requirement to match in a
-	// particular direction
-	if len(cert.DNSNames) == len(expectedEntries) {
+	switch {
+
+	// more entries than is on the cert
+	case len(expectedEntries) > len(lcDNSNames):
 		for idx := range expectedEntries {
 			if !textutils.InList(strings.ToLower(expectedEntries[idx]), lcDNSNames) {
 				unmatchedSANsEntries = append(unmatchedSANsEntries, expectedEntries[idx])
 				continue
 			}
 		}
-	}
 
-	if len(unmatchedSANsEntries) > 0 {
+		if len(unmatchedSANsEntries) > 0 {
+			err = fmt.Errorf(
+				"%d specified SANs entries missing from %s certificate: %v",
+				len(unmatchedSANsEntries),
+				ChainPosition(cert),
+				unmatchedSANsEntries,
+			)
+		}
 
-		// unmatched entries are a problem
-		return unmatchedSANsEntries, fmt.Errorf(
-			"specified SANs entries missing from certificate: %v",
+	// having more entries on the cert than specified is also a problem
+	case len(expectedEntries) < len(lcDNSNames):
+
+		for idx := range lcDNSNames {
+			if !textutils.InList(strings.ToLower(lcDNSNames[idx]), expectedEntries) {
+				unmatchedSANsEntries = append(unmatchedSANsEntries, lcDNSNames[idx])
+				continue
+			}
+		}
+
+		err = fmt.Errorf(
+			"%d SANs entries on certificate not specified in provided list: %v",
+			len(unmatchedSANsEntries),
+			ChainPosition(cert),
 			unmatchedSANsEntries,
 		)
 
+	}
+
+	// entries requested that are missing from the cert are a problem
+	if len(unmatchedSANsEntries) > 0 {
+		return unmatchedSANsEntries, fmt.Errorf(
+			"%d specified SANs entries missing from %s certificate: %v",
+			len(unmatchedSANsEntries),
+			ChainPosition(cert),
+			unmatchedSANsEntries,
+		)
 	}
 
 	// best case, everything checks out
