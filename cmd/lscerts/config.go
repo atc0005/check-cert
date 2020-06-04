@@ -25,6 +25,7 @@ const myAppName string = "lscerts"
 const myAppURL string = "https://github.com/atc0005/check-cert"
 
 const (
+	sansEntriesHelp      string = "Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list."
 	logLevelFlagHelp     string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
 	serverHelp           string = "The fully-qualified domain name of the remote system whose cert(s) will be monitored."
 	portHelp             string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
@@ -96,6 +97,11 @@ func (i *multiValueFlag) Set(value string) error {
 // command-line flags.
 type Config struct {
 
+	// SANsEntries is the list of Subject Alternate Names (SANs) to verify are
+	// present on the examined certificate. This value is provided a
+	// comma-separated list.
+	SANsEntries multiValueFlag
+
 	// Filename is the fully-qualified path to a file containing one or more
 	// certificates
 	Filename string
@@ -148,6 +154,7 @@ func Version() string {
 
 func (c *Config) handleFlagsConfig() {
 
+	flag.Var(&c.SANsEntries, "sans-entries", sansEntriesHelp)
 	flag.StringVar(&c.Filename, "filename", defaultFilename, filenameFlagHelp)
 	flag.StringVar(&c.Server, "server", defaultServer, serverHelp)
 	flag.IntVar(&c.Port, "port", defaultPort, portHelp)

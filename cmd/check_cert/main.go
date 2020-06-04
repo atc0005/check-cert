@@ -139,30 +139,34 @@ func main() {
 
 	}
 
-	// check SANS entries
-	if mismatched, err := certs.CheckSANsEntries(certChain[0], config.SANsEntries); err != nil {
+	// check SANS entries if provided via command-line
+	if len(config.SANsEntries) > 0 {
 
-		nagiosExitState.LastError = err
+		if mismatched, err := certs.CheckSANsEntries(certChain[0], config.SANsEntries); err != nil {
 
-		nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
-			certChain,
-			certsExpireAgeCritical,
-			certsExpireAgeWarning,
-		)
+			nagiosExitState.LastError = err
 
-		nagiosExitState.ServiceOutput = fmt.Sprintf(
-			"CRITICAL: Mismatch of %d SANs entries for certificate %q",
-			mismatched,
-			config.Server,
-		)
+			nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
+				certChain,
+				certsExpireAgeCritical,
+				certsExpireAgeWarning,
+			)
 
-		nagiosExitState.ExitStatusCode = nagios.StateWARNING
-		log.Warn().
-			Err(nagiosExitState.LastError).
-			Int("sans_entries_requested", len(config.SANsEntries)).
-			Int("sans_entries_found", len(certChain)).
-			Msg("SANs entires mismatch")
-		nagiosExitState.ReturnCheckResults()
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				"CRITICAL: Mismatch of %d SANs entries for certificate %q",
+				mismatched,
+				config.Server,
+			)
+
+			nagiosExitState.ExitStatusCode = nagios.StateWARNING
+			log.Warn().
+				Err(nagiosExitState.LastError).
+				Int("sans_entries_requested", len(config.SANsEntries)).
+				Int("sans_entries_found", len(certChain)).
+				Msg("SANs entries mismatch")
+			nagiosExitState.ReturnCheckResults()
+
+		}
 
 	}
 
