@@ -236,6 +236,11 @@ func main() {
 	// Give the all clear: no issues found
 	nagiosExitState.LastError = nil
 	nagiosExitState.ServiceOutput = "OK: " + certsSummary
+	nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
+		certChain,
+		certsExpireAgeCritical,
+		certsExpireAgeWarning,
+	)
 	nagiosExitState.ExitStatusCode = nagios.StateOK
 	log.Debug().Msg("No problems with certificate chain detected")
 	nagiosExitState.ReturnCheckResults()
