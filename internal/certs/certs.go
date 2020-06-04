@@ -24,10 +24,10 @@ const (
 	certChainPositionUnknown      string = "UNKNOWN: Please submit a bug report"
 )
 
-// ConvertKeyIdToHexStr converts a provided byte slice format of a X509v3
+// ConvertKeyIDToHexStr converts a provided byte slice format of a X509v3
 // Authority Key Identifier or X509v3 Subject Key Identifier to a hex-encoded
 // string to reflect what is shown in the OpenSSL "text" format.
-func ConvertKeyIdToHexStr(keyId []byte) string {
+func ConvertKeyIDToHexStr(keyId []byte) string {
 	var hexStrKeyId []string
 	for _, field := range keyId {
 		hexStrKeyId = append(hexStrKeyId, fmt.Sprintf("%X", field))
@@ -277,9 +277,9 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 			certPosition,
 			certificate.Subject,
 			certificate.DNSNames,
-			ConvertKeyIdToHexStr(certificate.SubjectKeyId),
+			ConvertKeyIDToHexStr(certificate.SubjectKeyId),
 			certificate.Issuer,
-			ConvertKeyIdToHexStr(certificate.AuthorityKeyId),
+			ConvertKeyIDToHexStr(certificate.AuthorityKeyId),
 			certificate.SerialNumber,
 			certificate.NotAfter.String(),
 			expiresText,
