@@ -94,7 +94,12 @@ func main() {
 			config.Server,
 			config.Port,
 		)
-		cfg := tls.Config{}
+		cfg := tls.Config{
+			// Allow insecure connection so that we can check not only the
+			// initial certificate, but others in the chain also
+			// nolint
+			InsecureSkipVerify: true,
+		}
 		conn, err := tls.Dial("tcp", server, &cfg)
 		if err != nil {
 			log.Error().Err(err).Msgf("error connecting to server")

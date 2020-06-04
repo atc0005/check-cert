@@ -82,7 +82,12 @@ func main() {
 	server := fmt.Sprintf("%s:%d", config.Server, config.Port)
 
 	log.Debug().Msg("Connecting to remote server")
-	cfg := tls.Config{}
+	cfg := tls.Config{
+		// Allow insecure connection so that we can check not only the initial
+		// certificate, but others in the chain also
+		// nolint
+		InsecureSkipVerify: true,
+	}
 	conn, err := tls.Dial("tcp", server, &cfg)
 	if err != nil {
 		nagiosExitState.LastError = err

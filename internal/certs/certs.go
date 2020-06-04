@@ -265,8 +265,8 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 		certsReport += fmt.Sprintf(
 			"\nCertificate %d of %d (%s):"+
 				"\n\tName: %s"+
-				"\n\tKeyID: %v"+
 				"\n\tSANs entries: %s"+
+				"\n\tKeyID: %v"+
 				"\n\tIssuer: %s"+
 				"\n\tIssuerKeyID: %v"+
 				"\n\tSerial: %s"+
@@ -276,8 +276,8 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 			certsTotal,
 			certPosition,
 			certificate.Subject,
-			ConvertKeyIdToHexStr(certificate.SubjectKeyId),
 			certificate.DNSNames,
+			ConvertKeyIdToHexStr(certificate.SubjectKeyId),
 			certificate.Issuer,
 			ConvertKeyIdToHexStr(certificate.AuthorityKeyId),
 			certificate.SerialNumber,
