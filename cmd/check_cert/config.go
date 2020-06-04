@@ -37,8 +37,8 @@ const (
 // Default flag settings if not overridden by user input
 const (
 	defaultLogLevel    string = "info"
-	defaultServer      string = "localhost"
-	defaultPort        int    = 993
+	defaultServer      string = ""
+	defaultPort        int    = 443
 	defaultAgeWarning  int    = 30
 	defaultAgeCritical int    = 15
 	defaultBranding    bool   = false
