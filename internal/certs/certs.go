@@ -24,7 +24,7 @@ const (
 	certChainPositionLeaf         string = "leaf"
 	certChainPositionIntermediate string = "intermediate"
 	certChainPositionRoot         string = "root"
-	certChainPositionUnknown      string = "UNKNOWN: Please submit a bug report"
+	certChainPositionUnknown      string = "UNKNOWN cert chain position; please submit a bug report"
 )
 
 // ConvertKeyIDToHexStr converts a provided byte slice format of a X509v3
