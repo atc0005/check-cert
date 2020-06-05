@@ -27,20 +27,6 @@ const (
 	certChainPositionUnknown      string = "UNKNOWN: Please submit a bug report"
 )
 
-type certificateChain []*x509.Certificate
-
-func (p certificateChain) Len() int {
-	return len(p)
-}
-
-func (p certificateChain) Less(i, j int) bool {
-	return p[i].NotAfter.Before(p[j].NotAfter)
-}
-
-func (p certificateChain) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
-}
-
 // ConvertKeyIDToHexStr converts a provided byte slice format of a X509v3
 // Authority Key Identifier or X509v3 Subject Key Identifier to a hex-encoded
 // string to reflect what is shown in the OpenSSL "text" format.
@@ -370,14 +356,16 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) (int, er
 
 }
 
-// NextToExpire receives a slice of x509 certificates as certificateChain type
-// and returns the certificate out of the pool set to expire next. If all
-// certs are expired then the one expired most recently will be returned.
+// NextToExpire receives a slice of x509 certificates and returns the
+// certificate out of the pool set to expire next. If all certs are expired
+// then the one expired most recently will be returned.
 // FIXME: Not 100% sure which one will be returned.
-func NextToExpire(certChain certificateChain) *x509.Certificate {
+func NextToExpire(certChain []*x509.Certificate) *x509.Certificate {
 
 	// First, go ahead and sort the chain by expiration date.
-	sort.Sort(certChain)
+	sort.Slice(certChain, func(i, j int) bool {
+		return certChain[i].NotAfter.Before(certChain[j].NotAfter)
+	})
 
 	// Grab the first cert to use as our default return value if not
 	// overridden later after checking each expiration date
