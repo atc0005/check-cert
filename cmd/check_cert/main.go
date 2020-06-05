@@ -105,6 +105,8 @@ func main() {
 	certChain := conn.ConnectionState().PeerCertificates
 	certsTotal := len(certChain)
 
+	// NOTE: Not sure this would ever be reached due to expectations of
+	// tls.Dial() that a certificate is present for the connection
 	if certsTotal == 0 {
 		nagiosExitState.LastError = fmt.Errorf("no certificates found")
 		nagiosExitState.ServiceOutput = "0 certificates found at " + server
@@ -115,6 +117,9 @@ func main() {
 
 	if certsTotal > 0 {
 		// verify leaf certificate is valid for the provided server FQDN
+		// NOTE: We make the assumption that the leaf certificate is ALWAYS in
+		// position 0 of the chain. Not having the cert in that position is
+		// treated as an error condition.
 		if err := certChain[0].VerifyHostname(config.Server); err != nil {
 			nagiosExitState.LastError = err
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
@@ -233,9 +238,17 @@ func main() {
 
 	}
 
-	// Give the all clear: no issues found
+	// Give the all clear: no issues found. Do go ahead and mention the next
+	// expiration date in the chain for quick reference however.
+	nextCertToExpire := certs.NextToExpire(certChain)
+
 	nagiosExitState.LastError = nil
-	nagiosExitState.ServiceOutput = "OK: " + certsSummary
+	nagiosExitState.ServiceOutput = fmt.Sprintf(
+		"%s: next cert expires %s %s",
+		"OK",
+		nextCertToExpire.NotAfter.Format("Mon Jan 2 15:04:05 -0700 MST 2006"),
+		certsSummary,
+	)
 	nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
 		certChain,
 		certsExpireAgeCritical,
