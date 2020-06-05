@@ -362,14 +362,19 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) (int, er
 // FIXME: Not 100% sure which one will be returned.
 func NextToExpire(certChain []*x509.Certificate) *x509.Certificate {
 
+	// Setting initial size to 0 makes the copy operation fail (for as yet unlearned reason)
+	// sortedChain := make([]*x509.Certificate, 0, len(certChain))
+	sortedChain := make([]*x509.Certificate, len(certChain))
+	copy(sortedChain, certChain)
+
 	// First, go ahead and sort the chain by expiration date.
-	sort.Slice(certChain, func(i, j int) bool {
-		return certChain[i].NotAfter.Before(certChain[j].NotAfter)
+	sort.Slice(sortedChain, func(i, j int) bool {
+		return sortedChain[i].NotAfter.Before(sortedChain[j].NotAfter)
 	})
 
 	// Grab the first cert to use as our default return value if not
 	// overridden later after checking each expiration date
-	nextToExpire := certChain[0]
+	nextToExpire := sortedChain[0]
 
 	// If the first cert from the sorted slice isn't expired, return it
 	if !IsExpiredCert(nextToExpire) {
@@ -377,11 +382,11 @@ func NextToExpire(certChain []*x509.Certificate) *x509.Certificate {
 	}
 
 	// otherwise, let's look for the cert expiring first
-	for idx := range certChain {
-		if IsExpiredCert(certChain[idx]) {
+	for idx := range sortedChain {
+		if IsExpiredCert(sortedChain[idx]) {
 			continue
 		}
-		nextToExpire = certChain[idx]
+		nextToExpire = sortedChain[idx]
 	}
 
 	// either the cert most recently expired or the one next set to expire
