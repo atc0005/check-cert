@@ -362,8 +362,14 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) (int, er
 // FIXME: Not 100% sure which one will be returned.
 func NextToExpire(certChain []*x509.Certificate) *x509.Certificate {
 
-	// Setting initial size to 0 makes the copy operation fail (for as yet unlearned reason)
+	// Copy method will return the minimum of length of source and destination
+	// slice which is zero for this empty slice  (regardless of what initial
+	// capacity we allow for)
+	// https://www.geeksforgeeks.org/how-to-copy-one-slice-into-another-slice-in-golang/
+	//
 	// sortedChain := make([]*x509.Certificate, 0, len(certChain))
+	// copy(sortedChain, certChain)
+
 	sortedChain := make([]*x509.Certificate, len(certChain))
 	copy(sortedChain, certChain)
 
