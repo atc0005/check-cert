@@ -109,7 +109,7 @@ func (nes NagiosExitState) ReturnCheckResults() {
 	// If set, call user-provided branding function just before exiting
 	// application
 	if nes.BrandingCallback != nil {
-		fmt.Println(nes.BrandingCallback())
+		fmt.Printf("\r\n%s\r\n", nes.BrandingCallback())
 	}
 
 	os.Exit(nes.ExitStatusCode)
