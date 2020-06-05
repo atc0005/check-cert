@@ -27,3 +27,5 @@ scratch/
 # Ignore plugin name in its multiple (potential) variations
 check_cert
 check-cert
+
+/release_assets
