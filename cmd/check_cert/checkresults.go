@@ -91,6 +91,8 @@ func (nes NagiosExitState) ReturnCheckResults() {
 
 		if nes.LastError != nil {
 			fmt.Printf("\r\n* %v\r\n", nes.LastError)
+		} else {
+			fmt.Printf("\r\n* None\r\n")
 		}
 
 		if nes.LongServiceOutput != "" {
@@ -101,7 +103,7 @@ func (nes NagiosExitState) ReturnCheckResults() {
 			// interpret them literally instead of emitting an actual newline.
 			// We work around that by using fmt.Printf() for output that is
 			// intended for display within the Nagios web UI.
-			fmt.Printf(nes.LongServiceOutput)
+			fmt.Printf("%v\r\n", nes.LongServiceOutput)
 		}
 
 	}
