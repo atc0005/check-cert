@@ -244,10 +244,11 @@ func main() {
 
 	nagiosExitState.LastError = nil
 	nagiosExitState.ServiceOutput = fmt.Sprintf(
-		"%s: next cert expires %s %s",
+		"%s: %s cert %q expires next on %s",
 		"OK",
-		nextCertToExpire.NotAfter.Format("Mon Jan 2 15:04:05 -0700 MST 2006"),
-		certsSummary,
+		certs.ChainPosition(nextCertToExpire),
+		nextCertToExpire.Subject.CommonName,
+		nextCertToExpire.NotAfter.Format("2006-01-02 15:04:05 -0700 MST"),
 	)
 	nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
 		certChain,
