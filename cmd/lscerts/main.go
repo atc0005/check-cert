@@ -174,7 +174,7 @@ func main() {
 	}
 
 	if expired, count := certs.HasExpiredCert(certChain); expired {
-		fmt.Printf("- WARNING: %d certificates expired\n", count)
+		fmt.Printf("- ERROR: %d certificates expired\n", count)
 	}
 
 	if expiring, count := certs.HasExpiringCert(
