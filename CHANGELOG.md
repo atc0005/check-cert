@@ -26,7 +26,7 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
-## [v0.1.0] - 2020-06-02
+## [v0.1.0] - 2020-06-xx
 
 Initial release!
 
@@ -35,23 +35,46 @@ monitor certificate-enabled services. This plugin will be used to verify that
 the certificate used by the monitored service is valid (e.g., complete
 certificate chain, expiration dates, etc).
 
-### Placeholder items
-
-List of items that I hope to add in the initial release:
-
-- Generate openssl-like text output from target cert-enabled service
-  - thanks to the `grantae/certinfo` package
-- Validate leaf certificate only
-- Validate certificate chain
-
 ### Added
 
-- Check expiration of certificate for cert-enabled services
+- Two tools for validating certificates
+  - `lscert` CLI tool
+    - verify remote certificate-enabled service
+    - verify local certificate "bundle" or standalone leaf certificate file
+  - `check_cert` Nagios plugin
+    - verify remote certificate-enabled service
+
+- Check expiration of all certificates in the *provided* certificate chain for
+  cert-enabled services
+  - not expired
+  - expiring "soon"
+    - warning threshold
+    - critical threshold
+
+- Validate provided hostname against Common Name *or* one of the available
+  SANs entries
+
+- Optional support for verifying SANs entries on a certificate against a
+  provided list
+
+- Detailed "report" of findings
+  - certificate order
+  - certificate type
+  - status (OK, CRITICAL, WARNING)
+  - SANs entries
+  - serial number
+  - issuer
+
+- Optional generation of openssl-like text output from target cert-enabled
+  service
+  - thanks to the `grantae/certinfo` package
+
 - Optional, leveled logging using `rs/zerolog` package
-  - JSON-format output
+  - JSON-format output (to `stderr`)
   - choice of `disabled`, `panic`, `fatal`, `error`, `warn`, `info` (the
     default), `debug` or `trace`.
-- Go modules (vs classic `GOPATH` setup)
+
+- Go modules support (vs classic `GOPATH` setup)
 
 [Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.0...HEAD
 [v0.1.0]: https://github.com/atc0005/check-cert/releases/tag/v0.1.0
