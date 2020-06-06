@@ -27,6 +27,12 @@ func main() {
 	config := Config{}
 	config.handleFlagsConfig()
 
+	// Display application info and exit
+	if config.ShowVersion {
+		fmt.Println(Version())
+		os.Exit(0)
+	}
+
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = NagiosExitState{
 		LastError:      nil,

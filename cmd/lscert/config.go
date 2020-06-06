@@ -30,7 +30,6 @@ const (
 	logLevelFlagHelp     string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
 	serverHelp           string = "The fully-qualified domain name of the remote system whose cert(s) will be monitored."
 	portHelp             string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
-	emitBrandingFlagHelp string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
 	emitCertTextFlagHelp string = "Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default."
 	filenameFlagHelp     string = "Fully-qualified path to a file containing one or more certificates"
 	ageWarningFlagHelp   string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state."
@@ -42,7 +41,6 @@ const (
 	defaultLogLevel     string = "info"
 	defaultServer       string = ""
 	defaultPort         int    = 443
-	defaultEmitBranding bool   = false
 	defaultEmitCertText bool   = false
 	defaultFilename     string = ""
 
@@ -143,7 +141,7 @@ type Config struct {
 
 	// showVersion is a flag indicating whether the user opted to display only
 	// the version string and then immediately exit the application
-	showVersion bool
+	ShowVersion bool
 }
 
 // Usage is a custom override for the default Help text provided by the flag
@@ -168,9 +166,8 @@ func (c *Config) handleFlagsConfig() {
 	flag.IntVar(&c.AgeWarning, "age-warning", defaultCertExpireAgeWarning, ageWarningFlagHelp)
 	flag.IntVar(&c.AgeCritical, "age-critical", defaultCertExpireAgeCritical, ageCriticalFlagHelp)
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
-	flag.BoolVar(&c.EmitBranding, "branding", defaultEmitBranding, emitBrandingFlagHelp)
 	flag.BoolVar(&c.EmitCertText, "text", defaultEmitCertText, emitCertTextFlagHelp)
-	flag.BoolVar(&c.showVersion, "version", defaultDisplayVersionAndExit, versionFlagHelp)
+	flag.BoolVar(&c.ShowVersion, "version", defaultDisplayVersionAndExit, versionFlagHelp)
 
 	// Allow our function to override the default Help output
 	flag.Usage = Usage

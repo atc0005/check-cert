@@ -31,8 +31,8 @@ func main() {
 
 	config.handleFlagsConfig()
 
-	// Display application branding info and exit
-	if config.showVersion {
+	// Display application info and exit
+	if config.ShowVersion {
 		fmt.Println(Version())
 		os.Exit(0)
 	}

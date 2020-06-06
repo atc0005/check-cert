@@ -114,9 +114,9 @@ type Config struct {
 	// their own branding output.
 	EmitBranding bool
 
-	// showVersion is a flag indicating whether the user opted to display only
+	// ShowVersion is a flag indicating whether the user opted to display only
 	// the version string and then immediately exit the application
-	showVersion bool
+	ShowVersion bool
 }
 
 // Usage is a custom override for the default Help text provided by the flag
@@ -151,7 +151,7 @@ func (c *Config) handleFlagsConfig() {
 	flag.IntVar(&c.Port, "port", defaultPort, portHelp)
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
 	flag.BoolVar(&c.EmitBranding, "branding", defaultBranding, brandingFlagHelp)
-	flag.BoolVar(&c.showVersion, "version", defaultDisplayVersionAndExit, versionFlagHelp)
+	flag.BoolVar(&c.ShowVersion, "version", defaultDisplayVersionAndExit, versionFlagHelp)
 
 	// Allow our function to override the default Help output
 	flag.Usage = Usage
