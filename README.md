@@ -21,7 +21,13 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
   - [`lscert`](#lscert-1)
 - [Examples](#examples)
   - [`check_cert` Nagios plugin](#check_cert-nagios-plugin)
+    - [Check www.google.com](#check-wwwgooglecom)
+      - [OK results](#ok-results)
+      - [WARNING results](#warning-results)
   - [`lscert` CLI tool](#lscert-cli-tool)
+    - [Check www.google.com](#check-wwwgooglecom-1)
+      - [OK results](#ok-results-1)
+      - [WARNING results](#warning-results-1)
 - [License](#license)
 - [References](#references)
 
@@ -186,7 +192,115 @@ been tested.
 
 ### `check_cert` Nagios plugin
 
+#### Check www.google.com
+
+##### OK results
+
+This example shows using the Nagios plugin to manually check a remote
+certificate-enabled port on www.google.com. We override the default `WARNING`
+and `CRITICAL` age threshold values with somewhat arbitrary numbers.
+
+```ShellSession
+.\check_cert.exe --server www.google.com --port 443 --age-critical 50 --age-warning 55
+OK: leaf cert "www.google.com" expires next on 2020-08-12 12:08:31 +0000 UTC
+
+**ERRORS**
+
+* None
+
+**DETAILED INFO**
+
+Certificate 1 of 2 (leaf):
+        Name: CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US
+        SANs entries: [www.google.com]
+        KeyID: D:94:9F:90:8A:5C:E:B5:B5:DB:B7:79:7F:6A:9:42:3A:4D:CC:D4
+        Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
+        IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
+        Serial: 41166161160297429311704478035915443513
+        Expiration: 2020-08-12 12:08:31 +0000 UTC
+        Status: [OK] 66d 23h remaining
+
+Certificate 2 of 2 (intermediate):
+        Name: CN=GTS CA 1O1,O=Google Trust Services,C=US
+        SANs entries: []
+        KeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
+        Issuer: CN=GlobalSign,OU=GlobalSign Root CA - R2,O=GlobalSign
+        IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
+        Serial: 149699596615803609916394524856
+        Expiration: 2021-12-15 00:00:42 +0000 UTC
+        Status: [OK] 556d 11h remaining
+```
+
+See the `WARNING` example output for additional details.
+
+##### WARNING results
+
+Here we do the same thing again, but using the expiration date values returned
+earlier as a starting point, we intentionally move the threshold values in
+order to trigger a `WARNING` state for the leaf certificate: if the leaf
+certificate is good for 66 days and 23 hours more, we indicate that warnings
+that should triggered once the cert has fewer than 67 days left.
+
+```ShellSession
+.\check_cert.exe --server www.google.com --port 443 --age-critical 50 --age-warning 67
+{"level":"warn","version":"x.y.z","logging_level":"info","server":"www.google.com","port":443,"age_warning":67,"age_critical":50,"expected_sans_entries":"","error":"1 certificates expired or expiring","expiring_certs":1,"caller":"T:/github/check-cert/cmd/check_cert/main.go:218","message":"expired certs present in chain"}
+WARNING: Invalid certificate chain for "www.google.com" [EXPIRED: 0, EXPIRING: 1, OK: 1]
+
+**ERRORS**
+
+* 1 certificates expired or expiring
+
+**DETAILED INFO**
+
+Certificate 1 of 2 (leaf):
+        Name: CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US
+        SANs entries: [www.google.com]
+        KeyID: D:94:9F:90:8A:5C:E:B5:B5:DB:B7:79:7F:6A:9:42:3A:4D:CC:D4
+        Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
+        IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
+        Serial: 41166161160297429311704478035915443513
+        Expiration: 2020-08-12 12:08:31 +0000 UTC
+        Status: [WARNING] 66d 23h remaining
+
+Certificate 2 of 2 (intermediate):
+        Name: CN=GTS CA 1O1,O=Google Trust Services,C=US
+        SANs entries: []
+        KeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
+        Issuer: CN=GlobalSign,OU=GlobalSign Root CA - R2,O=GlobalSign
+        IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
+        Serial: 149699596615803609916394524856
+        Expiration: 2021-12-15 00:00:42 +0000 UTC
+        Status: [OK] 556d 11h remaining
+```
+
+Some items to note (in order of appearance):
+
+1. JSON output providing structured logging information
+   - this is sent to `stderr`
+   - Nagios ignores `stderr` output from plugins; `stdout` is for Nagios,
+     `stderr` is for humans
+1. The one-line status output on the second line
+   - this is used by Nagios for display in an overview view for all service
+     checkout for a host
+   - this is used by Nagios for text, email and whatever else notifications
+     (if configured)
+1. The `ERRORS` section notes briefly what is wrong with the cert
+1. The `DETAILED INFO` section contains an overview of the certificate chain
+   - this is used by Nagios for display on the detailed service check-specific
+     page (e.g., shows last check time, frequency, current state, etc)
+   - as for the one-line output, this is used by Nagios for text, email and
+     whatever other notifications may be configured
+1. The `Status` field for the leaf certificate changed from `OK` to `WARNING`
+   and this plugin set the appropriate exit code to let Nagios know of the
+   state change.
+
 ### `lscert` CLI tool
+
+#### Check www.google.com
+
+##### OK results
+
+##### WARNING results
 
 ## License
 
