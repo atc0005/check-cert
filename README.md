@@ -10,6 +10,16 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
   - [check_certs](#check_certs)
   - [lscerts](#lscerts)
 - [Features](#features)
+- [Changelog](#changelog)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration options](#configuration-options)
+  - [Shared](#shared)
+  - [`check_cert`](#check_cert)
+  - [`lscert`](#lscert)
+- [Examples](#examples)
+  - [`check_cert` Nagios plugin](#check_cert-nagios-plugin)
+  - [`lscert` CLI tool](#lscert-cli-tool)
 - [License](#license)
 - [References](#references)
 
@@ -80,6 +90,32 @@ and/or troubleshoot why connections to a remote system may be failing.
     default), `debug` or `trace`.
 
 - Go modules support (vs classic `GOPATH` setup)
+
+## Changelog
+
+See the [`CHANGELOG.md`](CHANGELOG.md) file for the changes associated with
+each release of this application. Changes that have been merged to `master`,
+but not yet an official release may also be noted in the file under the
+`Unreleased` section. A helpful link to the Git commit history since the last
+official release is also provided for further review.
+
+## Requirements
+
+## Installation
+
+## Configuration options
+
+### Shared
+
+### `check_cert`
+
+### `lscert`
+
+## Examples
+
+### `check_cert` Nagios plugin
+
+### `lscert` CLI tool
 
 ## License
 
