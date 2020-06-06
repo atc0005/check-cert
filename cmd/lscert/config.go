@@ -21,7 +21,7 @@ import (
 // builds.
 var version string = "x.y.z"
 
-const myAppName string = "lscerts"
+const myAppName string = "lscert"
 const myAppURL string = "https://github.com/atc0005/check-cert"
 
 const (
