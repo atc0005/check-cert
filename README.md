@@ -208,6 +208,8 @@ TODO: Use these as-is options to construct a table:
         Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list.
   -server string
         The fully-qualified domain name of the remote system whose cert(s) will be monitored.
+  -version
+        Whether to display application version and then immediately exit application.
 ```
 
 #### `lscert`
@@ -232,7 +234,7 @@ TODO: Use these as-is options to construct a table:
   -text
         Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default.
   -version
-        Toggles emission of branding details with plugin status details. This output is disabled by default.
+        Whether to display application version and then immediately exit application.
 ```
 
 TODO: Replace this example table pulled from the atc0005/dnsc project:
