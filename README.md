@@ -12,6 +12,8 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
 - [Features](#features)
 - [Changelog](#changelog)
 - [Requirements](#requirements)
+  - [Building source code](#building-source-code)
+  - [Running](#running)
 - [Installation](#installation)
 - [Configuration options](#configuration-options)
   - [Shared](#shared)
@@ -101,10 +103,30 @@ official release is also provided for further review.
 
 ## Requirements
 
+The following is a loose guideline. Other combinations of Go and operating
+systems for building and running tools from this repo may work, but have not
+been tested.
+
+### Building source code
+
+- Go 1.13+
+- GCC
+  - if building with custom options (as the provided `Makefile` does)
+- `make`
+  - if using the provided `Makefile`
+
+### Running
+
+- Windows 7, Server 2008R2 or later
+  - per official [Go install notes][go-docs-install]
+- Windows 10 Version 1909
+  - tested
+- Ubuntu Linux 16.04, 18.04
+
 ## Installation
 
-1. [Download](https://golang.org/dl/) Go
-1. [Install](https://golang.org/doc/install) Go
+1. [Download][go-docs-download] Go
+1. [Install][go-docs-install] Go
    - NOTE: Pay special attention to the remarks about `$HOME/.profile`
 1. Clone the repo
    1. `cd /tmp`
@@ -133,21 +155,24 @@ official release is also provided for further review.
          [References](references.md) section for options for installing `gcc`
          and related packages on Windows
 1. Build binaries
-   - for the current operating system
+   - for the current operating system, explicitly using bundled dependencies
+         in top-level `vendor` folder
      - `go build -mod=vendor ./cmd/check_cert/`
      - `go build -mod=vendor ./cmd/lscert/`
-       - *forces build to use bundled dependencies in top-level `vendor`
-         folder*
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
       - `make windows`
    - for use on Linux
      - `make linux`
-1. Copy the newly compiled binary from the applicable path below and deploy
-   using the instructions provided in our [deployment doc](deploy.md).
-   - if using `Makefile`: look in `/tmp/release_assets/check-cert/`
-   - if using `go build`: look in `/tmp/check-cert/`
+1. Copy the newly compiled binary from the applicable `/tmp` subdirectory path
+   (based on the clone instructions in this section) below and deploy where
+   needed.
+   - if using `Makefile`
+     - look in `/tmp/check-cert/release_assets/check_cert/`
+     - look in `/tmp/check-cert/release_assets/lscert/`
+   - if using `go build`
+     - look in `/tmp/check-cert/`
 
 ## Configuration options
 
@@ -196,3 +221,13 @@ SOFTWARE.
 - <https://github.com/grantae/certinfo>
 - <https://github.com/rs/zerolog>
 - <https://github.com/atc0005/go-nagios>
+
+<!-- Footnotes here  -->
+
+[repo-url]: <https://github.com/atc0005/check-cert>  "This project's GitHub repo"
+
+[go-docs-download]: <https://golang.org/dl>  "Download Go"
+
+[go-docs-install]: <https://golang.org/doc/install>  "Install Go"
+
+<!-- []: PLACEHOLDER "DESCRIPTION_HERE" -->
