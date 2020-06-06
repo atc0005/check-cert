@@ -16,18 +16,17 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
   - [Running](#running)
 - [Installation](#installation)
 - [Configuration options](#configuration-options)
-  - [Shared](#shared)
-  - [`check_cert`](#check_cert)
-  - [`lscert`](#lscert-1)
+  - [Command-line arguments](#command-line-arguments)
+    - [`check_cert`](#check_cert)
+    - [`lscert`](#lscert-1)
+  - [Configuration file](#configuration-file)
 - [Examples](#examples)
   - [`check_cert` Nagios plugin](#check_cert-nagios-plugin)
-    - [Check www.google.com](#check-wwwgooglecom)
-      - [OK results](#ok-results)
-      - [WARNING results](#warning-results)
+    - [OK results](#ok-results)
+    - [WARNING results](#warning-results)
   - [`lscert` CLI tool](#lscert-cli-tool)
-    - [Check www.google.com](#check-wwwgooglecom-1)
-      - [OK results](#ok-results-1)
-      - [WARNING results](#warning-results-1)
+    - [OK results](#ok-results-1)
+    - [WARNING results](#warning-results-1)
 - [License](#license)
 - [References](#references)
 
@@ -182,19 +181,85 @@ been tested.
 
 ## Configuration options
 
-### Shared
+### Command-line arguments
 
-### `check_cert`
+- Use the `-h` or `--help` flag to display usage information.
+- Flags marked as **`required`** must be set via CLI flag *or* within a
+  TOML-formatted configuration file.
+- Flags *not* marked as required are for settings where a useful default is
+  already defined, but may be overridden if desired.
 
-### `lscert`
+#### `check_cert`
+
+TODO: Use these as-is options to construct a table:
+
+```ShellSession
+  -age-critical int
+        The number of days remaining before certificate expiration when Nagios will return a CRITICAL state (default 15)
+  -age-warning int
+        The number of days remaining before certificate expiration when Nagios will return a WARNING state (default 30)
+  -branding
+        Toggles emission of branding details with plugin status details. This output is disabled by default.
+  -log-level string
+        Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace. (default "info")
+  -port int
+        TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS). (default 443)
+  -sans-entries value
+        Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list.
+  -server string
+        The fully-qualified domain name of the remote system whose cert(s) will be monitored.
+```
+
+#### `lscert`
+
+TODO: Use these as-is options to construct a table:
+
+```ShellSession
+  -age-critical int
+        The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a CRITICAL state. (default 15)
+  -age-warning int
+        The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state. (default 30)
+  -filename string
+        Fully-qualified path to a file containing one or more certificates
+  -log-level string
+        Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace. (default "info")
+  -port int
+        TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS). (default 443)
+  -sans-entries value
+        Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list.
+  -server string
+        The fully-qualified domain name of the remote system whose cert(s) will be monitored.
+  -text
+        Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default.
+  -version
+        Toggles emission of branding details with plugin status details. This output is disabled by default.
+```
+
+TODO: Replace this example table pulled from the atc0005/dnsc project:
+
+| Flag                       | Required | Default        | Repeat  | Possible                                   | Description                                                                                                                                                   |
+| -------------------------- | -------- | -------------- | ------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `h`, `help`                | No       | `false`        | No      | `h`, `help`                                | Show Help text along with the list of supported flags.                                                                                                        |
+| `ds`, `dns-server`         | **Yes**  | *empty string* | **Yes** | *one valid IP Address per flag invocation* | DNS server to submit query against. This flag may be repeated for each additional DNS server to query.                                                        |
+| `cf`, `config-file`        | **Yes**  | *empty string* | No      | *valid file name characters*               | Full path to TOML-formatted configuration file. See [`config.example.toml`](config.example.toml) for a starter template.                                      |
+| `v`, `version`             | No       | `false`        | No      | `v`, `version`                             | Whether to display application version and then immediately exit application.                                                                                 |
+| `ide`, `ignore-dns-errors` | No       | `false`        | No      | `ide`, `ignore-dns-errors`                 | Whether DNS-related errors with one server should be ignored in order to try other DNS servers in the list.                                                   |
+| `q`, `query`               | **Yes**  | *empty string* | No      | *any valid FQDN string*                    | Fully-qualified system to lookup from all provided DNS servers.                                                                                               |
+| `ll`, `log-level`          | No       | `info`         | No      | `fatal`, `error`, `warn`, `info`, `debug`  | Log message priority filter. Log messages with a lower level are ignored.                                                                                     |
+| `lf`, `log-format`         | No       | `text`         | No      | `cli`, `json`, `logfmt`, `text`, `discard` | Use the specified `apex/log` package "handler" to output log messages in that handler's format.                                                               |
+| `t`, `type`                | No       | `A`            | **Yes** | `A`, `AAAA`, `MX`, `CNAME`                 | DNS query type to use when submitting a DNS query to each provided server. This flag may be repeated for each additional DNS record type you wish to request. |
+| `to`, `timeout`            | No       | `10`           | No      | *any positive whole number*                | Maximum number of seconds allowed for a DNS query to take before timing out.                                                                                  |
+
+### Configuration file
+
+Not currently supported. This feature may be added later if there is
+sufficient interest.
 
 ## Examples
 
 ### `check_cert` Nagios plugin
 
-#### Check www.google.com
-
-##### OK results
+#### OK results
 
 This example shows using the Nagios plugin to manually check a remote
 certificate-enabled port on www.google.com. We override the default `WARNING`
@@ -233,7 +298,7 @@ Certificate 2 of 2 (intermediate):
 
 See the `WARNING` example output for additional details.
 
-##### WARNING results
+#### WARNING results
 
 Here we do the same thing again, but using the expiration date values returned
 earlier as a starting point, we intentionally move the threshold values in
@@ -296,9 +361,7 @@ Some items to note (in order of appearance):
 
 ### `lscert` CLI tool
 
-#### Check www.google.com
-
-##### OK results
+#### OK results
 
 This example shows using the CLI app to perform the same initial check that we
 performed earlier using the Nagios plugin.
@@ -342,7 +405,7 @@ Certificate 2 of 2 (intermediate):
         Status: [OK] 556d 11h remaining
 ```
 
-##### WARNING results
+#### WARNING results
 
 ```ShellSession
 .\lscert.exe --server www.google.com --port 443 --age-critical 50 --age-warning 67
