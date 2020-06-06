@@ -32,7 +32,7 @@ func main() {
 	config.handleFlagsConfig()
 
 	// Display application branding info and exit
-	if config.EmitBranding {
+	if config.showVersion {
 		fmt.Println(Version())
 		os.Exit(0)
 	}

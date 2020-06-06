@@ -183,7 +183,7 @@ been tested.
 
 ### Command-line arguments
 
-- Use the `-h` or `--help` flag to display usage information.
+- Use the `-h` or `--help` flag to display current usage information.
 - Flags marked as **`required`** must be set via CLI flag *or* within a
   TOML-formatted configuration file.
 - Flags *not* marked as required are for settings where a useful default is

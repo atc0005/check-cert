@@ -25,6 +25,7 @@ const myAppName string = "check_cert"
 const myAppURL string = "https://github.com/atc0005/check-cert"
 
 const (
+	versionFlagHelp  string = "Whether to display application version and then immediately exit application."
 	sansEntriesHelp  string = "Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list."
 	logLevelFlagHelp string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
 	serverHelp       string = "The fully-qualified domain name of the remote system whose cert(s) will be monitored."
@@ -36,12 +37,13 @@ const (
 
 // Default flag settings if not overridden by user input
 const (
-	defaultLogLevel    string = "info"
-	defaultServer      string = ""
-	defaultPort        int    = 443
-	defaultAgeWarning  int    = 30
-	defaultAgeCritical int    = 15
-	defaultBranding    bool   = false
+	defaultLogLevel              string = "info"
+	defaultServer                string = ""
+	defaultPort                  int    = 443
+	defaultAgeWarning            int    = 30
+	defaultAgeCritical           int    = 15
+	defaultBranding              bool   = false
+	defaultDisplayVersionAndExit bool   = false
 )
 
 // multiValueFlag is a custom type that satisfies the flag.Value interface in
@@ -111,6 +113,10 @@ type Config struct {
 	// output from other tools such as atc0005/send2teams which also insert
 	// their own branding output.
 	EmitBranding bool
+
+	// showVersion is a flag indicating whether the user opted to display only
+	// the version string and then immediately exit the application
+	showVersion bool
 }
 
 // Usage is a custom override for the default Help text provided by the flag
@@ -145,6 +151,7 @@ func (c *Config) handleFlagsConfig() {
 	flag.IntVar(&c.Port, "port", defaultPort, portHelp)
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
 	flag.BoolVar(&c.EmitBranding, "branding", defaultBranding, brandingFlagHelp)
+	flag.BoolVar(&c.showVersion, "version", defaultDisplayVersionAndExit, versionFlagHelp)
 
 	// Allow our function to override the default Help output
 	flag.Usage = Usage

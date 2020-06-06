@@ -25,6 +25,7 @@ const myAppName string = "lscert"
 const myAppURL string = "https://github.com/atc0005/check-cert"
 
 const (
+	versionFlagHelp      string = "Whether to display application version and then immediately exit application."
 	sansEntriesHelp      string = "Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list."
 	logLevelFlagHelp     string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
 	serverHelp           string = "The fully-qualified domain name of the remote system whose cert(s) will be monitored."
@@ -50,6 +51,8 @@ const (
 
 	// Default CRITICAL threshold is 15 days
 	defaultCertExpireAgeCritical int = 15
+
+	defaultDisplayVersionAndExit bool = false
 )
 
 // var (
@@ -137,6 +140,10 @@ type Config struct {
 	// stdout using an OpenSSL-inspired text format. There is a good bit of
 	// output text, so this setting defaults to false.
 	EmitCertText bool
+
+	// showVersion is a flag indicating whether the user opted to display only
+	// the version string and then immediately exit the application
+	showVersion bool
 }
 
 // Usage is a custom override for the default Help text provided by the flag
@@ -161,8 +168,9 @@ func (c *Config) handleFlagsConfig() {
 	flag.IntVar(&c.AgeWarning, "age-warning", defaultCertExpireAgeWarning, ageWarningFlagHelp)
 	flag.IntVar(&c.AgeCritical, "age-critical", defaultCertExpireAgeCritical, ageCriticalFlagHelp)
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
-	flag.BoolVar(&c.EmitBranding, "version", defaultEmitBranding, emitBrandingFlagHelp)
+	flag.BoolVar(&c.EmitBranding, "branding", defaultEmitBranding, emitBrandingFlagHelp)
 	flag.BoolVar(&c.EmitCertText, "text", defaultEmitCertText, emitCertTextFlagHelp)
+	flag.BoolVar(&c.showVersion, "version", defaultDisplayVersionAndExit, versionFlagHelp)
 
 	// Allow our function to override the default Help output
 	flag.Usage = Usage
