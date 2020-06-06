@@ -8,7 +8,7 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
 
 - [Overview](#overview)
   - [check_certs](#check_certs)
-  - [lscerts](#lscerts)
+  - [lscert](#lscert)
 - [Features](#features)
 - [Changelog](#changelog)
 - [Requirements](#requirements)
@@ -16,7 +16,7 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
 - [Configuration options](#configuration-options)
   - [Shared](#shared)
   - [`check_cert`](#check_cert)
-  - [`lscert`](#lscert)
+  - [`lscert`](#lscert-1)
 - [Examples](#examples)
   - [`check_cert` Nagios plugin](#check_cert-nagios-plugin)
   - [`lscert` CLI tool](#lscert-cli-tool)
@@ -30,12 +30,12 @@ This repo contains various tools used to monitor/validate certificates.
 | Tool Name     | Status | Description                                                                            |
 | ------------- | ------ | -------------------------------------------------------------------------------------- |
 | `check_certs` | Alpha  | Nagios plugin used to monitor certificate chains                                       |
-| `lscerts`     | Alpha  | Small CLI app used to generate a summary of certificate metadata and expiration status |
+| `lscert`      | Alpha  | Small CLI app used to generate a summary of certificate metadata and expiration status |
 
 ### check_certs
 
 Nagios plugin used to monitor certificate chains. In addition to the features
-shared with `lscerts`, this app also validates the provided hostname against
+shared with `lscert`, this app also validates the provided hostname against
 the certificate Common Name *or* one of the available SANs entries.
 
 The output for this application is designed to provide the one-line summary
@@ -43,7 +43,7 @@ needed by Nagios for quick identification of a problem while providing longer,
 more detailed information for use in email and Teams notifications
 ([atc0005/send2teams](https://github.com/atc0005/send2teams)).
 
-### lscerts
+### lscert
 
 Small CLI tool to print a *very* basic summary of certificate metadata
 provided by a remote service at the specified fully-qualified domain name
@@ -102,6 +102,52 @@ official release is also provided for further review.
 ## Requirements
 
 ## Installation
+
+1. [Download](https://golang.org/dl/) Go
+1. [Install](https://golang.org/doc/install) Go
+   - NOTE: Pay special attention to the remarks about `$HOME/.profile`
+1. Clone the repo
+   1. `cd /tmp`
+   1. `git clone https://github.com/atc0005/check-cert`
+   1. `cd check-cert`
+1. Install dependencies (optional)
+   - for Ubuntu Linux
+     - `sudo apt-get install make gcc`
+   - for CentOS Linux
+     - `sudo yum install make gcc`
+   - for Windows
+     - Emulated environments (*easier*)
+       - Skip all of this and build using the default `go build` command in
+         Windows (see below for use of the `-mod=vendor` flag)
+       - build using Windows Subsystem for Linux Ubuntu environment and just
+         copy out the Windows binaries from that environment
+       - If already running a Docker environment, use a container with the Go
+         tool-chain already installed
+       - If already familiar with LXD, create a container and follow the
+         installation steps given previously to install required dependencies
+     - Native tooling (*harder*)
+       - see the StackOverflow Question `32127524` link in the
+         [References](references.md) section for potential options for
+         installing `make` on Windows
+       - see the mingw-w64 project homepage link in the
+         [References](references.md) section for options for installing `gcc`
+         and related packages on Windows
+1. Build binaries
+   - for the current operating system
+     - `go build -mod=vendor ./cmd/check_cert/`
+     - `go build -mod=vendor ./cmd/lscert/`
+       - *forces build to use bundled dependencies in top-level `vendor`
+         folder*
+   - for all supported platforms (where `make` is installed)
+      - `make all`
+   - for use on Windows
+      - `make windows`
+   - for use on Linux
+     - `make linux`
+1. Copy the newly compiled binary from the applicable path below and deploy
+   using the instructions provided in our [deployment doc](deploy.md).
+   - if using `Makefile`: look in `/tmp/release_assets/check-cert/`
+   - if using `go build`: look in `/tmp/check-cert/`
 
 ## Configuration options
 
