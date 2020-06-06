@@ -26,9 +26,9 @@ const myAppURL string = "https://github.com/atc0005/check-cert"
 
 const (
 	versionFlagHelp      string = "Whether to display application version and then immediately exit application."
-	sansEntriesHelp      string = "Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list."
+	sansEntriesHelp      string = "One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list."
 	logLevelFlagHelp     string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
-	serverHelp           string = "The fully-qualified domain name of the remote system whose cert(s) will be monitored."
+	serverHelp           string = "The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. The value provided will be validated against the Common Name and Subject Alternate Names fields."
 	portHelp             string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
 	emitCertTextFlagHelp string = "Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default."
 	filenameFlagHelp     string = "Fully-qualified path to a file containing one or more certificates"
@@ -38,19 +38,18 @@ const (
 
 // Default flag settings if not overridden by user input
 const (
-	defaultLogLevel     string = "info"
-	defaultServer       string = ""
-	defaultPort         int    = 443
-	defaultEmitCertText bool   = false
-	defaultFilename     string = ""
+	defaultLogLevel              string = "info"
+	defaultServer                string = ""
+	defaultPort                  int    = 443
+	defaultEmitCertText          bool   = false
+	defaultFilename              string = ""
+	defaultDisplayVersionAndExit bool   = false
 
 	// Default WARNING threshold is 30 days
 	defaultCertExpireAgeWarning int = 30
 
 	// Default CRITICAL threshold is 15 days
 	defaultCertExpireAgeCritical int = 15
-
-	defaultDisplayVersionAndExit bool = false
 )
 
 // var (

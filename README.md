@@ -191,66 +191,33 @@ been tested.
 
 #### `check_cert`
 
-TODO: Use these as-is options to construct a table:
-
-```ShellSession
-  -age-critical int
-        The number of days remaining before certificate expiration when Nagios will return a CRITICAL state (default 15)
-  -age-warning int
-        The number of days remaining before certificate expiration when Nagios will return a WARNING state (default 30)
-  -branding
-        Toggles emission of branding details with plugin status details. This output is disabled by default.
-  -log-level string
-        Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace. (default "info")
-  -port int
-        TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS). (default 443)
-  -sans-entries value
-        Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list.
-  -server string
-        The fully-qualified domain name of the remote system whose cert(s) will be monitored.
-  -version
-        Whether to display application version and then immediately exit application.
-```
+| Flag                 | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                          |
+| -------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `h`, `help`          | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                               |
+| `v`, `version`       | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                        |
+| `branding`           | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                 |
+| `c`, `age-critical`  | No       | 15      | No     | *positive whole number*                                                 | DNS server to submit query against. This flag may be repeated for each additional DNS server to query.                                                                                               |
+| `w`, `age-warning`   | No       | 30      | No     | *positive whole number*                                                 | Full path to TOML-formatted configuration file. See [`config.example.toml`](config.example.toml) for a starter template.                                                                             |
+| `f`, `filename`      | No       | `false` | No     | *valid file name characters*                                            |                                                                                                                                                                                                      |
+| `ll`, `log-level`    | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                            |
+| `p`, `port`          | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      |                                                                                                                                                                                                      |
+| `se`, `sans-entries` | No       |         |        | *comma-separated list of values*                                        | One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list.                                                |
+| `s`, `server`        | **Yes**  |         |        | *fully-qualified server name or IP Address*                             | The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. The value provided will be validated against the Common Name and Subject Alternate Names fields. |
 
 #### `lscert`
 
-TODO: Use these as-is options to construct a table:
-
-```ShellSession
-  -age-critical int
-        The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a CRITICAL state. (default 15)
-  -age-warning int
-        The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state. (default 30)
-  -filename string
-        Fully-qualified path to a file containing one or more certificates
-  -log-level string
-        Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace. (default "info")
-  -port int
-        TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS). (default 443)
-  -sans-entries value
-        Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list.
-  -server string
-        The fully-qualified domain name of the remote system whose cert(s) will be monitored.
-  -text
-        Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default.
-  -version
-        Whether to display application version and then immediately exit application.
-```
-
-TODO: Replace this example table pulled from the atc0005/dnsc project:
-
-| Flag                       | Required | Default        | Repeat  | Possible                                   | Description                                                                                                                                                   |
-| -------------------------- | -------- | -------------- | ------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `h`, `help`                | No       | `false`        | No      | `h`, `help`                                | Show Help text along with the list of supported flags.                                                                                                        |
-| `ds`, `dns-server`         | **Yes**  | *empty string* | **Yes** | *one valid IP Address per flag invocation* | DNS server to submit query against. This flag may be repeated for each additional DNS server to query.                                                        |
-| `cf`, `config-file`        | **Yes**  | *empty string* | No      | *valid file name characters*               | Full path to TOML-formatted configuration file. See [`config.example.toml`](config.example.toml) for a starter template.                                      |
-| `v`, `version`             | No       | `false`        | No      | `v`, `version`                             | Whether to display application version and then immediately exit application.                                                                                 |
-| `ide`, `ignore-dns-errors` | No       | `false`        | No      | `ide`, `ignore-dns-errors`                 | Whether DNS-related errors with one server should be ignored in order to try other DNS servers in the list.                                                   |
-| `q`, `query`               | **Yes**  | *empty string* | No      | *any valid FQDN string*                    | Fully-qualified system to lookup from all provided DNS servers.                                                                                               |
-| `ll`, `log-level`          | No       | `info`         | No      | `fatal`, `error`, `warn`, `info`, `debug`  | Log message priority filter. Log messages with a lower level are ignored.                                                                                     |
-| `lf`, `log-format`         | No       | `text`         | No      | `cli`, `json`, `logfmt`, `text`, `discard` | Use the specified `apex/log` package "handler" to output log messages in that handler's format.                                                               |
-| `t`, `type`                | No       | `A`            | **Yes** | `A`, `AAAA`, `MX`, `CNAME`                 | DNS query type to use when submitting a DNS query to each provided server. This flag may be repeated for each additional DNS record type you wish to request. |
-| `to`, `timeout`            | No       | `10`           | No      | *any positive whole number*                | Maximum number of seconds allowed for a DNS query to take before timing out.                                                                                  |
+| Flag                 | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                          |
+| -------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `h`, `help`          | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                               |
+| `v`, `version`       | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                        |
+| `c`, `age-critical`  | No       | 15      | No     | *positive whole number*                                                 | DNS server to submit query against. This flag may be repeated for each additional DNS server to query.                                                                                               |
+| `w`, `age-warning`   | No       | 30      | No     | *positive whole number*                                                 | Full path to TOML-formatted configuration file. See [`config.example.toml`](config.example.toml) for a starter template.                                                                             |
+| `f`, `filename`      | No       | `false` | No     | *valid file name characters*                                            |                                                                                                                                                                                                      |
+| `text`               | No       | `false` | No     | `true`, `false`                                                         | Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default.                                                                                    |
+| `ll`, `log-level`    | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                            |
+| `p`, `port`          | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      |                                                                                                                                                                                                      |
+| `se`, `sans-entries` | No       |         |        | *comma-separated list of values*                                        | One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list.                                                |
+| `s`, `server`        | **Yes**  |         |        | *fully-qualified server name or IP Address*                             | The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. The value provided will be validated against the Common Name and Subject Alternate Names fields. |
 
 ### Configuration file
 

@@ -26,9 +26,9 @@ const myAppURL string = "https://github.com/atc0005/check-cert"
 
 const (
 	versionFlagHelp  string = "Whether to display application version and then immediately exit application."
-	sansEntriesHelp  string = "Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list."
+	sansEntriesHelp  string = "One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list."
 	logLevelFlagHelp string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
-	serverHelp       string = "The fully-qualified domain name of the remote system whose cert(s) will be monitored."
+	serverHelp       string = "The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. The value provided will be validated against the Common Name and Subject Alternate Names fields."
 	portHelp         string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
 	ageWarningHelp   string = "The number of days remaining before certificate expiration when Nagios will return a WARNING state"
 	ageCriticalHelp  string = "The number of days remaining before certificate expiration when Nagios will return a CRITICAL state"
@@ -40,10 +40,14 @@ const (
 	defaultLogLevel              string = "info"
 	defaultServer                string = ""
 	defaultPort                  int    = 443
-	defaultAgeWarning            int    = 30
-	defaultAgeCritical           int    = 15
 	defaultBranding              bool   = false
 	defaultDisplayVersionAndExit bool   = false
+
+	// Default WARNING threshold is 30 days
+	defaultCertExpireAgeWarning int = 30
+
+	// Default CRITICAL threshold is 15 days
+	defaultCertExpireAgeCritical int = 15
 )
 
 // multiValueFlag is a custom type that satisfies the flag.Value interface in
@@ -145,8 +149,8 @@ func Branding(msg string) func() string {
 func (c *Config) handleFlagsConfig() {
 
 	flag.Var(&c.SANsEntries, "sans-entries", sansEntriesHelp)
-	flag.IntVar(&c.AgeWarning, "age-warning", defaultAgeWarning, ageWarningHelp)
-	flag.IntVar(&c.AgeCritical, "age-critical", defaultAgeCritical, ageCriticalHelp)
+	flag.IntVar(&c.AgeWarning, "age-warning", defaultCertExpireAgeWarning, ageWarningHelp)
+	flag.IntVar(&c.AgeCritical, "age-critical", defaultCertExpireAgeCritical, ageCriticalHelp)
 	flag.StringVar(&c.Server, "server", defaultServer, serverHelp)
 	flag.IntVar(&c.Port, "port", defaultPort, portHelp)
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
