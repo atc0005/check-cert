@@ -58,16 +58,17 @@ provided by a remote service at the specified fully-qualified domain name
 "bundle" or standalone leaf certificate file
 
 This tool is intended to quickly review the results of replacing a certificate
-and/or troubleshoot why connections to a remote system may be failing.
+and/or troubleshoot why connections to a certificate-enabled service smay be
+failing.
 
 ## Features
 
 - Two tools for validating certificates
   - `lscert` CLI tool
-    - verify remote certificate-enabled service
+    - verify certificate used by specified service
     - verify local certificate "bundle" or standalone leaf certificate file
   - `check_cert` Nagios plugin
-    - verify remote certificate-enabled service
+    - verify certificate used by specified service
 
 - Check expiration of all certificates in the *provided* certificate chain for
   cert-enabled services

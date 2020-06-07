@@ -5,8 +5,6 @@
 // Licensed under the MIT License. See LICENSE file in the project root for
 // full license information.
 
-// Package logging provides a logging configuration wrapper for the
-// applications within this repo
 package logging
 
 import (

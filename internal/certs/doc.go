@@ -6,5 +6,5 @@
 // full license information.
 
 // Package certs provides common/shared utility code to support applications
-// in this module which process certificates
+// in this module which process certificates.
 package certs
