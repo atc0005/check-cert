@@ -188,16 +188,8 @@ func (c *Config) handleFlagsConfig() {
 // values.
 func (c Config) Validate() error {
 
-	// TODO: How to implement validation for optional filename using standard
-	// library "flag" package (e.g., where we can't check for nil)?
-	//
-	// if c.Filename == "" {
-	// 	return fmt.Errorf("invalid filename specified: %q", c.Filename)
-	// }
-
 	// User can specify one of filename or server, but not both (mostly in
 	// order to keep the logic simpler)
-
 	switch {
 	case c.Filename == "" && c.Server == "":
 		return fmt.Errorf(
