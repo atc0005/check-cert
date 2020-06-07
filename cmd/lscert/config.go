@@ -233,8 +233,7 @@ func (c Config) Validate() error {
 
 	if c.AgeCritical > c.AgeWarning {
 		return fmt.Errorf(
-			"critical threshold set higher than warning threshold;" +
-				" review Nagios service check and command definition",
+			"critical threshold set higher than warning threshold",
 		)
 	}
 
