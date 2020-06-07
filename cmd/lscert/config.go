@@ -217,6 +217,13 @@ func (c Config) Validate() error {
 		return fmt.Errorf("invalid TCP port number %d", c.Port)
 	}
 
+	if c.AgeWarning < 0 {
+		return fmt.Errorf(
+			"invalid cert expiration WARNING threshold number: %d",
+			c.AgeWarning,
+		)
+	}
+
 	if c.AgeCritical < 0 {
 		return fmt.Errorf(
 			"invalid cert expiration CRITICAL threshold number: %d",
@@ -224,10 +231,10 @@ func (c Config) Validate() error {
 		)
 	}
 
-	if c.AgeWarning < 0 {
+	if c.AgeCritical > c.AgeWarning {
 		return fmt.Errorf(
-			"invalid cert expiration WARNING threshold number: %d",
-			c.AgeWarning,
+			"critical threshold set higher than warning threshold;" +
+				" review Nagios service check and command definition",
 		)
 	}
 

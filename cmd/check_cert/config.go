@@ -182,15 +182,24 @@ func (c Config) Validate() error {
 	}
 
 	if c.AgeWarning < 0 {
-		return fmt.Errorf("invalid value for warning age: %d", c.AgeWarning)
+		return fmt.Errorf(
+			"invalid value for warning age: %d",
+			c.AgeWarning,
+		)
 	}
 
 	if c.AgeCritical < 0 {
-		return fmt.Errorf("invalid value for critical age: %d", c.AgeCritical)
+		return fmt.Errorf(
+			"invalid value for critical age: %d",
+			c.AgeCritical,
+		)
 	}
 
 	if c.AgeCritical > c.AgeWarning {
-		return fmt.Errorf("critical threshold set higher than warning threshold; review Nagios service check and command definition")
+		return fmt.Errorf(
+			"critical threshold set higher than warning threshold;" +
+				" review Nagios service check and command definition",
+		)
 	}
 
 	if c.Server == "" {
