@@ -266,7 +266,7 @@ func main() {
 
 	nagiosExitState.LastError = nil
 	nagiosExitState.ServiceOutput = fmt.Sprintf(
-		"%s: %s cert %q expires next on %s",
+		"%s: %s cert %q expires next (on %s)",
 		"OK",
 		certs.ChainPosition(nextCertToExpire),
 		nextCertToExpire.Subject.CommonName,

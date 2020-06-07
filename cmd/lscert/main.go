@@ -202,7 +202,7 @@ func main() {
 
 	nextCertToExpire := certs.NextToExpire(certChain)
 	fmt.Printf(
-		"- FYI: %s cert %q expires next on %s",
+		"- FYI: %s cert %q expires next (on %s)",
 		certs.ChainPosition(nextCertToExpire),
 		nextCertToExpire.Subject.CommonName,
 		nextCertToExpire.NotAfter.Format("2006-01-02 15:04:05 -0700 MST"),

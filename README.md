@@ -252,7 +252,7 @@ and `CRITICAL` age threshold values with somewhat arbitrary numbers.
 
 ```ShellSession
 .\check_cert.exe --server www.google.com --port 443 --age-critical 50 --age-warning 55
-OK: leaf cert "www.google.com" expires next on 2020-08-12 12:08:31 +0000 UTC
+OK: leaf cert "www.google.com" expires next (on 2020-08-12 12:08:31 +0000 UTC)
 
 **ERRORS**
 
@@ -363,7 +363,7 @@ CERTIFICATES | SUMMARY
 
 - OK: 2 certs found for service running on www.google.com at port 443
 - OK: Provided hostname matches discovered certificate
-- FYI: leaf cert "www.google.com" expires next on 2020-08-12 12:08:31 +0000 UTC
+- FYI: leaf cert "www.google.com" expires next (on 2020-08-12 12:08:31 +0000 UTC)
 
 ============================
 CERTIFICATES | CHAIN DETAILS
@@ -405,7 +405,7 @@ CERTIFICATES | SUMMARY
 - OK: 2 certs found for service running on www.google.com at port 443
 - OK: Provided hostname matches discovered certificate
 - WARNING: 1 certificates expiring soon
-- FYI: leaf cert "www.google.com" expires next on 2020-08-12 12:08:31 +0000 UTC
+- FYI: leaf cert "www.google.com" expires next (on 2020-08-12 12:08:31 +0000 UTC)
 
 ============================
 CERTIFICATES | CHAIN DETAILS
