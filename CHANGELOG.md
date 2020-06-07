@@ -80,6 +80,8 @@ certificate chain, expiration dates, etc).
   - choice of `disabled`, `panic`, `fatal`, `error`, `warn`, `info` (the
     default), `debug` or `trace`.
 
+- Optional, user-specified timeout value for TCP connection attempt
+
 - Go modules support (vs classic `GOPATH` setup)
 
 [Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.0...HEAD
