@@ -24,9 +24,17 @@ var version string = "x.y.z"
 const myAppName string = "lscert"
 const myAppURL string = "https://github.com/atc0005/check-cert"
 
+// SkipSANSCheckKeyword is used as the sole argument to `--sans-entries` if
+// the user wishes to disable SANs entry verification. This seemingly
+// illogical option allows defining the `--sans-entries` flag in a command
+// definition used by a group-based service check even though some systems
+// targeted by that service check may use a certificate which does not have
+// any SANs entries present.
+const SkipSANSCheckKeyword string = "SKIPSANSCHECKS"
+
 const (
 	versionFlagHelp      string = "Whether to display application version and then immediately exit application."
-	sansEntriesHelp      string = "One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. This value is provided as a comma-separated list."
+	sansEntriesHelp      string = "One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP."
 	logLevelFlagHelp     string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
 	serverHelp           string = "The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. The value provided will be validated against the Common Name and Subject Alternate Names fields."
 	portHelp             string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."

@@ -13,6 +13,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -159,18 +160,23 @@ func main() {
 	// check SANS entries if provided via command-line
 	if len(config.SANsEntries) > 0 {
 
-		if mismatched, err := certs.CheckSANsEntries(certChain[0], config.SANsEntries); err != nil {
+		// Check for special keyword, skip SANs entry checks if provided
+		firstSANsEntry := strings.ToLower(strings.TrimSpace(config.SANsEntries[0]))
+		if firstSANsEntry != SkipSANSCheckKeyword {
 
-			log.Debug().
-				Err(err).
-				Int("sans_entries_requested", len(config.SANsEntries)).
-				Int("sans_entries_found", len(certChain)).
-				Int("sans_entries_mismatched", mismatched).
-				Msg("SANs entries mismatch")
+			if mismatched, err := certs.CheckSANsEntries(certChain[0], config.SANsEntries); err != nil {
 
-			fmt.Printf("- WARNING: %v \n", err)
+				log.Debug().
+					Err(err).
+					Int("sans_entries_requested", len(config.SANsEntries)).
+					Int("sans_entries_found", len(certChain)).
+					Int("sans_entries_mismatched", mismatched).
+					Msg("SANs entries mismatch")
+
+				fmt.Printf("- WARNING: %v \n", err)
+			}
+
 		}
-
 	}
 
 	if expired, count := certs.HasExpiredCert(certChain); expired {
