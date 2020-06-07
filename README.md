@@ -83,6 +83,10 @@ and/or troubleshoot why connections to a remote system may be failing.
 
 - Optional support for verifying SANs entries on a certificate against a
   provided list
+  - if `SKIPSANSCHECKS` keyword is supplied as the value no SANs entry checks
+    will be performed; this keyword is useful for defining a shared Nagios
+    check command and service check where some hosts may not use a certificate
+    which has SANs entries defined
 
 - Detailed "report" of findings
   - certificate order
