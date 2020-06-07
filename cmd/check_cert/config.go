@@ -35,6 +35,7 @@ const SkipSANSCheckKeyword string = "SKIPSANSCHECKS"
 const (
 	versionFlagHelp  string = "Whether to display application version and then immediately exit application."
 	sansEntriesHelp  string = "One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP."
+	dnsNameHelp      string = "The fully-qualified domain name of the remote system to be used for hostname verification. This option can be used for cases where make the initial connection using a name or IP not associated with the certificate."
 	logLevelFlagHelp string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
 	serverHelp       string = "The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. The value provided will be validated against the Common Name and Subject Alternate Names fields."
 	portHelp         string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
@@ -47,6 +48,7 @@ const (
 const (
 	defaultLogLevel              string = "info"
 	defaultServer                string = ""
+	defaultDNSName               string = ""
 	defaultPort                  int    = 443
 	defaultBranding              bool   = false
 	defaultDisplayVersionAndExit bool   = false
@@ -102,6 +104,12 @@ type Config struct {
 	// Server is the fully-qualified domain name of the system running a
 	// certificate-enabled service.
 	Server string
+
+	// DNSName is the fully-qualified domain name associated with the
+	// certificate. This is usually specified when the FQDN or IP used to make
+	// the connection is different than the Common Name or Subject Alternate
+	// Names entries associated with the certificate.
+	DNSName string
 
 	// Port is the TCP port used by the certifcate-enabled service.
 	Port int
@@ -160,6 +168,7 @@ func (c *Config) handleFlagsConfig() {
 	flag.IntVar(&c.AgeWarning, "age-warning", defaultCertExpireAgeWarning, ageWarningHelp)
 	flag.IntVar(&c.AgeCritical, "age-critical", defaultCertExpireAgeCritical, ageCriticalHelp)
 	flag.StringVar(&c.Server, "server", defaultServer, serverHelp)
+	flag.StringVar(&c.DNSName, "dns-name", defaultDNSName, dnsNameHelp)
 	flag.IntVar(&c.Port, "port", defaultPort, portHelp)
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
 	flag.BoolVar(&c.EmitBranding, "branding", defaultBranding, brandingFlagHelp)
@@ -202,6 +211,8 @@ func (c Config) Validate() error {
 		)
 	}
 
+	// Always required, even if using the DNSName value for hostname
+	// verification
 	if c.Server == "" {
 		return fmt.Errorf("server FQDN not provided")
 	}

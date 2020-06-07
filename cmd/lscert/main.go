@@ -144,11 +144,20 @@ func main() {
 	if config.Server != "" {
 
 		if len(certChain) > 0 {
+
+			hostnameValueToUse := config.Server
+
+			// Allow user to explicitly specify which hostname should be used
+			// for comparison against the leaf certificate.
+			if config.DNSName != "" {
+				hostnameValueToUse = config.DNSName
+			}
+
 			// verify leaf certificate is valid for the provided server FQDN
-			if err := certChain[0].VerifyHostname(config.Server); err != nil {
+			if err := certChain[0].VerifyHostname(hostnameValueToUse); err != nil {
 				log.Warn().Err(err).Msgf(
 					"provided hostname %q does not match server certificate",
-					config.Server,
+					hostnameValueToUse,
 				)
 			} else {
 				fmt.Println("- OK: Provided hostname matches discovered certificate")

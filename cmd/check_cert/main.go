@@ -123,22 +123,33 @@ func main() {
 	}
 
 	if certsTotal > 0 {
+
+		hostnameValue := config.Server
+
+		// Allow user to explicitly specify which hostname should be used
+		// for comparison against the leaf certificate.
+		if config.DNSName != "" {
+			hostnameValue = config.DNSName
+		}
+
 		// verify leaf certificate is valid for the provided server FQDN
 		// NOTE: We make the assumption that the leaf certificate is ALWAYS in
 		// position 0 of the chain. Not having the cert in that position is
 		// treated as an error condition.
-		if err := certChain[0].VerifyHostname(config.Server); err != nil {
+		if err := certChain[0].VerifyHostname(hostnameValue); err != nil {
 			nagiosExitState.LastError = err
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
 				"hostname %q does not match first cert in chain %q",
-				config.Server,
+				hostnameValue,
 				certChain[0].Subject.CommonName,
 			)
 			nagiosExitState.ExitStatusCode = nagios.StateCRITICAL
 			log.Error().
 				Err(err).
-				Str("hostname", config.Server).
+				Str("server", config.Server).
+				Str("dns_name", config.DNSName).
 				Str("cert_cn", certChain[0].Subject.CommonName).
+				Str("sans_entries", fmt.Sprintf("%s", certChain[0].DNSNames)).
 				Msg("hostname does not match first cert in chain")
 			nagiosExitState.ReturnCheckResults()
 
