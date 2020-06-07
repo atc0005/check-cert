@@ -33,15 +33,15 @@ const myAppURL string = "https://github.com/atc0005/check-cert"
 const SkipSANSCheckKeyword string = "SKIPSANSCHECKS"
 
 const (
-	versionFlagHelp  string = "Whether to display application version and then immediately exit application."
-	sansEntriesHelp  string = "One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP."
-	dnsNameHelp      string = "The fully-qualified domain name of the remote system to be used for hostname verification. This option can be used for cases where make the initial connection using a name or IP not associated with the certificate."
-	logLevelFlagHelp string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
-	serverHelp       string = "The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. The value provided will be validated against the Common Name and Subject Alternate Names fields."
-	portHelp         string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
-	ageWarningHelp   string = "The number of days remaining before certificate expiration when Nagios will return a WARNING state"
-	ageCriticalHelp  string = "The number of days remaining before certificate expiration when Nagios will return a CRITICAL state"
-	brandingFlagHelp string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
+	versionFlagHelp               string = "Whether to display application version and then immediately exit application."
+	sansEntriesFlagHelp           string = "One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP."
+	dnsNameFlagHelp               string = "The fully-qualified domain name of the remote system to be used for hostname verification. This option can be used for cases where make the initial connection using a name or IP not associated with the certificate."
+	logLevelFlagHelp              string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
+	serverFlagHelp                string = "The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. The value provided will be validated against the Common Name and Subject Alternate Names fields."
+	portFlagHelp                  string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
+	certExpireAgeWarningFlagHelp  string = "The number of days remaining before certificate expiration when Nagios will return a WARNING state"
+	certExpireAgeCriticalFlagHelp string = "The number of days remaining before certificate expiration when Nagios will return a CRITICAL state"
+	brandingFlagHelp              string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
 )
 
 // Default flag settings if not overridden by user input
@@ -164,15 +164,31 @@ func Branding(msg string) func() string {
 
 func (c *Config) handleFlagsConfig() {
 
-	flag.Var(&c.SANsEntries, "sans-entries", sansEntriesHelp)
-	flag.IntVar(&c.AgeWarning, "age-warning", defaultCertExpireAgeWarning, ageWarningHelp)
-	flag.IntVar(&c.AgeCritical, "age-critical", defaultCertExpireAgeCritical, ageCriticalHelp)
-	flag.StringVar(&c.Server, "server", defaultServer, serverHelp)
-	flag.StringVar(&c.DNSName, "dns-name", defaultDNSName, dnsNameHelp)
-	flag.IntVar(&c.Port, "port", defaultPort, portHelp)
+	flag.Var(&c.SANsEntries, "se", sansEntriesFlagHelp)
+	flag.Var(&c.SANsEntries, "sans-entries", sansEntriesFlagHelp)
+
+	flag.IntVar(&c.AgeWarning, "w", defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
+	flag.IntVar(&c.AgeWarning, "age-warning", defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
+
+	flag.IntVar(&c.AgeCritical, "c", defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
+	flag.IntVar(&c.AgeCritical, "age-critical", defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
+
+	flag.StringVar(&c.Server, "s", defaultServer, serverFlagHelp)
+	flag.StringVar(&c.Server, "server", defaultServer, serverFlagHelp)
+
+	flag.StringVar(&c.DNSName, "dn", defaultDNSName, dnsNameFlagHelp)
+	flag.StringVar(&c.DNSName, "dns-name", defaultDNSName, dnsNameFlagHelp)
+
+	flag.IntVar(&c.Port, "p", defaultPort, portFlagHelp)
+	flag.IntVar(&c.Port, "port", defaultPort, portFlagHelp)
+
+	flag.StringVar(&c.LoggingLevel, "ll", defaultLogLevel, logLevelFlagHelp)
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
-	flag.BoolVar(&c.EmitBranding, "branding", defaultBranding, brandingFlagHelp)
+
+	flag.BoolVar(&c.ShowVersion, "v", defaultDisplayVersionAndExit, versionFlagHelp)
 	flag.BoolVar(&c.ShowVersion, "version", defaultDisplayVersionAndExit, versionFlagHelp)
+
+	flag.BoolVar(&c.EmitBranding, "branding", defaultBranding, brandingFlagHelp)
 
 	// Allow our function to override the default Help output
 	flag.Usage = Usage
