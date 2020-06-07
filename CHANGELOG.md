@@ -53,6 +53,8 @@ certificate chain, expiration dates, etc).
 
 - Validate provided hostname against Common Name *or* one of the available
   SANs entries
+  - the expected hostname can be supplied by the `--server` flag *or* the
+    `--dns-name` flag
 
 - Optional support for verifying SANs entries on a certificate against a
   provided list
