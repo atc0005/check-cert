@@ -3,6 +3,11 @@
 
 Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
 
+[![Latest Release](https://img.shields.io/github/release/atc0005/check-cert.svg?style=flat-square)](https://github.com/atc0005/check-cert/releases/latest)
+[![GoDoc](https://godoc.org/github.com/atc0005/check-cert?status.svg)](https://godoc.org/github.com/atc0005/check-cert)
+![Validate Codebase](https://github.com/atc0005/check-cert/workflows/Validate%20Codebase/badge.svg)
+![Validate Docs](https://github.com/atc0005/check-cert/workflows/Validate%20Docs/badge.svg)
+
 <!-- omit in toc -->
 ## Table of Contents
 
