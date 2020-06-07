@@ -10,6 +10,7 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -98,7 +99,13 @@ func main() {
 		// nolint:gosec
 		InsecureSkipVerify: true,
 	}
-	conn, err := tls.Dial("tcp", server, &cfg)
+
+	// Create custom dialer with user-specified timeout value
+	dialer := &net.Dialer{
+		Timeout: time.Duration(config.Timeout) * time.Second,
+	}
+
+	conn, err := tls.DialWithDialer(dialer, "tcp", server, &cfg)
 	if err != nil {
 		nagiosExitState.LastError = err
 		nagiosExitState.ServiceOutput = "Error connecting to " + server

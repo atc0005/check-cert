@@ -12,6 +12,7 @@ import (
 	"crypto/x509"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -104,7 +105,13 @@ func main() {
 			// nolint:gosec
 			InsecureSkipVerify: true,
 		}
-		conn, err := tls.Dial("tcp", server, &cfg)
+
+		// Create custom dialer with user-specified timeout value
+		dialer := &net.Dialer{
+			Timeout: time.Duration(config.Timeout) * time.Second,
+		}
+
+		conn, err := tls.DialWithDialer(dialer, "tcp", server, &cfg)
 		if err != nil {
 			log.Error().Err(err).Msgf("error connecting to server")
 			os.Exit(1)
