@@ -15,6 +15,7 @@ Monitor/validate certificates.
 FEATURES
 
 • Nagios plugin for monitoring certificates of certificate-enabled services
+
 • CLI tool for verifying certificates of certificate-enabled services or files
 
 USAGE - check_cert Nagios plugin
