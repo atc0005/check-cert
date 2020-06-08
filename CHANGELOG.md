@@ -26,7 +26,7 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
-## [v0.1.0] - 2020-06-xx
+## [v0.1.0] - 2020-06-07
 
 Initial release!
 
