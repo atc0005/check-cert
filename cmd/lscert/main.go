@@ -178,7 +178,7 @@ func main() {
 
 		// Check for special keyword, skip SANs entry checks if provided
 		firstSANsEntry := strings.ToLower(strings.TrimSpace(config.SANsEntries[0]))
-		if firstSANsEntry != SkipSANSCheckKeyword {
+		if firstSANsEntry != strings.ToLower(strings.TrimSpace(SkipSANSCheckKeyword)) {
 
 			if mismatched, err := certs.CheckSANsEntries(certChain[0], config.SANsEntries); err != nil {
 
