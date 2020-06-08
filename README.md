@@ -11,6 +11,7 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
 <!-- omit in toc -->
 ## Table of Contents
 
+- [Project home](#project-home)
 - [Overview](#overview)
   - [check_certs](#check_certs)
   - [lscert](#lscert)
@@ -34,6 +35,12 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
     - [WARNING results](#warning-results-1)
 - [License](#license)
 - [References](#references)
+
+## Project home
+
+See [our GitHub repo](https://github.com/atc0005/check-cert) for the latest code,
+to file an issue or submit improvements for review and potential inclusion
+into the project.
 
 ## Overview
 
