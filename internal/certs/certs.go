@@ -39,7 +39,7 @@ func ConvertKeyIDToHexStr(keyID []byte) string {
 	return strings.Join(hexStrKeyID, ":")
 }
 
-// GetGetCertsFromFile is a helper function for retrieving a certificates
+// GetCertsFromFile is a helper function for retrieving a certificates
 // chain from a specified filename.
 func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
@@ -87,7 +87,7 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 }
 
-// IsIsExpiredCert receives a x509 certificate and returns a boolean value
+// IsExpiredCert receives a x509 certificate and returns a boolean value
 // indicating whether the cert has expired.
 func IsExpiredCert(cert *x509.Certificate) bool {
 	return cert.NotAfter.Before(time.Now())
