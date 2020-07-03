@@ -293,7 +293,7 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 			certificate.Issuer,
 			ConvertKeyIDToHexStr(certificate.AuthorityKeyId),
 			certificate.SerialNumber,
-			certificate.NotAfter.String(),
+			certificate.NotAfter.Format("2006-01-02 15:04:05 -0700 MST"),
 			expiresText,
 		)
 
