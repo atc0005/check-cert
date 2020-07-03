@@ -277,7 +277,7 @@ func main() {
 		"OK",
 		certs.ChainPosition(nextCertToExpire),
 		nextCertToExpire.Subject.CommonName,
-		nextCertToExpire.NotAfter.Format("2006-01-02 15:04:05 -0700 MST"),
+		nextCertToExpire.NotAfter.Format(certs.CertValidityDateLayout),
 	)
 	nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
 		certChain,

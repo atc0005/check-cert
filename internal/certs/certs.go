@@ -20,6 +20,10 @@ import (
 	"github.com/atc0005/check-certs/internal/textutils"
 )
 
+// CertValidityDateLayout is the chosen date layout for displaying certificate
+// validity date/time values across our application.
+const CertValidityDateLayout string = "2006-01-02 15:04:05 -0700 MST"
+
 const (
 	certChainPositionLeaf         string = "leaf"
 	certChainPositionIntermediate string = "intermediate"
@@ -293,7 +297,7 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 			certificate.Issuer,
 			ConvertKeyIDToHexStr(certificate.AuthorityKeyId),
 			certificate.SerialNumber,
-			certificate.NotAfter.Format("2006-01-02 15:04:05 -0700 MST"),
+			certificate.NotAfter.Format(CertValidityDateLayout),
 			expiresText,
 		)
 
