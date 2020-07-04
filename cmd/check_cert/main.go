@@ -283,12 +283,22 @@ func main() {
 	// expiration date in the chain for quick reference however.
 	nextCertToExpire := certs.NextToExpire(certChain)
 
+	// Start by assuming that the CommonName is *not* blank
+	nextCertToExpireServerName := nextCertToExpire.Subject.CommonName
+
+	// but if it is, use the first SubjectAlterateName field in its place
+	if nextCertToExpire.Subject.CommonName == "" {
+		if len(nextCertToExpire.DNSNames[0]) > 0 {
+			nextCertToExpireServerName = nextCertToExpire.DNSNames[0]
+		}
+	}
+
 	nagiosExitState.LastError = nil
 	nagiosExitState.ServiceOutput = fmt.Sprintf(
 		"%s: %s cert %q expires next (on %s)",
 		"OK",
 		certs.ChainPosition(nextCertToExpire),
-		nextCertToExpire.Subject.CommonName,
+		nextCertToExpireServerName,
 		nextCertToExpire.NotAfter.Format(certs.CertValidityDateLayout),
 	)
 	nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
