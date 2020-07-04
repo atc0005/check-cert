@@ -208,9 +208,10 @@ been tested.
 
 ### Threshold calculations
 
-As GH-32 confirmed, the behavior of this plugin differs somewhat from
-`check_http` `v2.1.2`; this plugin in that it triggers a whole day *later*
-than `check_http` does for the same `WARNING` and `CRITICAL` threshold values.
+The behavior of the `check_cert`plugin differs somewhat from
+`check_http` `v2.1.2`; this plugin triggers a whole day
+*later* than `check_http` does for the same `WARNING` and
+`CRITICAL` threshold values.
 
 For example, if we use the default values of 30 days for `WARNING` threshold
 and 15 days for the `CRITICAL` threshold:
@@ -229,6 +230,8 @@ and 15 days for the `CRITICAL` threshold:
     1. otherwise, the certificate is assumed to have a status of `OK`
 
 No rounding is performed.
+
+See GH-32 for additional info.
 
 ### Command-line arguments
 
