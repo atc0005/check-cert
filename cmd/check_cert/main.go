@@ -56,8 +56,20 @@ func main() {
 
 	// Use provided threshold values to calculate the expiration times that
 	// should trigger either a WARNING or CRITICAL state.
-	certsExpireAgeWarning := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeWarning))
-	certsExpireAgeCritical := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeCritical))
+	now := time.Now().UTC()
+	certsExpireAgeWarning := now.AddDate(0, 0, config.AgeWarning)
+	certsExpireAgeCritical := now.AddDate(0, 0, config.AgeCritical)
+
+	nagiosExitState.WarningThreshold = fmt.Sprintf(
+		"WARNING:\tExpires before %v (%d days)",
+		certsExpireAgeWarning.Format(certs.CertValidityDateLayout),
+		config.AgeWarning,
+	)
+	nagiosExitState.CriticalThreshold = fmt.Sprintf(
+		"CRITICAL:\tExpires before %v (%d days)",
+		certsExpireAgeCritical.Format(certs.CertValidityDateLayout),
+		config.AgeCritical,
+	)
 
 	// Note: Nagios doesn't look at stderr, only stdout. We have to make sure
 	// that only whatever output is meant for consumption is emitted to stdout

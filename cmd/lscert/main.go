@@ -131,8 +131,21 @@ func main() {
 
 	certsTotal := len(certChain)
 
-	certsExpireAgeWarning := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeWarning))
-	certsExpireAgeCritical := time.Now().Add(time.Hour * 24 * time.Duration(config.AgeCritical))
+	now := time.Now().UTC()
+	certsExpireAgeWarning := now.AddDate(0, 0, config.AgeWarning)
+	certsExpireAgeCritical := now.AddDate(0, 0, config.AgeCritical)
+
+	textutils.PrintHeader("CERTIFICATES | AGE THRESHOLDS")
+	fmt.Printf(
+		"\n- WARNING:\tExpires before %v (%d days)\n",
+		certsExpireAgeWarning.Format(certs.CertValidityDateLayout),
+		config.AgeWarning,
+	)
+	fmt.Printf(
+		"- CRITICAL:\tExpires before %v (%d days)\n",
+		certsExpireAgeCritical.Format(certs.CertValidityDateLayout),
+		config.AgeCritical,
+	)
 
 	textutils.PrintHeader("CERTIFICATES | SUMMARY")
 
@@ -195,6 +208,14 @@ func main() {
 		}
 	}
 
+	nextCertToExpire := certs.NextToExpire(certChain)
+	fmt.Printf(
+		"- FYI: %s cert %q expires next (on %s)\n",
+		certs.ChainPosition(nextCertToExpire),
+		nextCertToExpire.Subject.CommonName,
+		nextCertToExpire.NotAfter.Format(certs.CertValidityDateLayout),
+	)
+
 	if expired, count := certs.HasExpiredCert(certChain); expired {
 		fmt.Printf("- ERROR: %d certificates expired\n", count)
 	}
@@ -206,14 +227,6 @@ func main() {
 	); expiring {
 		fmt.Printf("- WARNING: %d certificates expiring soon\n", count)
 	}
-
-	nextCertToExpire := certs.NextToExpire(certChain)
-	fmt.Printf(
-		"- FYI: %s cert %q expires next (on %s)",
-		certs.ChainPosition(nextCertToExpire),
-		nextCertToExpire.Subject.CommonName,
-		nextCertToExpire.NotAfter.Format(certs.CertValidityDateLayout),
-	)
 
 	textutils.PrintHeader("CERTIFICATES | CHAIN DETAILS")
 

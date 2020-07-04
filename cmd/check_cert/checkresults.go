@@ -44,6 +44,16 @@ type NagiosExitState struct {
 	// from the last service check.
 	LongServiceOutput string
 
+	// WarningThreshold is the value used to determine when the service check
+	// has crossed between an existing state into a WARNING state. This value
+	// is used for display purposes.
+	WarningThreshold string
+
+	// CriticalThreshold is the value used to determine when the service check
+	// has crossed between an existing state into a CRITICAL state. This value
+	// is used for display purposes.
+	CriticalThreshold string
+
 	// BrandingCallback is a function that is called before application
 	// termination to emit branding details at the end of the notification.
 	// See also NagiosExitCallBackFunc.
@@ -96,6 +106,11 @@ func (nes NagiosExitState) ReturnCheckResults() {
 		}
 
 		if nes.LongServiceOutput != "" {
+
+			fmt.Printf("\r\n**CERTIFICATE AGE THRESHOLDS**\r\n\r\n")
+
+			fmt.Printf("* %v\r\n", nes.CriticalThreshold)
+			fmt.Printf("* %v\r\n", nes.WarningThreshold)
 
 			fmt.Printf("\r\n**DETAILED INFO**\r\n")
 

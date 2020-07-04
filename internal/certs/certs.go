@@ -201,27 +201,28 @@ func FormattedExpiration(expireTime time.Time) string {
 func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning time.Time) string {
 
 	var expiresText string
+	certExpiration := cert.NotAfter
 	switch {
-	case cert.NotAfter.Before(time.Now()):
+	case certExpiration.Before(time.Now()):
 		expiresText = fmt.Sprintf(
 			"[EXPIRED] %s",
-			FormattedExpiration(cert.NotAfter),
+			FormattedExpiration(certExpiration),
 		)
-	case cert.NotAfter.Before(ageCritical):
+	case certExpiration.Before(ageCritical):
 		expiresText = fmt.Sprintf(
 			"[CRITICAL] %s",
-			FormattedExpiration(cert.NotAfter),
+			FormattedExpiration(certExpiration),
 		)
-	case cert.NotAfter.Before(ageWarning):
+	case certExpiration.Before(ageWarning):
 		expiresText = fmt.Sprintf(
 			"[WARNING] %s",
-			FormattedExpiration(cert.NotAfter),
+			FormattedExpiration(certExpiration),
 		)
 	default:
 		expiresText = fmt.Sprintf(
 			// "[OK] | %s (%s)",
 			"[OK] %s",
-			FormattedExpiration(cert.NotAfter),
+			FormattedExpiration(certExpiration),
 		)
 
 	}
