@@ -22,6 +22,7 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
   - [Running](#running)
 - [Installation](#installation)
 - [Configuration options](#configuration-options)
+  - [Threshold calculations](#threshold-calculations)
   - [Command-line arguments](#command-line-arguments)
     - [`check_cert`](#check_cert)
     - [`lscert`](#lscert-1)
@@ -205,11 +206,34 @@ been tested.
 
 ## Configuration options
 
+### Threshold calculations
+
+As GH-32 confirmed, the behavior of this plugin differs somewhat from
+`check_http` `v2.1.2`; this plugin in that it triggers a whole day *later*
+than `check_http` does for the same `WARNING` and `CRITICAL` threshold values.
+
+For example, if we use the default values of 30 days for `WARNING` threshold
+and 15 days for the `CRITICAL` threshold:
+
+1. The thresholds are calculated
+    - `WARNING`: Now (exact time in UTC) + 30 days
+    - `CRITICAL`: Now (exact timein UTC) + 15 days
+1. The certificate expiration date is checked and the very first match (in
+   order) determines the status of the service check
+    1. if the certificate expires *before* the current time, the status is
+       `EXPIRED`
+    1. if the certificate expires *before* the CRITICAL threshold, the status
+       is `CRITICAL`
+    1. if the certificate expires *before* the WARNING threshold, the status
+       is `WARNING`
+    1. otherwise, the certificate is assumed to have a status of `OK`
+
+No rounding is performed.
+
 ### Command-line arguments
 
 - Use the `-h` or `--help` flag to display current usage information.
-- Flags marked as **`required`** must be set via CLI flag *or* within a
-  TOML-formatted configuration file.
+- Flags marked as **`required`** must be set via CLI flag.
 - Flags *not* marked as required are for settings where a useful default is
   already defined, but may be overridden if desired.
 
@@ -220,8 +244,8 @@ been tested.
 | `h`, `help`          | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                |
 | `v`, `version`       | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                         |
 | `branding`           | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                                                                  |
-| `c`, `age-critical`  | No       | 15      | No     | *positive whole number*                                                 | The number of days remaining before certificate expiration when this application will flag the NotAfter certificate field as a CRITICAL state.                                                                                                                                                                                                                        |
-| `w`, `age-warning`   | No       | 30      | No     | *positive whole number*                                                 | The number of days remaining before certificate expiration when this application will flag the NotAfter certificate field as a WARNING state.                                                                                                                                                                                                                         |
+| `c`, `age-critical`  | No       | 15      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                                    |
+| `w`, `age-warning`   | No       | 30      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `WARNING` state. If the certificate expires before this number of days, but not before the `age-critical` value, then the service check will be considered in a `WARNING` state.                                                                                                                                            |
 | `ll`, `log-level`    | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                             |
 | `p`, `port`          | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS).                                                                                                                                                                                                                                                                       |
 | `t`, `timeout`       | No       | `10`    | No     | *positive whole number*                                                 | Timeout value in seconds allowed before the connection attempt to a remote certificate-enabled service is abandoned and an error returned.                                                                                                                                                                                                                            |
@@ -235,8 +259,8 @@ been tested.
 | -------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `h`, `help`          | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                |
 | `v`, `version`       | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                         |
-| `c`, `age-critical`  | No       | 15      | No     | *positive whole number*                                                 | The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a CRITICAL state.                                                                                                                                                                                                                   |
-| `w`, `age-warning`   | No       | 30      | No     | *positive whole number*                                                 | The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state.                                                                                                                                                                                                                    |
+| `c`, `age-critical`  | No       | 15      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                                    |
+| `w`, `age-warning`   | No       | 30      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `WARNING` state. If the certificate expires before this number of days, but not before the `age-critical` value, then the service check will be considered in a `WARNING` state.                                                                                                                                            |
 | `f`, `filename`      | No       | `false` | No     | *valid file name characters*                                            | Fully-qualified path to a file containing one or more certificates.                                                                                                                                                                                                                                                                                                   |
 | `text`               | No       | `false` | No     | `true`, `false`                                                         | Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default.                                                                                                                                                                                                                                                     |
 | `ll`, `log-level`    | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                             |

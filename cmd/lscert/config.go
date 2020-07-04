@@ -139,7 +139,7 @@ type Config struct {
 	// field as a WARNING state.
 	AgeWarning int
 
-	// AgeWarning is the number of days remaining before certificate
+	// AgeCritical is the number of days remaining before certificate
 	// expiration when this application will flag the NotAfter certificate
 	// field as a CRITICAL state.
 	AgeCritical int
