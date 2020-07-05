@@ -25,6 +25,7 @@ import (
 	"github.com/atc0005/check-certs/internal/certs"
 	"github.com/atc0005/check-certs/internal/logging"
 	"github.com/atc0005/check-certs/internal/textutils"
+	"github.com/atc0005/go-nagios"
 )
 
 func main() {
@@ -111,9 +112,9 @@ func main() {
 			Timeout: time.Duration(config.Timeout) * time.Second,
 		}
 
-		conn, err := tls.DialWithDialer(dialer, "tcp", server, &cfg)
-		if err != nil {
-			log.Error().Err(err).Msgf("error connecting to server")
+		conn, connErr := tls.DialWithDialer(dialer, "tcp", server, &cfg)
+		if connErr != nil {
+			log.Error().Err(connErr).Msgf("error connecting to server")
 			os.Exit(1)
 		}
 		log.Debug().Msg("Connected")
@@ -129,35 +130,42 @@ func main() {
 
 	}
 
-	certsTotal := len(certChain)
-
 	now := time.Now().UTC()
 	certsExpireAgeWarning := now.AddDate(0, 0, config.AgeWarning)
 	certsExpireAgeCritical := now.AddDate(0, 0, config.AgeCritical)
 
+	certsSummary := certs.ChainSummary(
+		certChain,
+		certsExpireAgeCritical,
+		certsExpireAgeWarning,
+	)
+
 	textutils.PrintHeader("CERTIFICATES | AGE THRESHOLDS")
 	fmt.Printf(
-		"\n- WARNING:\tExpires before %v (%d days)\n",
+		"\n- %s:\tExpires before %v (%d days)\n",
+		nagios.StateWARNINGLabel,
 		certsExpireAgeWarning.Format(certs.CertValidityDateLayout),
 		config.AgeWarning,
 	)
 	fmt.Printf(
-		"- CRITICAL:\tExpires before %v (%d days)\n",
+		"- %s:\tExpires before %v (%d days)\n",
+		nagios.StateCRITICALLabel,
 		certsExpireAgeCritical.Format(certs.CertValidityDateLayout),
 		config.AgeCritical,
 	)
 
 	textutils.PrintHeader("CERTIFICATES | SUMMARY")
 
-	if certsTotal < 0 {
-		errMsg := fmt.Errorf("no certificates found")
-		log.Err(errMsg).Msg("")
+	if certsSummary.TotalCertsCount == 0 {
+		noCertsErr := fmt.Errorf("no certificates found")
+		log.Err(noCertsErr).Msg("")
 		os.Exit(1)
 	}
 
 	fmt.Printf(
-		"\n- OK: %d certs found for %s\n",
-		certsTotal,
+		"\n- %s: %d certs found for %s\n",
+		nagios.StateOKLabel,
+		certsSummary.TotalCertsCount,
 		certChainSource,
 	)
 
@@ -202,42 +210,33 @@ func main() {
 					Int("sans_entries_mismatched", mismatched).
 					Msg("SANs entries mismatch")
 
-				fmt.Printf("- WARNING: %v \n", err)
+				fmt.Printf(
+					"- %s: %v \n", err,
+					certsSummary.ServiceCheckStatus,
+				)
 			}
 
 		}
 	}
 
-	nextCertToExpire := certs.NextToExpire(certChain)
-
-	// Start by assuming that the CommonName is *not* blank
-	nextCertToExpireServerName := nextCertToExpire.Subject.CommonName
-
-	// but if it is, use the first SubjectAlterateName field in its place
-	if nextCertToExpire.Subject.CommonName == "" {
-		if len(nextCertToExpire.DNSNames[0]) > 0 {
-			nextCertToExpireServerName = nextCertToExpire.DNSNames[0]
-		}
-	}
-
-	fmt.Printf(
-		"- FYI: %s cert %q expires next (on %s)\n",
-		certs.ChainPosition(nextCertToExpire),
-		nextCertToExpireServerName,
-		nextCertToExpire.NotAfter.Format(certs.CertValidityDateLayout),
+	nextToExpire := fmt.Sprintf(
+		"- %s",
+		certs.OneLineCheckSummary(
+			certsSummary.ServiceCheckStatus,
+			certChain,
+			// Leave off summary/overview as we'll emit it separately
+			// certsSummary.Summary,
+			"",
+		),
 	)
+	fmt.Println(nextToExpire)
 
-	if expired, count := certs.HasExpiredCert(certChain); expired {
-		fmt.Printf("- ERROR: %d certificates expired\n", count)
-	}
-
-	if expiring, count := certs.HasExpiringCert(
-		certChain,
-		certsExpireAgeCritical,
-		certsExpireAgeWarning,
-	); expiring {
-		fmt.Printf("- WARNING: %d certificates expiring soon\n", count)
-	}
+	statusOverview := fmt.Sprintf(
+		"- %s: %s",
+		certsSummary.ServiceCheckStatus,
+		certsSummary.Summary,
+	)
+	fmt.Println(statusOverview)
 
 	textutils.PrintHeader("CERTIFICATES | CHAIN DETAILS")
 
@@ -261,7 +260,7 @@ func main() {
 			fmt.Printf(
 				"\nCertificate %d of %d:\n%s\n",
 				idx+1,
-				certsTotal,
+				certsSummary.TotalCertsCount,
 				certText,
 			)
 
