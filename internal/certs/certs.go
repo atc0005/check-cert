@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/atc0005/check-certs/internal/textutils"
+	"github.com/atc0005/go-nagios"
 )
 
 // CertValidityDateLayout is the chosen date layout for displaying certificate
@@ -30,6 +31,52 @@ const (
 	certChainPositionRoot         string = "root"
 	certChainPositionUnknown      string = "UNKNOWN cert chain position; please submit a bug report"
 )
+
+// CertCertCheckOneLineSummaryTmpl is a shared template string used for
+// emitting one-line service check status output for certificate chains whose
+// certificates have not expired yet.
+const CertCheckOneLineSummaryTmpl string = "%s: %s cert %q expires next with %s (until %s) %s"
+
+// CertCertCheckOneLineSummaryExpiredTmpl is a shared template string used for
+// emitting one-line service check status output for certificate chains with
+// expired certificates.
+const CertCheckOneLineSummaryExpiredTmpl string = "%s: %s cert %q expired %s (on %s) %s"
+
+// ChainStatus provides a quick status overview of the certificates in a
+// provided certificate chain.
+type ChainStatus struct {
+
+	// HasExpiredCerts indicates whether the certificate chain has any
+	// expired certificates.
+	HasExpiredCerts bool
+
+	// HasExpiringCerts indicates whether the certificate chain has any
+	// certificates set to expire before the WARNING or CRITICAL age
+	// thresholds.
+	HasExpiringCerts bool
+
+	// ExpiredCertsCount is the number of expired certificates in the chain.
+	ExpiredCertsCount int
+
+	// ExpiringCertsCount is the number of certificates expiring before one of
+	// the WARNING or CRITICAL age thresholds.
+	ExpiringCertsCount int
+
+	// ValidCertsCount is the number of certificates not yet expired or
+	// expiring
+	ValidCertsCount int
+
+	// TotalCertsCount is the total number of certificates in a chain
+	TotalCertsCount int
+
+	// ServiceCheckStatus is the overall status of the service check backed on
+	// the presence of (or lack thereof) expired or expiring certificates.
+	ServiceCheckStatus string
+
+	// Summary is a high-level overview of the number of expired, expiring and
+	// certificates not yet crossing over a WARNING or CRITICAL age threshold.
+	Summary string
+}
 
 // ConvertKeyIDToHexStr converts a provided byte slice format of a X509v3
 // Authority Key Identifier or X509v3 Subject Key Identifier to a hex-encoded
@@ -210,18 +257,20 @@ func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning 
 		)
 	case certExpiration.Before(ageCritical):
 		expiresText = fmt.Sprintf(
-			"[CRITICAL] %s",
+			"[%s] %s",
+			nagios.StateCRITICALLabel,
 			FormattedExpiration(certExpiration),
 		)
 	case certExpiration.Before(ageWarning):
 		expiresText = fmt.Sprintf(
-			"[WARNING] %s",
+			"[%s] %s",
+			nagios.StateWARNINGLabel,
 			FormattedExpiration(certExpiration),
 		)
 	default:
 		expiresText = fmt.Sprintf(
-			// "[OK] | %s (%s)",
-			"[OK] %s",
+			"[%s] %s",
+			nagios.StateOKLabel,
 			FormattedExpiration(certExpiration),
 		)
 
@@ -365,11 +414,11 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) (int, er
 
 }
 
-// NextToExpire receives a slice of x509 certificates and returns the
-// certificate out of the pool set to expire next. If all certs are expired
-// then the one expired most recently will be returned.
-// FIXME: Not 100% sure which one will be returned.
-func NextToExpire(certChain []*x509.Certificate) *x509.Certificate {
+// NextToExpire receives a slice of x509 certificates and a boolean flag
+// indicating whether already expired certificates should be excluded. If not
+// excluded, the first expired certificate is returned, otherwise the first
+// certificate out of the pool set to expire next is returned.
+func NextToExpire(certChain []*x509.Certificate, excludeExpired bool) *x509.Certificate {
 
 	// Copy method will return the minimum of length of source and destination
 	// slice which is zero for this empty slice  (regardless of what initial
@@ -388,22 +437,109 @@ func NextToExpire(certChain []*x509.Certificate) *x509.Certificate {
 	})
 
 	// Grab the first cert to use as our default return value if not
-	// overridden later after checking each expiration date
+	// overridden later. This is either first expired certificate (if present)
+	// or the next certificate to expire. If *all* certs are expired, the cert
+	// which first expired will be returned.
 	nextToExpire := sortedChain[0]
 
-	// If the first cert from the sorted slice isn't expired, return it
-	if !IsExpiredCert(nextToExpire) {
-		return nextToExpire
-	}
-
-	// otherwise, let's look for the cert expiring first
-	for idx := range sortedChain {
-		if IsExpiredCert(sortedChain[idx]) {
+	if excludeExpired {
+		// skip expired certs and return the one set to expire next
+		for idx := range sortedChain {
+			if !IsExpiredCert(sortedChain[idx]) {
+				nextToExpire = sortedChain[idx]
+				break
+			}
 			continue
 		}
-		nextToExpire = sortedChain[idx]
 	}
 
-	// either the cert most recently expired or the one next set to expire
 	return nextToExpire
+}
+
+// ChainSummary receives a certificate chain, the critical age threshold and
+// the warning age threshold and generates a summary of certificate details.
+func ChainSummary(
+	certChain []*x509.Certificate,
+	certsExpireAgeCritical time.Time,
+	certsExpireAgeWarning time.Time,
+) ChainStatus {
+
+	hasExpiredCerts, expiredCertsCount := HasExpiredCert(certChain)
+	hasExpiringCerts, expiringCertsCount := HasExpiringCert(
+		certChain,
+		certsExpireAgeCritical,
+		certsExpireAgeWarning,
+	)
+	totalCerts := len(certChain)
+	validCertsCount := totalCerts - expiredCertsCount - expiringCertsCount
+
+	certsSummary := fmt.Sprintf(
+		"[EXPIRED: %d, EXPIRING: %d, OK: %d]",
+		expiredCertsCount,
+		expiringCertsCount,
+		validCertsCount,
+	)
+
+	var serviceCheckStatus string
+	switch {
+	case hasExpiredCerts:
+		serviceCheckStatus = nagios.StateCRITICALLabel
+	case hasExpiringCerts:
+		serviceCheckStatus = nagios.StateWARNINGLabel
+	case !hasExpiringCerts && !hasExpiredCerts:
+		serviceCheckStatus = nagios.StateOKLabel
+	default:
+		serviceCheckStatus = nagios.StateUNKNOWNLabel
+	}
+
+	chainStatus := ChainStatus{
+		HasExpiredCerts:    hasExpiredCerts,
+		HasExpiringCerts:   hasExpiringCerts,
+		ExpiredCertsCount:  expiredCertsCount,
+		ExpiringCertsCount: expiringCertsCount,
+		TotalCertsCount:    totalCerts,
+		ServiceCheckStatus: serviceCheckStatus,
+		Summary:            certsSummary,
+	}
+
+	return chainStatus
+
+}
+
+// OneLineCheckSummary receives the desired service check state as a prefix, a
+// certificate chain, a cert summary as a suffix and then generates a one-line
+// summary of the check results for display and notification purposes.
+func OneLineCheckSummary(serviceState string, certChain []*x509.Certificate, certsSummary string) string {
+
+	// Give the all clear: no issues found. Do go ahead and mention the next
+	// expiration date in the chain for quick reference however.
+	nextCertToExpire := NextToExpire(certChain, false)
+
+	// Start by assuming that the CommonName is *not* blank
+	nextCertToExpireServerName := nextCertToExpire.Subject.CommonName
+
+	// but if it is, use the first SubjectAlterateName field in its place
+	if nextCertToExpire.Subject.CommonName == "" {
+		if len(nextCertToExpire.DNSNames[0]) > 0 {
+			nextCertToExpireServerName = nextCertToExpire.DNSNames[0]
+		}
+	}
+
+	summaryTemplate := CertCheckOneLineSummaryTmpl
+	if hasExpiredCert, _ := HasExpiredCert(certChain); hasExpiredCert {
+		summaryTemplate = CertCheckOneLineSummaryExpiredTmpl
+	}
+
+	summary := fmt.Sprintf(
+		summaryTemplate,
+		serviceState,
+		ChainPosition(nextCertToExpire),
+		nextCertToExpireServerName,
+		FormattedExpiration(nextCertToExpire.NotAfter),
+		nextCertToExpire.NotAfter.Format(CertValidityDateLayout),
+		certsSummary,
+	)
+
+	return summary
+
 }

@@ -38,13 +38,16 @@ func main() {
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = NagiosExitState{
 		LastError:      nil,
-		ExitStatusCode: nagios.StateOK,
+		ExitStatusCode: nagios.StateOKExitCode,
 	}
 
 	if err := config.Validate(); err != nil {
-		nagiosExitState.ServiceOutput = "CRITICAL: Error validating configuration"
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error validating configuration",
+			nagios.StateCRITICALLabel,
+		)
 		nagiosExitState.LastError = err
-		nagiosExitState.ExitStatusCode = nagios.StateCRITICAL
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 		log.Err(err).Msg("Error validating configuration")
 		nagiosExitState.ReturnCheckResults()
 	}
@@ -61,12 +64,14 @@ func main() {
 	certsExpireAgeCritical := now.AddDate(0, 0, config.AgeCritical)
 
 	nagiosExitState.WarningThreshold = fmt.Sprintf(
-		"WARNING:\tExpires before %v (%d days)",
+		"%s:\tExpires before %v (%d days)",
+		nagios.StateWARNINGLabel,
 		certsExpireAgeWarning.Format(certs.CertValidityDateLayout),
 		config.AgeWarning,
 	)
 	nagiosExitState.CriticalThreshold = fmt.Sprintf(
-		"CRITICAL:\tExpires before %v (%d days)",
+		"%s:\tExpires before %v (%d days)",
+		nagios.StateCRITICALLabel,
 		certsExpireAgeCritical.Format(certs.CertValidityDateLayout),
 		config.AgeCritical,
 	)
@@ -94,8 +99,11 @@ func main() {
 
 	if err := logging.SetLoggingLevel(config.LoggingLevel); err != nil {
 		nagiosExitState.LastError = err
-		nagiosExitState.ServiceOutput = "CRITICAL: Error configuring logging level"
-		nagiosExitState.ExitStatusCode = nagios.StateCRITICAL
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error configuring logging level",
+			nagios.StateCRITICALLabel,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 		log.Err(err).Msg("configuring logging level")
 		nagiosExitState.ReturnCheckResults()
 	}
@@ -117,31 +125,45 @@ func main() {
 		Timeout: time.Duration(config.Timeout) * time.Second,
 	}
 
-	conn, err := tls.DialWithDialer(dialer, "tcp", server, &cfg)
-	if err != nil {
-		nagiosExitState.LastError = err
-		nagiosExitState.ServiceOutput = "Error connecting to " + server
-		nagiosExitState.ExitStatusCode = nagios.StateCRITICAL
-		log.Error().Err(err).Str("server", server).Msg("error connecting to server")
+	conn, connErr := tls.DialWithDialer(dialer, "tcp", server, &cfg)
+	if connErr != nil {
+		nagiosExitState.LastError = connErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error connecting to %s",
+			nagios.StateCRITICALLabel,
+			server,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+		log.Error().Err(connErr).Str("server", server).Msg("error connecting to server")
 		nagiosExitState.ReturnCheckResults()
 	}
 	log.Debug().Msg("Connected")
 
 	// certificate chain presented by remote peer
 	certChain := conn.ConnectionState().PeerCertificates
-	certsTotal := len(certChain)
+
+	certsSummary := certs.ChainSummary(
+		certChain,
+		certsExpireAgeCritical,
+		certsExpireAgeWarning,
+	)
 
 	// NOTE: Not sure this would ever be reached due to expectations of
 	// tls.Dial() that a certificate is present for the connection
-	if certsTotal == 0 {
-		nagiosExitState.LastError = fmt.Errorf("no certificates found")
-		nagiosExitState.ServiceOutput = "0 certificates found at " + server
-		nagiosExitState.ExitStatusCode = nagios.StateCRITICAL
-		log.Error().Err(err).Str("server", server).Msg("no certificates found")
+	if certsSummary.TotalCertsCount == 0 {
+		noCertsErr := fmt.Errorf("no certificates found")
+		nagiosExitState.LastError = noCertsErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: 0 certificates found at %q",
+			nagios.StateCRITICALLabel,
+			server,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+		log.Error().Err(noCertsErr).Str("server", server).Msg("no certificates found")
 		nagiosExitState.ReturnCheckResults()
 	}
 
-	if certsTotal > 0 {
+	if certsSummary.TotalCertsCount > 0 {
 
 		hostnameValue := config.Server
 
@@ -162,7 +184,7 @@ func main() {
 				hostnameValue,
 				certChain[0].Subject.CommonName,
 			)
-			nagiosExitState.ExitStatusCode = nagios.StateCRITICAL
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 			log.Error().
 				Err(err).
 				Str("server", config.Server).
@@ -199,12 +221,13 @@ func main() {
 				)
 
 				nagiosExitState.ServiceOutput = fmt.Sprintf(
-					"CRITICAL: Mismatch of %d SANs entries for certificate %q",
+					"%s: Mismatch of %d SANs entries for certificate %q",
+					nagios.StateCRITICALLabel,
 					mismatched,
 					config.Server,
 				)
 
-				nagiosExitState.ExitStatusCode = nagios.StateWARNING
+				nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 				log.Warn().
 					Err(nagiosExitState.LastError).
 					Int("sans_entries_requested", len(config.SANsEntries)).
@@ -216,26 +239,11 @@ func main() {
 		}
 	}
 
-	hasExpiredCerts, expiredCertsCount := certs.HasExpiredCert(certChain)
-	hasExpiringCerts, expiringCertsCount := certs.HasExpiringCert(
-		certChain,
-		certsExpireAgeCritical,
-		certsExpireAgeWarning,
-	)
-	validCertsCount := certsTotal - expiredCertsCount - expiringCertsCount
-
-	certsSummary := fmt.Sprintf(
-		"[EXPIRED: %d, EXPIRING: %d, OK: %d]",
-		expiredCertsCount,
-		expiringCertsCount,
-		validCertsCount,
-	)
-
-	if hasExpiredCerts || hasExpiringCerts {
+	if certsSummary.HasExpiredCerts || certsSummary.HasExpiringCerts {
 
 		nagiosExitState.LastError = fmt.Errorf(
 			"%d certificates expired or expiring",
-			expiredCertsCount+expiringCertsCount,
+			certsSummary.ExpiredCertsCount+certsSummary.ExpiringCertsCount,
 		)
 		nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
 			certChain,
@@ -243,35 +251,33 @@ func main() {
 			certsExpireAgeWarning,
 		)
 
-		certValidationFailureTmpl := "%s: Invalid certificate chain for %q %s"
+		if certsSummary.HasExpiringCerts {
 
-		if hasExpiringCerts {
-			nagiosExitState.ServiceOutput = fmt.Sprintf(
-				certValidationFailureTmpl,
-				"WARNING",
-				config.Server,
-				certsSummary,
+			nagiosExitState.ServiceOutput = certs.OneLineCheckSummary(
+				nagios.StateWARNINGLabel,
+				certChain,
+				certsSummary.Summary,
 			)
-			nagiosExitState.ExitStatusCode = nagios.StateWARNING
+
+			nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 			log.Warn().
 				Err(nagiosExitState.LastError).
-				Int("expiring_certs", expiringCertsCount).
-				Msg("expired certs present in chain")
+				Int("expiring_certs", certsSummary.ExpiringCertsCount).
+				Msg("expiring certs present in chain")
 		}
 
 		// intentionally overwrite/override "warning" status from the last
 		// check; expired certs are more of a concern than expiring certs
-		if hasExpiredCerts {
-			nagiosExitState.ServiceOutput = fmt.Sprintf(
-				certValidationFailureTmpl,
-				"CRITICAL",
-				config.Server,
-				certsSummary,
+		if certsSummary.HasExpiredCerts {
+			nagiosExitState.ServiceOutput = certs.OneLineCheckSummary(
+				nagios.StateCRITICALLabel,
+				certChain,
+				certsSummary.Summary,
 			)
-			nagiosExitState.ExitStatusCode = nagios.StateCRITICAL
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 			log.Error().
 				Err(nagiosExitState.LastError).
-				Int("expired_certs", expiredCertsCount).
+				Int("expired_certs", certsSummary.ExpiredCertsCount).
 				Msg("expired certs present in chain")
 		}
 
@@ -279,34 +285,20 @@ func main() {
 
 	}
 
-	// Give the all clear: no issues found. Do go ahead and mention the next
-	// expiration date in the chain for quick reference however.
-	nextCertToExpire := certs.NextToExpire(certChain)
-
-	// Start by assuming that the CommonName is *not* blank
-	nextCertToExpireServerName := nextCertToExpire.Subject.CommonName
-
-	// but if it is, use the first SubjectAlterateName field in its place
-	if nextCertToExpire.Subject.CommonName == "" {
-		if len(nextCertToExpire.DNSNames[0]) > 0 {
-			nextCertToExpireServerName = nextCertToExpire.DNSNames[0]
-		}
-	}
-
 	nagiosExitState.LastError = nil
-	nagiosExitState.ServiceOutput = fmt.Sprintf(
-		"%s: %s cert %q expires next (on %s)",
-		"OK",
-		certs.ChainPosition(nextCertToExpire),
-		nextCertToExpireServerName,
-		nextCertToExpire.NotAfter.Format(certs.CertValidityDateLayout),
+
+	nagiosExitState.ServiceOutput = certs.OneLineCheckSummary(
+		nagios.StateOKLabel,
+		certChain,
+		certsSummary.Summary,
 	)
+
 	nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
 		certChain,
 		certsExpireAgeCritical,
 		certsExpireAgeWarning,
 	)
-	nagiosExitState.ExitStatusCode = nagios.StateOK
+	nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 	log.Debug().Msg("No problems with certificate chain detected")
 	nagiosExitState.ReturnCheckResults()
 
