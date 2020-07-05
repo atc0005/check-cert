@@ -26,6 +26,117 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.2] - 2020-07-06
+
+### Added
+
+- The emitted calculations used for `WARNING` and `CRITICAL` thresholds is
+  intended as a helpful troubleshooting tool in case the results are not as
+  expected
+- Enable Dependabot updates
+  - GitHub Actions
+  - Go Modules
+- README
+  - Add `CRITICAL` threshold examples by using <https://expired.badssl.com/>
+    as the test host
+    - many thanks to that project for providing the service!
+  - Add `Shared` flags table
+
+### Changed
+
+- GoDoc `Usage` section now points reader to main README for usage details,
+  examples instead of duplicating the coverage
+  - the concern is that duplication will lead to the GoDoc copy getting out of
+    date with the main README
+
+- README
+  - Updated examples to reflect changes in this release
+  - Add additional coverage for threshold logic
+    - how it differs from the official `check_http` plugin
+    - `UTC` values (previously local time)
+    - emphasize that rounding is *not* used
+  - Change flag descriptions for threshold values in an attempt to better
+    explain the intent (coupled with the extra section for threshold
+    calculations, this should hopefully be clearer)
+
+- Update dependencies
+  - `actions/checkout`
+    - `v1` to `v2.3.1`
+  - `actions/setup-go`
+    - `v1` to `v2.1.0`
+  - `actions/setup-node`
+    - `v1` to `v2.1.0`
+  - `atc0005/go-nagios`
+    - `v0.2.0` to `v0.3.0`
+
+- `lscert`
+  - Tweak "next to expire" and "status overview" details to (hopefully) read
+    better at a quick glance
+  - Explicitly set `UTC` location for `now` variables
+  - Add new output block to list `WarningThreshold` and `CriticalThreshold`
+    formatted strings
+    - expiration date thresholds in number of days
+    - expiration date thresholds in specific dates/times
+  - Move potential `WARNING` summary item just below the potential `ERROR`
+    summary item, intentionally placing the FYI item last
+
+- `check_cert`
+  - rework one-line summary to provide feature parity with `check_http`
+    plugin, but with custom details specific to this plugin
+    - cert chain position
+    - status overview
+  - Add `NagiosExitState` struct fields
+    - `WarningThreshold`
+    - `CriticalThreshold`
+  - Add new output block to list `WarningThreshold` and `CriticalThreshold`
+    formatted strings
+    - expiration date thresholds in number of days
+    - expiration date thresholds in specific dates/times
+    - when reviewing the email notification (ticket) or looking at the web UI,
+      having this information available should help emphasize what values are
+      used to determine the current service check state
+
+- `lscert`, `check_cert`
+  - replace hard-coded status strings with const references
+  - Limit connection error scope
+
+- `internal/certs`
+  - Create new `ChainStatus` type to encompass the shared cert details
+    computed throughout both `check_cert` and `lscert` applications
+  - Update `NextToExpire` func to support including or excluding expired
+    certificates depending on the use case
+  - Add `ChainSummary` func to handle generating a `ChainStatus` value for use
+    throughout the application in place of one-off values
+
+### Fixed
+
+- gitignore
+  - Fix patterns for `check_cert` binary to only match at the root of the repo
+    and not subdirectories
+
+- README
+  - fix typos
+  - Remove reference to setting values in a config file (not yet implemented)
+
+- misc fixes, cleanup
+
+- Update various doc comments
+
+- Use shared const for intended date formatting instead of multiple hard-coded
+  layout strings
+
+- `lscert`
+  - Fix invalid cert count check
+
+- `lscert`, `check_cert`
+  - Fix struct field doc comment (referred to wrong field name)
+  - Server name: Use CN if set, otherwise first SANs to help prevent empty
+    server name in output
+
+- `internal/certs`
+  - `GenerateCertsReport` func updated to replace debug `String()` call with
+    explicit format
+
 ## [v0.1.1] - 2020-06-08
 
 ### Fixed
@@ -92,6 +203,7 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.2...HEAD
+[v0.1.2]: https://github.com/atc0005/check-cert/releases/tag/v0.1.2
 [v0.1.1]: https://github.com/atc0005/check-cert/releases/tag/v0.1.1
 [v0.1.0]: https://github.com/atc0005/check-cert/releases/tag/v0.1.0
