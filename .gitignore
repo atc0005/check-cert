@@ -28,4 +28,7 @@ scratch/
 /check_cert
 /check-cert
 
+# Ignore one-off CLI app builds
+/lscert
+
 /release_assets
