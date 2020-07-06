@@ -31,9 +31,11 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
   - [`check_cert` Nagios plugin](#check_cert-nagios-plugin)
     - [OK results](#ok-results)
     - [WARNING results](#warning-results)
+    - [CRITICAL results](#critical-results)
   - [`lscert` CLI tool](#lscert-cli-tool)
     - [OK results](#ok-results-1)
     - [WARNING results](#warning-results-1)
+    - [CRITICAL results](#critical-results-1)
 - [License](#license)
 - [References](#references)
 
@@ -289,24 +291,29 @@ certificate-enabled port on www.google.com. We override the default `WARNING`
 and `CRITICAL` age threshold values with somewhat arbitrary numbers.
 
 ```ShellSession
-.\check_cert.exe --server www.google.com --port 443 --age-critical 50 --age-warning 55
-OK: leaf cert "www.google.com" expires next (on 2020-08-12 12:08:31 +0000 UTC)
+$ ./check_cert --server www.google.com --port 443 --age-critical 50 --age-warning 55
+OK: leaf cert "www.google.com" expires next with 65d 3h remaining (until 2020-09-09 14:31:22 +0000 UTC) [EXPIRED: 0, EXPIRING: 0, OK: 2]
 
 **ERRORS**
 
 * None
+
+**CERTIFICATE AGE THRESHOLDS**
+
+* CRITICAL:     Expires before 2020-08-25 11:06:28 +0000 UTC (50 days)
+* WARNING:      Expires before 2020-08-30 11:06:28 +0000 UTC (55 days)
 
 **DETAILED INFO**
 
 Certificate 1 of 2 (leaf):
         Name: CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US
         SANs entries: [www.google.com]
-        KeyID: D:94:9F:90:8A:5C:E:B5:B5:DB:B7:79:7F:6A:9:42:3A:4D:CC:D4
+        KeyID: 8E:A3:6C:47:12:A7:A:7:5B:94:51:D6:2A:3F:72:F9:35:6:45:2C
         Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
         IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
-        Serial: 41166161160297429311704478035915443513
-        Expiration: 2020-08-12 12:08:31 +0000 UTC
-        Status: [OK] 66d 23h remaining
+        Serial: 336872288293767042001244177974291853363
+        Expiration: 2020-09-09 14:31:22 +0000 UTC
+        Status: [OK] 65d 3h remaining
 
 Certificate 2 of 2 (intermediate):
         Name: CN=GTS CA 1O1,O=Google Trust Services,C=US
@@ -316,7 +323,7 @@ Certificate 2 of 2 (intermediate):
         IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
         Serial: 149699596615803609916394524856
         Expiration: 2021-12-15 00:00:42 +0000 UTC
-        Status: [OK] 556d 11h remaining
+        Status: [OK] 526d 12h remaining
 ```
 
 See the `WARNING` example output for additional details.
@@ -326,29 +333,34 @@ See the `WARNING` example output for additional details.
 Here we do the same thing again, but using the expiration date values returned
 earlier as a starting point, we intentionally move the threshold values in
 order to trigger a `WARNING` state for the leaf certificate: if the leaf
-certificate is good for 66 days and 23 hours more, we indicate that warnings
-that should triggered once the cert has fewer than 67 days left.
+certificate is good for 65 days and 3 hours more, we indicate that warnings
+that should triggered once the cert has fewer than 66 days left.
 
 ```ShellSession
-.\check_cert.exe --server www.google.com --port 443 --age-critical 50 --age-warning 67
-{"level":"warn","version":"x.y.z","logging_level":"info","server":"www.google.com","port":443,"age_warning":67,"age_critical":50,"expected_sans_entries":"","error":"1 certificates expired or expiring","expiring_certs":1,"caller":"T:/github/check-cert/cmd/check_cert/main.go:218","message":"expired certs present in chain"}
-WARNING: Invalid certificate chain for "www.google.com" [EXPIRED: 0, EXPIRING: 1, OK: 1]
+$ ./check_c./check_cert --server www.google.com --port 443 --age-critical 50 --age-warning 66
+{"level":"warn","version":"x.y.z","logging_level":"info","server":"www.google.com","port":443,"age_warning":66,"age_critical":50,"expected_sans_entries":"","error":"1 certificates expired or expiring","expiring_certs":1,"caller":"/mnt/t/github/check-cert/cmd/check_cert/main.go:266","message":"expiring certs present in chain"}
+WARNING: leaf cert "www.google.com" expires next with 65d 3h remaining (until 2020-09-09 14:31:22 +0000 UTC) [EXPIRED: 0, EXPIRING: 1, OK: 1]
 
 **ERRORS**
 
 * 1 certificates expired or expiring
+
+**CERTIFICATE AGE THRESHOLDS**
+
+* CRITICAL:     Expires before 2020-08-25 11:07:49 +0000 UTC (50 days)
+* WARNING:      Expires before 2020-09-10 11:07:49 +0000 UTC (66 days)
 
 **DETAILED INFO**
 
 Certificate 1 of 2 (leaf):
         Name: CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US
         SANs entries: [www.google.com]
-        KeyID: D:94:9F:90:8A:5C:E:B5:B5:DB:B7:79:7F:6A:9:42:3A:4D:CC:D4
+        KeyID: 8E:A3:6C:47:12:A7:A:7:5B:94:51:D6:2A:3F:72:F9:35:6:45:2C
         Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
         IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
-        Serial: 41166161160297429311704478035915443513
-        Expiration: 2020-08-12 12:08:31 +0000 UTC
-        Status: [WARNING] 66d 23h remaining
+        Serial: 336872288293767042001244177974291853363
+        Expiration: 2020-09-09 14:31:22 +0000 UTC
+        Status: [WARNING] 65d 3h remaining
 
 Certificate 2 of 2 (intermediate):
         Name: CN=GTS CA 1O1,O=Google Trust Services,C=US
@@ -358,7 +370,7 @@ Certificate 2 of 2 (intermediate):
         IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
         Serial: 149699596615803609916394524856
         Expiration: 2021-12-15 00:00:42 +0000 UTC
-        Status: [OK] 556d 11h remaining
+        Status: [OK] 526d 12h remaining
 ```
 
 Some items to note (in order of appearance):
@@ -373,6 +385,8 @@ Some items to note (in order of appearance):
    - this is used by Nagios for text, email and whatever else notifications
      (if configured)
 1. The `ERRORS` section notes briefly what is wrong with the cert
+1. The `CERTIFICATE AGE THRESHOLDS` section notes what (calculated) thresholds
+   were used to determine the current service check status (results)
 1. The `DETAILED INFO` section contains an overview of the certificate chain
    - this is used by Nagios for display on the detailed service check-specific
      page (e.g., shows last check time, frequency, current state, etc)
@@ -382,6 +396,59 @@ Some items to note (in order of appearance):
    and this plugin set the appropriate exit code to let Nagios know of the
    state change.
 
+#### CRITICAL results
+
+Here we use the expired.badssl.com subdomain to demo the results of
+encountering one or more (in this case more) expired certificates in a chain.
+Aside from the FQDN, all default options (including the port) are used.
+
+```ShellSession
+$ ./check_cert --server expired.badssl.com
+{"level":"error","version":"x.y.z","logging_level":"info","server":"expired.badssl.com","port":443,"age_warning":30,"age_critical":15,"expected_sans_entries":"","error":"2 certificates expired or expiring","expired_certs":2,"caller":"/mnt/t/github/check-cert/cmd/check_cert/main.go:281","message":"expired certs present in chain"}
+CRITICAL: leaf cert "*.badssl.com" expired 1911d 11h ago (on 2015-04-12 23:59:59 +0000 UTC) [EXPIRED: 2, EXPIRING: 0, OK: 1]
+
+**ERRORS**
+
+* 2 certificates expired or expiring
+
+**CERTIFICATE AGE THRESHOLDS**
+
+* CRITICAL:     Expires before 2020-07-21 11:11:01 +0000 UTC (15 days)
+* WARNING:      Expires before 2020-08-05 11:11:01 +0000 UTC (30 days)
+
+**DETAILED INFO**
+
+Certificate 1 of 3 (leaf):
+        Name: CN=*.badssl.com,OU=Domain Control Validated+OU=PositiveSSL Wildcard
+        SANs entries: [*.badssl.com badssl.com]
+        KeyID: 9D:EE:C1:7B:81:B:3A:47:69:71:18:7D:11:37:93:BC:A5:1B:3F:FB
+        Issuer: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
+        IssuerKeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
+        Serial: 99565320202650452861752791156765321481
+        Expiration: 2015-04-12 23:59:59 +0000 UTC
+        Status: [EXPIRED] 1911d 11h ago
+
+Certificate 2 of 3 (intermediate):
+        Name: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
+        SANs entries: []
+        KeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
+        Issuer: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
+        IssuerKeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
+        Serial: 57397899145990363081023081275480378375
+        Expiration: 2029-02-11 23:59:59 +0000 UTC
+        Status: [OK] 3142d 12h remaining
+
+Certificate 3 of 3 (intermediate):
+        Name: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
+        SANs entries: []
+        KeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
+        Issuer: CN=AddTrust External CA Root,OU=AddTrust External TTP Network,O=AddTrust AB,C=SE
+        IssuerKeyID: AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:3:BD:E0:24:CB:54:1A
+        Serial: 52374340215108295845375962883522092578
+        Expiration: 2020-05-30 10:48:38 +0000 UTC
+        Status: [EXPIRED] 37d 0h ago
+```
+
 ### `lscert` CLI tool
 
 #### OK results
@@ -390,9 +457,17 @@ This example shows using the CLI app to perform the same initial check that we
 performed earlier using the Nagios plugin.
 
 ```ShellSession
-.\lscert.exe --server www.google.com --port 443 --age-critical 50 --age-warning 55
+$ ./lscert --server www.google.com --port 443 --age-critical 50 --age-warning 55
 
 Connecting to remote server "www.google.com" at port 443
+
+
+=============================
+CERTIFICATES | AGE THRESHOLDS
+=============================
+
+- WARNING:      Expires before 2020-08-30 11:12:01 +0000 UTC (55 days)
+- CRITICAL:     Expires before 2020-08-25 11:12:01 +0000 UTC (50 days)
 
 
 ======================
@@ -401,7 +476,9 @@ CERTIFICATES | SUMMARY
 
 - OK: 2 certs found for service running on www.google.com at port 443
 - OK: Provided hostname matches discovered certificate
-- FYI: leaf cert "www.google.com" expires next (on 2020-08-12 12:08:31 +0000 UTC)
+- OK: leaf cert "www.google.com" expires next with 65d 3h remaining (until 2020-09-09 14:31:22 +0000 UTC)
+- OK: [EXPIRED: 0, EXPIRING: 0, OK: 2]
+
 
 ============================
 CERTIFICATES | CHAIN DETAILS
@@ -410,12 +487,12 @@ CERTIFICATES | CHAIN DETAILS
 Certificate 1 of 2 (leaf):
         Name: CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US
         SANs entries: [www.google.com]
-        KeyID: D:94:9F:90:8A:5C:E:B5:B5:DB:B7:79:7F:6A:9:42:3A:4D:CC:D4
+        KeyID: 8E:A3:6C:47:12:A7:A:7:5B:94:51:D6:2A:3F:72:F9:35:6:45:2C
         Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
         IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
-        Serial: 41166161160297429311704478035915443513
-        Expiration: 2020-08-12 12:08:31 +0000 UTC
-        Status: [OK] 66d 23h remaining
+        Serial: 336872288293767042001244177974291853363
+        Expiration: 2020-09-09 14:31:22 +0000 UTC
+        Status: [OK] 65d 3h remaining
 
 Certificate 2 of 2 (intermediate):
         Name: CN=GTS CA 1O1,O=Google Trust Services,C=US
@@ -425,15 +502,23 @@ Certificate 2 of 2 (intermediate):
         IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
         Serial: 149699596615803609916394524856
         Expiration: 2021-12-15 00:00:42 +0000 UTC
-        Status: [OK] 556d 11h remaining
+        Status: [OK] 526d 12h remaining
 ```
 
 #### WARNING results
 
 ```ShellSession
-.\lscert.exe --server www.google.com --port 443 --age-critical 50 --age-warning 67
+$ ./lscert --server www.google.com --port 443 --age-critical 50 --age-warning 66
 
 Connecting to remote server "www.google.com" at port 443
+
+
+=============================
+CERTIFICATES | AGE THRESHOLDS
+=============================
+
+- WARNING:      Expires before 2020-09-10 11:13:11 +0000 UTC (66 days)
+- CRITICAL:     Expires before 2020-08-25 11:13:11 +0000 UTC (50 days)
 
 
 ======================
@@ -442,8 +527,9 @@ CERTIFICATES | SUMMARY
 
 - OK: 2 certs found for service running on www.google.com at port 443
 - OK: Provided hostname matches discovered certificate
-- WARNING: 1 certificates expiring soon
-- FYI: leaf cert "www.google.com" expires next (on 2020-08-12 12:08:31 +0000 UTC)
+- WARNING: leaf cert "www.google.com" expires next with 65d 3h remaining (until 2020-09-09 14:31:22 +0000 UTC)
+- WARNING: [EXPIRED: 0, EXPIRING: 1, OK: 1]
+
 
 ============================
 CERTIFICATES | CHAIN DETAILS
@@ -452,12 +538,12 @@ CERTIFICATES | CHAIN DETAILS
 Certificate 1 of 2 (leaf):
         Name: CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US
         SANs entries: [www.google.com]
-        KeyID: D:94:9F:90:8A:5C:E:B5:B5:DB:B7:79:7F:6A:9:42:3A:4D:CC:D4
+        KeyID: 8E:A3:6C:47:12:A7:A:7:5B:94:51:D6:2A:3F:72:F9:35:6:45:2C
         Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
         IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
-        Serial: 41166161160297429311704478035915443513
-        Expiration: 2020-08-12 12:08:31 +0000 UTC
-        Status: [WARNING] 66d 23h remaining
+        Serial: 336872288293767042001244177974291853363
+        Expiration: 2020-09-09 14:31:22 +0000 UTC
+        Status: [WARNING] 65d 3h remaining
 
 Certificate 2 of 2 (intermediate):
         Name: CN=GTS CA 1O1,O=Google Trust Services,C=US
@@ -467,14 +553,93 @@ Certificate 2 of 2 (intermediate):
         IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
         Serial: 149699596615803609916394524856
         Expiration: 2021-12-15 00:00:42 +0000 UTC
-        Status: [OK] 556d 11h remaining
+        Status: [OK] 526d 12h remaining
 ```
 
 In general, the differences between the `OK` and `WARNING` output for the two
 tools is minor. However, unlike the `check_cert` Nagios plugin where we are
 limited to one line of summary output, the `lscert` CLI tool doesn't share the
 same output requirements and can be more expressive (e.g., such as the summary
-section to highlight particular items of interest).
+section to highlight particular items of interest). Like the `check_cert`
+Nagios plugin, the `lscert` CLI tool also displays the thresholds used to
+determine the state of the checks applied to the certificate chain.
+
+#### CRITICAL results
+
+Here we use the expired.badssl.com subdomain to demo the results of
+encountering one or more (in this case more) expired certificates in a chain.
+Aside from the FQDN, all default options (including the port) are used.
+
+```ShellSession
+$ ./lscert --server expired.badssl.com
+
+Connecting to remote server "expired.badssl.com" at port 443
+
+
+=============================
+CERTIFICATES | AGE THRESHOLDS
+=============================
+
+- WARNING:      Expires before 2020-08-05 11:14:32 +0000 UTC (30 days)
+- CRITICAL:     Expires before 2020-07-21 11:14:32 +0000 UTC (15 days)
+
+
+======================
+CERTIFICATES | SUMMARY
+======================
+
+- OK: 3 certs found for service running on expired.badssl.com at port 443
+- OK: Provided hostname matches discovered certificate
+- CRITICAL: leaf cert "*.badssl.com" expired 1911d 11h ago (on 2015-04-12 23:59:59 +0000 UTC)
+- CRITICAL: [EXPIRED: 2, EXPIRING: 0, OK: 1]
+
+
+============================
+CERTIFICATES | CHAIN DETAILS
+============================
+
+Certificate 1 of 3 (leaf):
+        Name: CN=*.badssl.com,OU=Domain Control Validated+OU=PositiveSSL Wildcard
+        SANs entries: [*.badssl.com badssl.com]
+        KeyID: 9D:EE:C1:7B:81:B:3A:47:69:71:18:7D:11:37:93:BC:A5:1B:3F:FB
+        Issuer: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
+        IssuerKeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
+        Serial: 99565320202650452861752791156765321481
+        Expiration: 2015-04-12 23:59:59 +0000 UTC
+        Status: [EXPIRED] 1911d 11h ago
+
+Certificate 2 of 3 (intermediate):
+        Name: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
+        SANs entries: []
+        KeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
+        Issuer: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
+        IssuerKeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
+        Serial: 57397899145990363081023081275480378375
+        Expiration: 2029-02-11 23:59:59 +0000 UTC
+        Status: [OK] 3142d 12h remaining
+
+Certificate 3 of 3 (intermediate):
+        Name: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
+        SANs entries: []
+        KeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
+        Issuer: CN=AddTrust External CA Root,OU=AddTrust External TTP Network,O=AddTrust AB,C=SE
+        IssuerKeyID: AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:3:BD:E0:24:CB:54:1A
+        Serial: 52374340215108295845375962883522092578
+        Expiration: 2020-05-30 10:48:38 +0000 UTC
+        Status: [EXPIRED] 37d 0h ago
+```
+
+Some items to note in the `CERTIFICATES | SUMMARY` section:
+
+- the certificate which expired first (leaf cert `*.badssl.com`) is listed
+  - chain position
+  - expiration summary
+  - expiration date
+- a quick count of the `EXPIRED`, `EXPIRING` and `OK` certificates
+- future work here might list out *all* expired certs, but the assumption
+  was that listing the first one to expire and then listing out the chain
+  details in the following section (with explicit notes re expiration
+  status) was sufficient coverage
 
 ## License
 
