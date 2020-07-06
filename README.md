@@ -511,6 +511,12 @@ SOFTWARE.
 - <https://github.com/atc0005/go-nagios>
 - <https://nagios-plugins.org/doc/guidelines.html>
 
+- badssl.com
+  - <https://github.com/chromium/badssl.com>
+  - <https://expired.badssl.com/>
+    - useful test target to demo output of tools, confirm expiration
+      validation works as intended
+
 <!-- Footnotes here  -->
 
 [repo-url]: <https://github.com/atc0005/check-cert>  "This project's GitHub repo"
