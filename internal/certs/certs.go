@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -32,12 +33,12 @@ const (
 	certChainPositionUnknown      string = "UNKNOWN cert chain position; please submit a bug report"
 )
 
-// CertCertCheckOneLineSummaryTmpl is a shared template string used for
-// emitting one-line service check status output for certificate chains whose
+// CertCheckOneLineSummaryTmpl is a shared template string used for emitting
+// one-line service check status output for certificate chains whose
 // certificates have not expired yet.
 const CertCheckOneLineSummaryTmpl string = "%s: %s cert %q expires next with %s (until %s) %s"
 
-// CertCertCheckOneLineSummaryExpiredTmpl is a shared template string used for
+// CertCheckOneLineSummaryExpiredTmpl is a shared template string used for
 // emitting one-line service check status output for certificate chains with
 // expired certificates.
 const CertCheckOneLineSummaryExpiredTmpl string = "%s: %s cert %q expired %s (on %s) %s"
@@ -96,8 +97,9 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 	var certChain []*x509.Certificate
 
-	// Read in the entire PEM certificate file
-	pemData, err := ioutil.ReadFile(filename)
+	// Read in the entire PEM certificate file after first attempting to
+	// sanitize the input file variable contents.
+	pemData, err := ioutil.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -189,11 +191,11 @@ func HasExpiringCert(certChain []*x509.Certificate, ageCritical time.Time, ageWa
 
 }
 
-// FormattedTimeUntilExpiration receives a Time value and converts it to a
-// string representing the largest useful whole units of time in days and
-// hours. For example, if a certificate has 1 year, 2 days and 3 hours
-// remaining, this function will return the string 367d 3h, but if only 3
-// hours remain then 3h will be returned.
+// FormattedExpiration receives a Time value and converts it to a string
+// representing the largest useful whole units of time in days and hours. For
+// example, if a certificate has 1 year, 2 days and 3 hours remaining, this
+// function will return the string 367d 3h, but if only 3 hours remain then 3h
+// will be returned.
 func FormattedExpiration(expireTime time.Time) string {
 
 	// hoursRemaining := time.Until(certificate.NotAfter)/time.Hour)/24,
@@ -280,8 +282,8 @@ func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning 
 
 }
 
-// ChainChainPosition receives a cert and returns a string indicating what
-// position or "role" it occurpies in the certificate chain
+// ChainPosition receives a cert and returns a string indicating what position
+// or "role" it occurpies in the certificate chain
 func ChainPosition(cert *x509.Certificate) string {
 
 	var certPosition string
