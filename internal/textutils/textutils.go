@@ -37,6 +37,8 @@ func LowerCaseStringSlice(xs []string) []string {
 	return lxs
 }
 
+// PrintHeader printers a section header to help separate otherwise
+// potentially dense blocks of text.
 func PrintHeader(headerText string) {
 	headerBorderStr := strings.Repeat("=", len(headerText))
 	fmt.Printf(
