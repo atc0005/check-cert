@@ -1,29 +1,64 @@
 // Copyright 2020 Adam Chalkley
 //
-// https://github.com/atc0005/check-cert
+// https://github.com/atc0005/go-nagios
 //
 // Licensed under the MIT License. See LICENSE file in the project root for
 // full license information.
 
-package main
+// Package nagios is a small collection of common types and package-level
+// variables intended for use with various plugins to reduce code duplication.
+package nagios
 
 import (
 	"fmt"
 	"os"
 )
 
-// NagiosExitCallBackFunc represents a function that is called as a final step
+// Nagios plugin/service check states. These constants replicate the values
+// from utils.sh which is normally found at one of these two locations,
+// depending on which Linux distribution you're using:
+//
+//     /usr/lib/nagios/plugins/utils.sh
+//     /usr/local/nagios/libexec/utils.sh
+//
+// See also http://nagios-plugins.org/doc/guidelines.html
+const (
+	StateOKExitCode        int = 0
+	StateWARNINGExitCode   int = 1
+	StateCRITICALExitCode  int = 2
+	StateUNKNOWNExitCode   int = 3
+	StateDEPENDENTExitCode int = 4
+)
+
+// Nagios plugin/service check state "labels". These constants are provided as
+// an alternative to using literal state strings throughout client application
+// code.
+const (
+	StateOKLabel        string = "OK"
+	StateWARNINGLabel   string = "WARNING"
+	StateCRITICALLabel  string = "CRITICAL"
+	StateUNKNOWNLabel   string = "UKNOWN"
+	StateDEPENDENTLabel string = "DEPENDENT"
+)
+
+// CheckOutputEOL is the newline used with formatted service and host check
+// output. Based on previous testing, Nagios treats LF newlines within the
+// `$LONGSERVICEOUTPUT$` macro as literal values instead of parsing them for
+// display purposes. Using DOS EOL values with `fmt.Printf()` gives the
+// results that we're looking for with that output and (presumably) host check
+// output as well.
+const CheckOutputEOL string = "\r\n"
+
+// ExitCallBackFunc represents a function that is called as a final step
 // before application termination so that branding information can be emitted
 // for inclusion in the notification. This helps identify which specific
 // application (and its version) that is responsible for the notification.
-type NagiosExitCallBackFunc func() string
+type ExitCallBackFunc func() string
 
-// NagiosExitState represents the last known execution state of the
+// ExitState represents the last known execution state of the
 // application, including the most recent error and the final intended plugin
 // state.
-// TODO: Refine this further and consider moving to the atc0005/go-nagios
-// package.
-type NagiosExitState struct {
+type ExitState struct {
 
 	// LastError is the last error encountered which should be reported as
 	// part of ending the service check (e.g., "Failed to connect to XYZ to
@@ -56,13 +91,14 @@ type NagiosExitState struct {
 
 	// BrandingCallback is a function that is called before application
 	// termination to emit branding details at the end of the notification.
-	// See also NagiosExitCallBackFunc.
-	BrandingCallback NagiosExitCallBackFunc
+	// See also ExitCallBackFunc.
+	BrandingCallback ExitCallBackFunc
 }
 
-// ReturnCheckResults is intended to be called with the defer keyword. Nagios
-// relies on plugin exit codes to determine success/failure of checks; in
-// order to safely apply a final exit code without halting normal program
+// ReturnCheckResults is intended to be called with the defer keyword.
+//
+// Nagios relies on plugin exit codes to determine success/failure of checks;
+// in order to safely apply a final exit code without halting normal program
 // execution the defer keyword is used to allow this function to execute after
 // normal program execution completes.
 //
@@ -79,7 +115,7 @@ type NagiosExitState struct {
 // intended plugin exit state. Since this codeblock runs as the last step
 // in the application, it can safely call os.Exit() to set the desired
 // exit code without blocking other deferred functions from running.
-func (nes NagiosExitState) ReturnCheckResults() {
+func (es ExitState) ReturnCheckResults() {
 
 	// ##################################################################
 	// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
@@ -90,44 +126,46 @@ func (nes NagiosExitState) ReturnCheckResults() {
 
 	// One-line output used as the summary or short explanation for the
 	// specific Nagios state that we are returning.
-	fmt.Printf(nes.ServiceOutput)
+	fmt.Printf(es.ServiceOutput)
 
-	if nes.LongServiceOutput != "" || nes.LastError != nil {
+	if es.LongServiceOutput != "" || es.LastError != nil {
 
-		// fmt.Printf("\nAdditional details:\n\n")
-		fmt.Printf("\r\n\r\n**ERRORS**\r\n")
+		fmt.Printf("%s%s**ERRORS**%s", CheckOutputEOL, CheckOutputEOL, CheckOutputEOL)
 
 		// If an error occurred or if there are additional details to share ...
 
-		if nes.LastError != nil {
-			fmt.Printf("\r\n* %v\r\n", nes.LastError)
+		if es.LastError != nil {
+			fmt.Printf("%s* %v%s", CheckOutputEOL, es.LastError, CheckOutputEOL)
 		} else {
-			fmt.Printf("\r\n* None\r\n")
+			fmt.Printf("%s* None%s", CheckOutputEOL, CheckOutputEOL)
 		}
 
-		if nes.LongServiceOutput != "" {
+		if es.LongServiceOutput != "" {
 
-			fmt.Printf("\r\n**CERTIFICATE AGE THRESHOLDS**\r\n\r\n")
+			fmt.Printf(
+				"%s**THRESHOLDS**%s%s",
+				CheckOutputEOL, CheckOutputEOL, CheckOutputEOL,
+			)
 
-			fmt.Printf("* %v\r\n", nes.CriticalThreshold)
-			fmt.Printf("* %v\r\n", nes.WarningThreshold)
+			fmt.Printf("* %v%s", es.CriticalThreshold, CheckOutputEOL)
+			fmt.Printf("* %v%s", es.WarningThreshold, CheckOutputEOL)
 
-			fmt.Printf("\r\n**DETAILED INFO**\r\n")
+			fmt.Printf("%s**DETAILED INFO**%s", CheckOutputEOL, CheckOutputEOL)
 
 			// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
 			// interpret them literally instead of emitting an actual newline.
 			// We work around that by using fmt.Printf() for output that is
 			// intended for display within the Nagios web UI.
-			fmt.Printf("%v\r\n", nes.LongServiceOutput)
+			fmt.Printf("%v%s", es.LongServiceOutput, CheckOutputEOL)
 		}
 
 	}
 
 	// If set, call user-provided branding function just before exiting
 	// application
-	if nes.BrandingCallback != nil {
-		fmt.Printf("\r\n%s\r\n", nes.BrandingCallback())
+	if es.BrandingCallback != nil {
+		fmt.Printf("%s%s%s", CheckOutputEOL, es.BrandingCallback(), CheckOutputEOL)
 	}
 
-	os.Exit(nes.ExitStatusCode)
+	os.Exit(es.ExitStatusCode)
 }
