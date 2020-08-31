@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// Set initial "state" as valid, adjust as we go.
-	var nagiosExitState = NagiosExitState{
+	var nagiosExitState = nagios.ExitState{
 		LastError:      nil,
 		ExitStatusCode: nagios.StateOKExitCode,
 	}
