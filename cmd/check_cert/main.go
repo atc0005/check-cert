@@ -64,13 +64,13 @@ func main() {
 	certsExpireAgeCritical := now.AddDate(0, 0, config.AgeCritical)
 
 	nagiosExitState.WarningThreshold = fmt.Sprintf(
-		"%s:\tExpires before %v (%d days)",
+		"%s: Expires before %v (%d days)",
 		nagios.StateWARNINGLabel,
 		certsExpireAgeWarning.Format(certs.CertValidityDateLayout),
 		config.AgeWarning,
 	)
 	nagiosExitState.CriticalThreshold = fmt.Sprintf(
-		"%s:\tExpires before %v (%d days)",
+		"%s: Expires before %v (%d days)",
 		nagios.StateCRITICALLabel,
 		certsExpireAgeCritical.Format(certs.CertValidityDateLayout),
 		config.AgeCritical,
