@@ -26,6 +26,21 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.4] - 2020-09-01
+
+### Changed
+
+- Dependencies
+  - upgrade `atc0005/go-nagios`
+    - `v0.3.0` to `v0.4.0`
+
+- Replace local implementation of `NagiosExitState` type and associated method
+  with type/method now provided by the `atc0005/go-nagios` package
+
+### Fixed
+
+- threshold key/value pair whitespace rendering
+
 ## [v0.1.3] - 2020-08-22
 
 ### Added
@@ -270,7 +285,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.4...HEAD
+[v0.1.4]: https://github.com/atc0005/check-cert/releases/tag/v0.1.4
 [v0.1.3]: https://github.com/atc0005/check-cert/releases/tag/v0.1.3
 [v0.1.2]: https://github.com/atc0005/check-cert/releases/tag/v0.1.2
 [v0.1.1]: https://github.com/atc0005/check-cert/releases/tag/v0.1.1
