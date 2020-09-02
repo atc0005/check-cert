@@ -117,6 +117,11 @@ func main() {
 			log.Error().Err(connErr).Msgf("error connecting to server")
 			os.Exit(1)
 		}
+		defer func() {
+			if err := conn.Close(); err != nil {
+				log.Error().Err(err).Msgf("error closing connection to server")
+			}
+		}()
 		log.Debug().Msg("Connected")
 
 		// certificate chain presented by remote peer
@@ -159,7 +164,12 @@ func main() {
 	if certsSummary.TotalCertsCount == 0 {
 		noCertsErr := fmt.Errorf("no certificates found")
 		log.Err(noCertsErr).Msg("")
-		os.Exit(1)
+
+		// defer os.Exit so that the deferred server connection close step can
+		// run
+		defer func() {
+			os.Exit(1)
+		}()
 	}
 
 	fmt.Printf(

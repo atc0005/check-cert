@@ -105,6 +105,9 @@ func main() {
 		)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 		log.Err(err).Msg("configuring logging level")
+
+		// no need to defer this, we *want* to exit right away; we don't have
+		// a working configuration and there isn't anything further to do
 		nagiosExitState.ReturnCheckResults()
 	}
 
@@ -135,8 +138,17 @@ func main() {
 		)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 		log.Error().Err(connErr).Str("server", server).Msg("error connecting to server")
+
+		// no need to defer this, we *want* to exit right away; we don't have
+		// a connection to the remote server and there isn't anything further
+		// we can do
 		nagiosExitState.ReturnCheckResults()
 	}
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Error().Err(err).Msgf("error closing connection to server")
+		}
+	}()
 	log.Debug().Msg("Connected")
 
 	// certificate chain presented by remote peer
@@ -160,7 +172,11 @@ func main() {
 		)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 		log.Error().Err(noCertsErr).Str("server", server).Msg("no certificates found")
-		nagiosExitState.ReturnCheckResults()
+
+		// NOTE: We need to pair the two steps so that deferred functions will
+		// run as intended.
+		defer nagiosExitState.ReturnCheckResults()
+		return
 	}
 
 	if certsSummary.TotalCertsCount > 0 {
@@ -192,7 +208,9 @@ func main() {
 				Str("cert_cn", certChain[0].Subject.CommonName).
 				Str("sans_entries", fmt.Sprintf("%s", certChain[0].DNSNames)).
 				Msg("hostname does not match first cert in chain")
-			nagiosExitState.ReturnCheckResults()
+
+			defer nagiosExitState.ReturnCheckResults()
+			return
 
 		}
 
@@ -233,7 +251,9 @@ func main() {
 					Int("sans_entries_requested", len(config.SANsEntries)).
 					Int("sans_entries_found", len(certChain)).
 					Msg("SANs entries mismatch")
-				nagiosExitState.ReturnCheckResults()
+
+				defer nagiosExitState.ReturnCheckResults()
+				return
 
 			}
 		}
@@ -281,7 +301,8 @@ func main() {
 				Msg("expired certs present in chain")
 		}
 
-		nagiosExitState.ReturnCheckResults()
+		defer nagiosExitState.ReturnCheckResults()
+		return
 
 	}
 
@@ -300,6 +321,8 @@ func main() {
 	)
 	nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 	log.Debug().Msg("No problems with certificate chain detected")
-	nagiosExitState.ReturnCheckResults()
+
+	// defer is still needed here to allow other deferred function calls to run
+	defer nagiosExitState.ReturnCheckResults()
 
 }
