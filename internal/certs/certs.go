@@ -226,9 +226,7 @@ func FormattedExpiration(expireTime time.Time) string {
 	// simplified
 	hoursRemaining := math.Trunc(timeRemaining - (daysRemaining * 24))
 
-	//if hoursRemaining > 0 {
 	hoursRemainingStr = fmt.Sprintf("%dh", int64(hoursRemaining))
-	//}
 
 	formattedTimeRemainingStr = strings.Join([]string{
 		daysRemainingStr, hoursRemainingStr}, " ")
