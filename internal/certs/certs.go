@@ -327,28 +327,38 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 		// FWIW: Nagios seems to display `\n` literally, but interpret `\r\n`
 		// as the intended newline. Using `\r\n` seems to work normally when
 		// testing with Ubuntu console output, so presumably this is fine
-		// elsewhere too?
+		// elsewhere too? The `\r\n` escape sequence "set" is provided by the
+		// `nagios` package as `nagios.CheckOutputEOL`.
 		certsReport += fmt.Sprintf(
-			"\r\nCertificate %d of %d (%s):"+
-				"\r\n\tName: %s"+
-				"\r\n\tSANs entries: %s"+
-				"\r\n\tKeyID: %v"+
-				"\r\n\tIssuer: %s"+
-				"\r\n\tIssuerKeyID: %v"+
-				"\r\n\tSerial: %s"+
-				"\r\n\tExpiration: %s"+
-				"\r\n\tStatus: %s\r\n",
+			"Certificate %d of %d (%s):"+
+				"%s\tName: %s"+
+				"%s\tSANs entries: %s"+
+				"%s\tKeyID: %v"+
+				"%s\tIssuer: %s"+
+				"%s\tIssuerKeyID: %v"+
+				"%s\tSerial: %s"+
+				"%s\tExpiration: %s"+
+				"%s\tStatus: %s%s",
 			idx+1,
 			certsTotal,
 			certPosition,
+			nagios.CheckOutputEOL,
 			certificate.Subject,
+			nagios.CheckOutputEOL,
 			certificate.DNSNames,
+			nagios.CheckOutputEOL,
 			ConvertKeyIDToHexStr(certificate.SubjectKeyId),
+			nagios.CheckOutputEOL,
 			certificate.Issuer,
+			nagios.CheckOutputEOL,
 			ConvertKeyIDToHexStr(certificate.AuthorityKeyId),
+			nagios.CheckOutputEOL,
 			certificate.SerialNumber,
+			nagios.CheckOutputEOL,
 			certificate.NotAfter.Format(CertValidityDateLayout),
+			nagios.CheckOutputEOL,
 			expiresText,
+			nagios.CheckOutputEOL,
 		)
 
 	}

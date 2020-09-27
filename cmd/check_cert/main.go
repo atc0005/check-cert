@@ -41,6 +41,9 @@ func main() {
 		ExitStatusCode: nagios.StateOKExitCode,
 	}
 
+	// defer this from the start so it is the last deferred function to run
+	defer nagiosExitState.ReturnCheckResults()
+
 	if err := config.Validate(); err != nil {
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error validating configuration",
@@ -49,7 +52,10 @@ func main() {
 		nagiosExitState.LastError = err
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 		log.Err(err).Msg("Error validating configuration")
-		nagiosExitState.ReturnCheckResults()
+
+		// no need to go any further, we *want* to exit right away; we don't
+		// have a working configuration and there isn't anything further to do
+		return
 	}
 
 	if config.EmitBranding {
@@ -64,14 +70,12 @@ func main() {
 	certsExpireAgeCritical := now.AddDate(0, 0, config.AgeCritical)
 
 	nagiosExitState.WarningThreshold = fmt.Sprintf(
-		"%s: Expires before %v (%d days)",
-		nagios.StateWARNINGLabel,
+		"Expires before %v (%d days)",
 		certsExpireAgeWarning.Format(certs.CertValidityDateLayout),
 		config.AgeWarning,
 	)
 	nagiosExitState.CriticalThreshold = fmt.Sprintf(
-		"%s: Expires before %v (%d days)",
-		nagios.StateCRITICALLabel,
+		"Expires before %v (%d days)",
 		certsExpireAgeCritical.Format(certs.CertValidityDateLayout),
 		config.AgeCritical,
 	)
@@ -108,7 +112,7 @@ func main() {
 
 		// no need to defer this, we *want* to exit right away; we don't have
 		// a working configuration and there isn't anything further to do
-		nagiosExitState.ReturnCheckResults()
+		return
 	}
 
 	server := fmt.Sprintf("%s:%d", config.Server, config.Port)
@@ -139,10 +143,10 @@ func main() {
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 		log.Error().Err(connErr).Str("server", server).Msg("error connecting to server")
 
-		// no need to defer this, we *want* to exit right away; we don't have
-		// a connection to the remote server and there isn't anything further
-		// we can do
-		nagiosExitState.ReturnCheckResults()
+		// no need to go any further, we *want* to exit right away; we don't
+		// have a connection to the remote server and there isn't anything
+		// further we can do
+		return
 	}
 	defer func() {
 		if err := conn.Close(); err != nil {
@@ -173,9 +177,6 @@ func main() {
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 		log.Error().Err(noCertsErr).Str("server", server).Msg("no certificates found")
 
-		// NOTE: We need to pair the two steps so that deferred functions will
-		// run as intended.
-		defer nagiosExitState.ReturnCheckResults()
 		return
 	}
 
@@ -209,7 +210,6 @@ func main() {
 				Str("sans_entries", fmt.Sprintf("%s", certChain[0].DNSNames)).
 				Msg("hostname does not match first cert in chain")
 
-			defer nagiosExitState.ReturnCheckResults()
 			return
 
 		}
@@ -252,7 +252,6 @@ func main() {
 					Int("sans_entries_found", len(certChain)).
 					Msg("SANs entries mismatch")
 
-				defer nagiosExitState.ReturnCheckResults()
 				return
 
 			}
@@ -301,7 +300,6 @@ func main() {
 				Msg("expired certs present in chain")
 		}
 
-		defer nagiosExitState.ReturnCheckResults()
 		return
 
 	}
@@ -323,6 +321,5 @@ func main() {
 	log.Debug().Msg("No problems with certificate chain detected")
 
 	// defer is still needed here to allow other deferred function calls to run
-	defer nagiosExitState.ReturnCheckResults()
 
 }
