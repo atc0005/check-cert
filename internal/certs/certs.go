@@ -338,7 +338,7 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 				"%s\tIssuerKeyID: %v"+
 				"%s\tSerial: %s"+
 				"%s\tExpiration: %s"+
-				"%s\tStatus: %s%s",
+				"%s\tStatus: %s%s%s",
 			idx+1,
 			certsTotal,
 			certPosition,
@@ -358,6 +358,7 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 			certificate.NotAfter.Format(CertValidityDateLayout),
 			nagios.CheckOutputEOL,
 			expiresText,
+			nagios.CheckOutputEOL,
 			nagios.CheckOutputEOL,
 		)
 
