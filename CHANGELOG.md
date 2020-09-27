@@ -26,6 +26,26 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.6] - 2020-09-27
+
+### Fixed
+
+- `ReturnNagiosResults` deferred first, allowed to run last (as intended) to
+  handle setting final exit code
+- Formatting for `certs.GenerateCertsReport` to place additional whitespace at
+  the *end* of each cert chain entry instead of at the beginning
+- Linting issue with unused/commented out code formatting
+
+### Changed
+
+- Dependencies
+  - upgrade `atc0005/go-nagios`
+    - `v0.4.0` to `v0.5.1`
+  - upgrade `actions/checkout`
+    - `v2.3.2` to `v2.3.3`
+  - upgrade `rs/zerolog`
+    - `v1.19.0` to `v1.20.0`
+
 ## [v0.1.5] - 2020-09-02
 
 ### Fixed
@@ -291,7 +311,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.6...HEAD
+[v0.1.6]: https://github.com/atc0005/check-cert/releases/tag/v0.1.6
 [v0.1.5]: https://github.com/atc0005/check-cert/releases/tag/v0.1.5
 [v0.1.4]: https://github.com/atc0005/check-cert/releases/tag/v0.1.4
 [v0.1.3]: https://github.com/atc0005/check-cert/releases/tag/v0.1.3
