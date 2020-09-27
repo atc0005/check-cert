@@ -28,6 +28,28 @@ The following types of changes will be recorded in this file:
 
 ## [v0.1.6] - 2020-09-27
 
+### Added
+
+- First (limited) binary release
+  - Built using Go 1.15.2
+  - Windows
+    - x86
+    - x64
+  - Linux
+    - x86
+    - x64
+
+### Changed
+
+- Dependencies
+  - built using Go 1.15.2
+  - upgrade `atc0005/go-nagios`
+    - `v0.4.0` to `v0.5.1`
+  - upgrade `actions/checkout`
+    - `v2.3.2` to `v2.3.3`
+  - upgrade `rs/zerolog`
+    - `v1.19.0` to `v1.20.0`
+
 ### Fixed
 
 - `ReturnNagiosResults` deferred first, allowed to run last (as intended) to
@@ -35,16 +57,6 @@ The following types of changes will be recorded in this file:
 - Formatting for `certs.GenerateCertsReport` to place additional whitespace at
   the *end* of each cert chain entry instead of at the beginning
 - Linting issue with unused/commented out code formatting
-
-### Changed
-
-- Dependencies
-  - upgrade `atc0005/go-nagios`
-    - `v0.4.0` to `v0.5.1`
-  - upgrade `actions/checkout`
-    - `v2.3.2` to `v2.3.3`
-  - upgrade `rs/zerolog`
-    - `v1.19.0` to `v1.20.0`
 
 ## [v0.1.5] - 2020-09-02
 
