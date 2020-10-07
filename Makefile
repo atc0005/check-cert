@@ -141,8 +141,10 @@ windows:
 		echo "Building $$target amd64 binaries" && \
 		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-$(VERSION)-windows-amd64.exe ${PWD}/cmd/$$target && \
 		echo "Generating $$target checksum files" && \
-		$(CHECKSUMCMD) $(OUTPUTDIR)/$$target/$$target-$(VERSION)-windows-386.exe > $(OUTPUTDIR)/$$target/$$target-$(VERSION)-windows-386.exe.sha256 && \
-		$(CHECKSUMCMD) $(OUTPUTDIR)/$$target/$$target-$(VERSION)-windows-amd64.exe > $(OUTPUTDIR)/$$target/$$target-$(VERSION)-windows-amd64.exe.sha256; \
+		cd $(OUTPUTDIR)/$$target && \
+		$(CHECKSUMCMD) $$target-$(VERSION)-windows-386.exe > $$target-$(VERSION)-windows-386.exe.sha256 && \
+		$(CHECKSUMCMD) $$target-$(VERSION)-windows-amd64.exe > $$target-$(VERSION)-windows-amd64.exe.sha256 && \
+		cd $$OLDPWD; \
 	done
 
 	@echo "Completed build tasks for windows"
@@ -159,8 +161,10 @@ linux:
 		echo "Building $$target amd64 binaries" && \
 		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-$(VERSION)-linux-amd64 ${PWD}/cmd/$$target && \
 		echo "Generating $$target checksum files" && \
-		$(CHECKSUMCMD) $(OUTPUTDIR)/$$target/$$target-$(VERSION)-linux-386 > $(OUTPUTDIR)/$$target/$$target-$(VERSION)-linux-386.sha256 && \
-		$(CHECKSUMCMD) $(OUTPUTDIR)/$$target/$$target-$(VERSION)-linux-amd64 > $(OUTPUTDIR)/$$target/$$target-$(VERSION)-linux-amd64.sha256; \
+		cd $(OUTPUTDIR)/$$target && \
+		$(CHECKSUMCMD) $$target-$(VERSION)-linux-386 > $$target-$(VERSION)-linux-386.sha256 && \
+		$(CHECKSUMCMD) $$target-$(VERSION)-linux-amd64 > $$target-$(VERSION)-linux-amd64.sha256 && \
+		cd $$OLDPWD; \
 	done
 
 	@echo "Completed build tasks for linux"
