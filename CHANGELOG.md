@@ -26,11 +26,36 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.7] - 2020-10-07
+
+### Changed
+
+- Statically linked binary release
+  - Built using Go 1.15.2
+  - Windows
+    - x86
+    - x64
+  - Linux
+    - x86
+    - x64
+
+- Dependencies
+  - `actions/setup-node`
+    - `v2.1.1` to `v2.1.2`
+
+- Add '-trimpath' flag to Makefile build options
+
+### Fixed
+
+- Update CHANGELOG to reflect v0.1.6 binary release
+- Makefile generates checksums with qualified path
+- Makefile build options do not generate static binaries
+
 ## [v0.1.6] - 2020-09-27
 
 ### Added
 
-- First (limited) binary release
+- First (limited) binary release (dynamically linked)
   - Built using Go 1.15.2
   - Windows
     - x86
@@ -323,7 +348,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.7...HEAD
+[v0.1.7]: https://github.com/atc0005/check-cert/releases/tag/v0.1.7
 [v0.1.6]: https://github.com/atc0005/check-cert/releases/tag/v0.1.6
 [v0.1.5]: https://github.com/atc0005/check-cert/releases/tag/v0.1.5
 [v0.1.4]: https://github.com/atc0005/check-cert/releases/tag/v0.1.4
