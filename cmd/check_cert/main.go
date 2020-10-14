@@ -190,10 +190,17 @@ func main() {
 			hostnameValue = config.DNSName
 		}
 
-		// verify leaf certificate is valid for the provided server FQDN
-		// NOTE: We make the assumption that the leaf certificate is ALWAYS in
-		// position 0 of the chain. Not having the cert in that position is
-		// treated as an error condition.
+		// Verify leaf certificate is valid for the provided server FQDN; we
+		// make the assumption that the leaf certificate is ALWAYS in position
+		// 0 of the chain. Not having the cert in that position is treated as
+		// an error condition.
+		//
+		// Server Name Indication (SNI) support is used to provide the value
+		// specified by the `server` flag to the remote server. This is less
+		// important for remote hosts with only one certificate, but for a
+		// host with multiple certificates it becomes very important to
+		// provide the sitename as the value to the `server` flag so that the
+		// correct certificate for the connection can be provided.
 		if err := certChain[0].VerifyHostname(hostnameValue); err != nil {
 			nagiosExitState.LastError = err
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
@@ -201,6 +208,15 @@ func main() {
 				hostnameValue,
 				certChain[0].Subject.CommonName,
 			)
+			nagiosExitState.LongServiceOutput =
+				"Consider updating the service check or command " +
+					"definition to specify the website FQDN instead of " +
+					"the host FQDN as the 'server' flag value. " +
+					"E.g., use 'www.example.org' instead of " +
+					"'host7.example.com' in order to allow the remote " +
+					"server to select the correct certificate instead " +
+					"of the certificate for the first website in its list."
+
 			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 			log.Error().
 				Err(err).
