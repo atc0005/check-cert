@@ -26,6 +26,16 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.8] - 2020-10-14
+
+### Changed
+
+- Clarify SNI support for systems with multiple certificate chains
+  - Update README to expand on behavior and requirements for the `server` and
+    `dns-name` flags for hosts with multiple certificates.
+  - Add extended Service Check output help text to guide sysadmins when first
+    cert in chain fails hostname validation.
+
 ## [v0.1.7] - 2020-10-07
 
 ### Changed
@@ -348,7 +358,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.8...HEAD
+[v0.1.8]: https://github.com/atc0005/check-cert/releases/tag/v0.1.8
 [v0.1.7]: https://github.com/atc0005/check-cert/releases/tag/v0.1.7
 [v0.1.6]: https://github.com/atc0005/check-cert/releases/tag/v0.1.6
 [v0.1.5]: https://github.com/atc0005/check-cert/releases/tag/v0.1.5
