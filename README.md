@@ -683,6 +683,18 @@ SOFTWARE.
     - useful test target to demo output of tools, confirm expiration
       validation works as intended
 
+- <https://utcc.utoronto.ca/~cks/space/blog/tech/TLSHowMultipleChains>
+  - good overview of the AddTrust Root CA expiration of 2020
+  - *As a practical matter, monitoring the expiry time of all certificates
+    provided by a TLS server seems very likely to be enough to detect multiple
+    chain problems such as the AddTrust issue. Competent Certificate
+    Authorities shouldn't issue server or intermediate certificates with
+    expiry times later than their root (or intermediate) certificates, so we
+    don't need to try to find and explicitly check those root certificates.
+    This will also alert on expiring certificates that were provided but that
+    can't be used to construct any chain, but you probably want to get rid of
+    those anyway.*
+
 <!-- Footnotes here  -->
 
 [repo-url]: <https://github.com/atc0005/check-cert>  "This project's GitHub repo"
