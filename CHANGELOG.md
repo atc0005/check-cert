@@ -26,6 +26,32 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.9]- 2020-11-10
+
+### Changed
+
+- Statically linked binary release
+  - Built using Go 1.15.3
+  - Windows
+    - x86
+    - x64
+  - Linux
+    - x86
+    - x64
+
+- Dependencies
+  - `actions/checkout`
+    - `v2.3.3` to `v2.3.4`
+  - `atc0005/go-nagios`
+    - `v0.5.1` to `v0.5.2`
+
+- Certificate summary
+  - Add `Issued On` label with cert `NotBefore` value
+
+- Documentation
+  - Add reference link: "How you get multiple TLS certificate chains from a
+    server certificate"
+
 ## [v0.1.8] - 2020-10-14
 
 ### Changed
@@ -358,7 +384,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.8...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.9...HEAD
+[v0.1.9]: https://github.com/atc0005/check-cert/releases/tag/v0.1.9
 [v0.1.8]: https://github.com/atc0005/check-cert/releases/tag/v0.1.8
 [v0.1.7]: https://github.com/atc0005/check-cert/releases/tag/v0.1.7
 [v0.1.6]: https://github.com/atc0005/check-cert/releases/tag/v0.1.6
