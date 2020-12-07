@@ -10,55 +10,48 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"flag"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	zlog "github.com/rs/zerolog/log"
 
 	"github.com/grantae/certinfo"
 
 	"github.com/atc0005/check-certs/internal/certs"
-	"github.com/atc0005/check-certs/internal/logging"
+	"github.com/atc0005/check-certs/internal/config"
 	"github.com/atc0005/check-certs/internal/textutils"
 	"github.com/atc0005/go-nagios"
 )
 
 func main() {
 
-	config := Config{}
+	// Setup configuration by parsing user-provided flags.
+	isPlugin := false
+	cfg, cfgErr := config.New(isPlugin)
+	switch {
+	case errors.Is(cfgErr, config.ErrVersionRequested):
+		fmt.Println(config.Version())
 
-	config.handleFlagsConfig()
+		return
 
-	// Display application info and exit
-	if config.ShowVersion {
-		fmt.Println(Version())
-		os.Exit(0)
-	}
+	case cfgErr != nil:
+		// We're using the standalone Err function from rs/zerolog/log as we
+		// do not have a working configuration.
+		zlog.Err(cfgErr).Msg("Error initializing application")
 
-	if err := config.Validate(); err != nil {
-		log.Err(err).Msg("Error validating configuration")
-		flag.Usage()
-		os.Exit(1)
+		return
 	}
 
 	// Set common fields here so that we don't have to repeat them explicitly
 	// later. This will hopefully help to standardize the log messages to make
 	// them easier to search through later when troubleshooting.
-	log := zerolog.New(os.Stderr).With().Caller().
-		Str("version", version).
-		Str("logging_level", config.LoggingLevel).
-		Str("server", config.Server).
-		Int("port", config.Port).
-		Str("filename", config.Filename).Logger()
-
-	if err := logging.SetLoggingLevel(config.LoggingLevel); err != nil {
-		log.Err(err).Msg("configuring logging level")
-	}
+	log := cfg.Log.With().
+		Str("filename", cfg.Filename).
+		Logger()
 
 	var certChain []*x509.Certificate
 
@@ -73,31 +66,31 @@ func main() {
 
 	// Honor request to parse filename first
 	switch {
-	case config.Filename != "":
+	case cfg.Filename != "":
 
 		var err error
-		certChain, parseAttemptLeftovers, err = certs.GetCertsFromFile(config.Filename)
+		certChain, parseAttemptLeftovers, err = certs.GetCertsFromFile(cfg.Filename)
 		if err != nil {
-			log.Error().Err(err).Str("filename", config.Filename).Msgf(
+			log.Error().Err(err).Msgf(
 				"error parsing certificates file")
 			os.Exit(1)
 		}
 
 		// figure out what couldn't be parsed and display it
 
-		certChainSource = config.Filename
+		certChainSource = cfg.Filename
 
-	case config.Server != "":
+	case cfg.Server != "":
 
-		server := fmt.Sprintf("%s:%d", config.Server, config.Port)
+		server := fmt.Sprintf("%s:%d", cfg.Server, cfg.Port)
 
 		// log.Debug().Msg("Connecting to remote server")
 		fmt.Printf(
 			"\nConnecting to remote server %q at port %d\n",
-			config.Server,
-			config.Port,
+			cfg.Server,
+			cfg.Port,
 		)
-		cfg := tls.Config{
+		tlsConfig := tls.Config{
 			// Allow insecure connection so that we can check not only the
 			// initial certificate (which may be expired), but others in the
 			// chain also to potentially catch any intermediates which may
@@ -109,10 +102,10 @@ func main() {
 
 		// Create custom dialer with user-specified timeout value
 		dialer := &net.Dialer{
-			Timeout: time.Duration(config.Timeout) * time.Second,
+			Timeout: time.Duration(cfg.Timeout) * time.Second,
 		}
 
-		conn, connErr := tls.DialWithDialer(dialer, "tcp", server, &cfg)
+		conn, connErr := tls.DialWithDialer(dialer, "tcp", server, &tlsConfig)
 		if connErr != nil {
 			log.Error().Err(connErr).Msgf("error connecting to server")
 			os.Exit(1)
@@ -129,15 +122,15 @@ func main() {
 
 		certChainSource = fmt.Sprintf(
 			"service running on %s at port %d",
-			config.Server,
-			config.Port,
+			cfg.Server,
+			cfg.Port,
 		)
 
 	}
 
 	now := time.Now().UTC()
-	certsExpireAgeWarning := now.AddDate(0, 0, config.AgeWarning)
-	certsExpireAgeCritical := now.AddDate(0, 0, config.AgeCritical)
+	certsExpireAgeWarning := now.AddDate(0, 0, cfg.AgeWarning)
+	certsExpireAgeCritical := now.AddDate(0, 0, cfg.AgeCritical)
 
 	certsSummary := certs.ChainSummary(
 		certChain,
@@ -150,13 +143,13 @@ func main() {
 		"\n- %s:\tExpires before %v (%d days)\n",
 		nagios.StateWARNINGLabel,
 		certsExpireAgeWarning.Format(certs.CertValidityDateLayout),
-		config.AgeWarning,
+		cfg.AgeWarning,
 	)
 	fmt.Printf(
 		"- %s:\tExpires before %v (%d days)\n",
 		nagios.StateCRITICALLabel,
 		certsExpireAgeCritical.Format(certs.CertValidityDateLayout),
-		config.AgeCritical,
+		cfg.AgeCritical,
 	)
 
 	textutils.PrintHeader("CERTIFICATES | SUMMARY")
@@ -179,16 +172,16 @@ func main() {
 		certChainSource,
 	)
 
-	if config.Server != "" {
+	if cfg.Server != "" {
 
 		if len(certChain) > 0 {
 
-			hostnameValueToUse := config.Server
+			hostnameValueToUse := cfg.Server
 
 			// Allow user to explicitly specify which hostname should be used
 			// for comparison against the leaf certificate.
-			if config.DNSName != "" {
-				hostnameValueToUse = config.DNSName
+			if cfg.DNSName != "" {
+				hostnameValueToUse = cfg.DNSName
 			}
 
 			// verify leaf certificate is valid for the provided server FQDN
@@ -205,17 +198,17 @@ func main() {
 	}
 
 	// check SANS entries if provided via command-line
-	if len(config.SANsEntries) > 0 {
+	if len(cfg.SANsEntries) > 0 {
 
 		// Check for special keyword, skip SANs entry checks if provided
-		firstSANsEntry := strings.ToLower(strings.TrimSpace(config.SANsEntries[0]))
-		if firstSANsEntry != strings.ToLower(strings.TrimSpace(SkipSANSCheckKeyword)) {
+		firstSANsEntry := strings.ToLower(strings.TrimSpace(cfg.SANsEntries[0]))
+		if firstSANsEntry != strings.ToLower(strings.TrimSpace(config.SkipSANSCheckKeyword)) {
 
-			if mismatched, err := certs.CheckSANsEntries(certChain[0], config.SANsEntries); err != nil {
+			if mismatched, err := certs.CheckSANsEntries(certChain[0], cfg.SANsEntries); err != nil {
 
 				log.Debug().
 					Err(err).
-					Int("sans_entries_requested", len(config.SANsEntries)).
+					Int("sans_entries_requested", len(cfg.SANsEntries)).
 					Int("sans_entries_found", len(certChain)).
 					Int("sans_entries_mismatched", mismatched).
 					Msg("SANs entries mismatch")
@@ -256,7 +249,7 @@ func main() {
 		certsExpireAgeWarning,
 	))
 
-	if config.EmitCertText {
+	if cfg.EmitCertText {
 		textutils.PrintHeader("CERTIFICATES | OpenSSL Text Format")
 
 		for idx, certificate := range certChain {
@@ -284,7 +277,7 @@ func main() {
 		fmt.Printf("The following text was found in the %q file"+
 			" and is provided here in case it is useful for"+
 			" troubleshooting purposes.\n\n",
-			config.Filename,
+			cfg.Filename,
 		)
 
 		fmt.Println(string(parseAttemptLeftovers))
