@@ -93,19 +93,27 @@ func setLoggingLevel(logLevel string) error {
 
 // setupLogging is responsible for configuring logging settings for this
 // application
-func (c *Config) setupLogging(isPlugin bool) error {
+func (c *Config) setupLogging(appType AppType) error {
 
 	var output *os.File
+	var appDescription string
 
 	switch {
-	case isPlugin:
+	case appType.Inspecter:
+		// CLI app logging goes to stdout
+		output = os.Stdout
+		appDescription = appTypeInspecter
+
+	case appType.Plugin:
 		// plugin logging goes to stderr to prevent mixing in with stdout output
 		// intended for the Nagios console
 		output = os.Stderr
+		appDescription = appTypePlugin
 
-	case !isPlugin:
+	case appType.Scanner:
 		// CLI app logging goes to stdout
 		output = os.Stdout
+		appDescription = appTypeScanner
 	}
 
 	// We set some common fields here so that we don't have to repeat them
@@ -116,9 +124,8 @@ func (c *Config) setupLogging(isPlugin bool) error {
 	c.Log = zerolog.New(output).With().Caller().
 		Str("version", Version()).
 		Str("logging_level", c.LoggingLevel).
-		Bool("is_plugin", isPlugin).
-		Str("server", c.Server).
-		Int("port", c.Port).
+		Str("app_type", appDescription).
+		Str("cert_check_timeout", c.Timeout().String()).
 		Int("age_warning", c.AgeWarning).
 		Int("age_critical", c.AgeCritical).
 		Logger()

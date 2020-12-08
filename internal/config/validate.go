@@ -14,13 +14,10 @@ import (
 
 // validate verifies all Config struct fields have been provided acceptable
 // values.
-func (c Config) validate(isPlugin bool) error {
+func (c Config) validate(appType AppType) error {
 
-	// Server or Filename verification, depending on whether we are validating
-	// settings for a Nagios plugin.
 	switch {
-
-	case !isPlugin:
+	case appType.Inspecter:
 		// User can specify one of filename or server, but not both (mostly in
 		// order to keep the logic simpler)
 		switch {
@@ -38,20 +35,58 @@ func (c Config) validate(isPlugin bool) error {
 			)
 		}
 
-	case isPlugin:
+	case appType.Plugin:
 		// Always required, even if using the DNSName value for hostname
 		// verification
 		if c.Server == "" {
-			return fmt.Errorf("server FQDN not provided")
+			return fmt.Errorf("server FQDN or IP Address not provided")
 		}
+
+	case appType.Scanner:
+
+		// Use getter method in order to validate final ports list. Because we
+		// have made this flag optional, we can't assert that the field value
+		// itself is non-empty.
+		if c.CertPorts() == nil {
+			return fmt.Errorf("ports list (one or many) not provided")
+		}
+
+		// Use getter method here in order to validate conversion results.
+		// Require that *at least* 1 ms be given as the timeout.
+		if c.TimeoutPortScan() < 1 {
+			return fmt.Errorf(
+				"invalid port check timeout value provided: %d",
+				c.TimeoutPortScan(),
+			)
+		}
+
+		if c.PortScanRateLimit < 1 {
+			return fmt.Errorf(
+				"invalid port scan rate limit value provided: %d",
+				c.TimeoutPortScan(),
+			)
+		}
+
+		// NOTE: It is likely that we'll use a different flag later in order
+		// to accept a mix of single, CIDR range, and a standard
+		// start-finish range of IP Addresses.
+		// if c.CIDRRange == "" {
+		// 	return fmt.Errorf("CIDR IP range not provided")
+		// }
+		if c.CIDRRange == nil {
+			return fmt.Errorf("CIDR IP range(s) not provided")
+		}
+
+		// TODO: Figure out how to (or if we need to) validate mix of boolean
+		// value "show" flags
 	}
 
 	if c.Port < 0 {
 		return fmt.Errorf("invalid TCP port number %d", c.Port)
 	}
 
-	if c.Timeout < 0 {
-		return fmt.Errorf("invalid timeout value %d provided", c.Timeout)
+	if c.Timeout() < 0 {
+		return fmt.Errorf("invalid timeout value %d provided", c.Timeout())
 	}
 
 	if c.AgeWarning < 0 {

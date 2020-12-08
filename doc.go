@@ -18,6 +18,8 @@ FEATURES
 
 • CLI tool for verifying certificates of certificate-enabled services or files
 
+• CLI tool for generating summary of discovered certificates from given IP ranges and ports
+
 USAGE
 
 See our main README for supported settings and examples.

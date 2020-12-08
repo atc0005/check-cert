@@ -31,6 +31,18 @@ import (
 	"github.com/atc0005/go-nagios"
 )
 
+// DiscoveredCertChain is a poorly named type that represents the certificate
+// chain found on a specific host along with that hosts IP/Name and port.
+type DiscoveredCertChain struct {
+	Host  string
+	Port  int
+	Certs []*x509.Certificate
+}
+
+// DiscoveredCertChains is a collection of discovered certificate chains for
+// specified hosts and ports.
+type DiscoveredCertChains []DiscoveredCertChain
+
 // CertValidityDateLayout is the chosen date layout for displaying certificate
 // validity date/time values across our application.
 const CertValidityDateLayout string = "2006-01-02 15:04:05 -0700 MST"
@@ -89,18 +101,6 @@ type ChainStatus struct {
 	Summary string
 }
 
-// ConvertKeyIDToHexStr converts a provided byte slice format of a X509v3
-// Authority Key Identifier or X509v3 Subject Key Identifier to a hex-encoded
-// string to reflect what is shown in the OpenSSL "text" format.
-func ConvertKeyIDToHexStr(keyID []byte) string {
-
-	hexStrKeyID := make([]string, 0, len(keyID))
-	for _, field := range keyID {
-		hexStrKeyID = append(hexStrKeyID, fmt.Sprintf("%X", field))
-	}
-	return strings.Join(hexStrKeyID, ":")
-}
-
 // GetCertsFromFile is a helper function for retrieving a certificates
 // chain from a specified filename.
 func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
@@ -156,23 +156,34 @@ func IsExpiredCert(cert *x509.Certificate) bool {
 	return cert.NotAfter.Before(time.Now())
 }
 
-// HasExpiredCert receives a slice of x509 certificates and returns a boolean
-// value indicating whether any certificates in the chain are expired along
-// with a count of how many.
-func HasExpiredCert(certChain []*x509.Certificate) (bool, int) {
+// IsExpiringCert receives a x509 certificate, CRITICAL age threshold and
+// WARNING age threshold values and uses the provided thresholds to determine
+// if the certificate is about to expire. A boolean value is returned to
+// indicate the results of this check.
+func IsExpiringCert(cert *x509.Certificate, ageCritical time.Time, ageWarning time.Time) bool {
 
-	var expiredCertsPresent bool
-	var expiredCertsCount int
-	for idx := range certChain {
-
-		if certChain[idx].NotAfter.Before(time.Now()) {
-			expiredCertsPresent = true
-			expiredCertsCount++
-		}
-
+	switch {
+	case !IsExpiredCert(cert) && cert.NotAfter.Before(ageCritical):
+		return true
+	case !IsExpiredCert(cert) && cert.NotAfter.Before(ageWarning):
+		return true
 	}
 
-	return expiredCertsPresent, expiredCertsCount
+	return false
+
+}
+
+// HasExpiredCert receives a slice of x509 certificates and indicates whether
+// any of the certificates in the chain have expired.
+func HasExpiredCert(certChain []*x509.Certificate) bool {
+
+	for idx := range certChain {
+		if certChain[idx].NotAfter.Before(time.Now()) {
+			return true
+		}
+	}
+
+	return false
 
 }
 
@@ -180,24 +191,54 @@ func HasExpiredCert(certChain []*x509.Certificate) (bool, int) {
 // threshold and WARNING age threshold values and ignoring any certificates
 // already expired, uses the provided thresholds to determine if any
 // certificates are about to expire. A boolean value is returned to indicate
-// the results of this check along with a count of expiring certificates.
-func HasExpiringCert(certChain []*x509.Certificate, ageCritical time.Time, ageWarning time.Time) (bool, int) {
-
-	var expiringCertsPresent bool
-	var expiringCertsCount int
+// the results of this check.
+func HasExpiringCert(certChain []*x509.Certificate, ageCritical time.Time, ageWarning time.Time) bool {
 	for idx := range certChain {
-
 		switch {
 		case !IsExpiredCert(certChain[idx]) && certChain[idx].NotAfter.Before(ageCritical):
-			expiringCertsPresent = true
+			return true
+		case !IsExpiredCert(certChain[idx]) && certChain[idx].NotAfter.Before(ageWarning):
+			return true
+		}
+	}
+
+	return false
+
+}
+
+// NumExpiredCerts receives a slice of x509 certificates and returns a count
+// of how many certificates have expired.
+func NumExpiredCerts(certChain []*x509.Certificate) int {
+
+	var expiredCertsCount int
+
+	for idx := range certChain {
+		if certChain[idx].NotAfter.Before(time.Now()) {
+			expiredCertsCount++
+		}
+	}
+
+	return expiredCertsCount
+
+}
+
+// NumExpiringCerts receives a slice of x509 certificates, CRITICAL age threshold
+// and WARNING age threshold values and ignoring any certificates already
+// expired, uses the provided thresholds to determine if any certificates are
+// about to expire. A count of expiring certificates is returned.
+func NumExpiringCerts(certChain []*x509.Certificate, ageCritical time.Time, ageWarning time.Time) int {
+
+	var expiringCertsCount int
+	for idx := range certChain {
+		switch {
+		case !IsExpiredCert(certChain[idx]) && certChain[idx].NotAfter.Before(ageCritical):
 			expiringCertsCount++
 		case !IsExpiredCert(certChain[idx]) && certChain[idx].NotAfter.Before(ageWarning):
-			expiringCertsPresent = true
 			expiringCertsCount++
 		}
 	}
 
-	return expiringCertsPresent, expiringCertsCount
+	return expiringCertsCount
 
 }
 
@@ -548,7 +589,7 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 				"%s\tKeyID: %v"+
 				"%s\tIssuer: %s"+
 				"%s\tIssuerKeyID: %v"+
-				"%s\tSerial: %s"+
+				"%s\tSerial: %v"+
 				"%s\tIssued On: %s"+
 				"%s\tExpiration: %s"+
 				"%s\tStatus: %s%s%s",
@@ -560,11 +601,11 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 			nagios.CheckOutputEOL,
 			certificate.DNSNames,
 			nagios.CheckOutputEOL,
-			ConvertKeyIDToHexStr(certificate.SubjectKeyId),
+			textutils.BytesToDelimitedHexStr(certificate.SubjectKeyId, ":"),
 			nagios.CheckOutputEOL,
 			certificate.Issuer,
 			nagios.CheckOutputEOL,
-			ConvertKeyIDToHexStr(certificate.AuthorityKeyId),
+			textutils.BytesToDelimitedHexStr(certificate.AuthorityKeyId, ":"),
 			nagios.CheckOutputEOL,
 			FormatCertSerialNumber(certificate.SerialNumber),
 			nagios.CheckOutputEOL,
@@ -691,12 +732,20 @@ func ChainSummary(
 	certsExpireAgeWarning time.Time,
 ) ChainStatus {
 
-	hasExpiredCerts, expiredCertsCount := HasExpiredCert(certChain)
-	hasExpiringCerts, expiringCertsCount := HasExpiringCert(
+	hasExpiredCerts := HasExpiredCert(certChain)
+	expiredCertsCount := NumExpiredCerts(certChain)
+
+	hasExpiringCerts := HasExpiringCert(
 		certChain,
 		certsExpireAgeCritical,
 		certsExpireAgeWarning,
 	)
+	expiringCertsCount := NumExpiringCerts(
+		certChain,
+		certsExpireAgeCritical,
+		certsExpireAgeWarning,
+	)
+
 	totalCerts := len(certChain)
 	validCertsCount := totalCerts - expiredCertsCount - expiringCertsCount
 
@@ -753,7 +802,7 @@ func OneLineCheckSummary(serviceState string, certChain []*x509.Certificate, cer
 	}
 
 	summaryTemplate := CertCheckOneLineSummaryTmpl
-	if hasExpiredCert, _ := HasExpiredCert(certChain); hasExpiredCert {
+	if hasExpiredCert := HasExpiredCert(certChain); hasExpiredCert {
 		summaryTemplate = CertCheckOneLineSummaryExpiredTmpl
 	}
 

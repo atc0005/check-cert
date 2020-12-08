@@ -8,11 +8,9 @@
 package main
 
 import (
-	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"strings"
 	"time"
@@ -23,6 +21,7 @@ import (
 
 	"github.com/atc0005/check-certs/internal/certs"
 	"github.com/atc0005/check-certs/internal/config"
+	"github.com/atc0005/check-certs/internal/net"
 	"github.com/atc0005/check-certs/internal/textutils"
 	"github.com/atc0005/go-nagios"
 )
@@ -30,8 +29,7 @@ import (
 func main() {
 
 	// Setup configuration by parsing user-provided flags.
-	isPlugin := false
-	cfg, cfgErr := config.New(isPlugin)
+	cfg, cfgErr := config.New(config.AppType{Inspecter: true})
 	switch {
 	case errors.Is(cfgErr, config.ErrVersionRequested):
 		fmt.Println(config.Version())
@@ -51,6 +49,8 @@ func main() {
 	// them easier to search through later when troubleshooting.
 	log := cfg.Log.With().
 		Str("filename", cfg.Filename).
+		Str("server", cfg.Server).
+		Int("port", cfg.Port).
 		Logger()
 
 	var certChain []*x509.Certificate
@@ -71,54 +71,22 @@ func main() {
 		var err error
 		certChain, parseAttemptLeftovers, err = certs.GetCertsFromFile(cfg.Filename)
 		if err != nil {
-			log.Error().Err(err).Msgf(
+			log.Error().Err(err).Msg(
 				"error parsing certificates file")
 			os.Exit(1)
 		}
-
-		// figure out what couldn't be parsed and display it
 
 		certChainSource = cfg.Filename
 
 	case cfg.Server != "":
 
-		server := fmt.Sprintf("%s:%d", cfg.Server, cfg.Port)
-
-		// log.Debug().Msg("Connecting to remote server")
-		fmt.Printf(
-			"\nConnecting to remote server %q at port %d\n",
-			cfg.Server,
-			cfg.Port,
-		)
-		tlsConfig := tls.Config{
-			// Allow insecure connection so that we can check not only the
-			// initial certificate (which may be expired), but others in the
-			// chain also to potentially catch any intermediates which may
-			// also be expired. Also, ignore security (gosec) linting warnings
-			// re this choice.
-			// nolint:gosec
-			InsecureSkipVerify: true,
-		}
-
-		// Create custom dialer with user-specified timeout value
-		dialer := &net.Dialer{
-			Timeout: time.Duration(cfg.Timeout) * time.Second,
-		}
-
-		conn, connErr := tls.DialWithDialer(dialer, "tcp", server, &tlsConfig)
-		if connErr != nil {
-			log.Error().Err(connErr).Msgf("error connecting to server")
+		var certFetchErr error
+		certChain, certFetchErr = net.GetCerts(cfg.Server, cfg.Port, cfg.Timeout(), log)
+		if certFetchErr != nil {
+			log.Error().Err(certFetchErr).Msg(
+				"error fetching certificates chain")
 			os.Exit(1)
 		}
-		defer func() {
-			if err := conn.Close(); err != nil {
-				log.Error().Err(err).Msgf("error closing connection to server")
-			}
-		}()
-		log.Debug().Msg("Connected")
-
-		// certificate chain presented by remote peer
-		certChain = conn.ConnectionState().PeerCertificates
 
 		certChainSource = fmt.Sprintf(
 			"service running on %s at port %d",

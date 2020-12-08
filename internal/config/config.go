@@ -12,8 +12,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
+	"github.com/atc0005/check-certs/internal/textutils"
 	"github.com/rs/zerolog"
 )
 
@@ -26,26 +28,66 @@ var version string = "x.y.z"
 // information.
 var ErrVersionRequested = errors.New("version information requested")
 
-// multiValueFlag is a custom type that satisfies the flag.Value interface in
-// order to accept multiple values for some of our flags.
-type multiValueFlag []string
+// AppType represents the type of application that is being
+// configured/initialized. Not all application types will use the same
+// features and as a result will not accept the same flags. Unless noted
+// otherwise, each of the application types are incompatible with each other,
+// though some flags are common to all types.
+type AppType struct {
+
+	// Scanner represents an application intended for bulk operations across a
+	// range of hosts.
+	Scanner bool
+
+	// Plugin represents an application used as a Nagios plugin.
+	Plugin bool
+
+	// Inspecter represents an application used for one-off or isolated
+	// checks. Unlike a Nagios plugin which is focused on specific attributes
+	// resulting in a severity-based outcome, an Inspecter application is
+	// intended for examining a small set of targets for
+	// informational/troubleshooting purposes.
+	Inspecter bool
+}
+
+// multiValueStringFlag is a custom type that satisfies the flag.Value
+// interface in order to accept multiple string values for some of our flags.
+type multiValueStringFlag []string
+
+// multiValueIntFlag is a custom type that satisfies the flag.Value interface
+// in order to accept multiple int values (initially as strings) for some of
+// our flags.
+type multiValueIntFlag []int
 
 // String returns a comma separated string consisting of all slice elements.
-func (i *multiValueFlag) String() string {
+func (mvs *multiValueStringFlag) String() string {
 
 	// From the `flag` package docs:
 	// "The flag package may call the String method with a zero-valued
 	// receiver, such as a nil pointer."
-	if i == nil {
+	if mvs == nil {
 		return ""
 	}
 
-	return strings.Join(*i, ", ")
+	return strings.Join(*mvs, ", ")
+}
+
+// String returns a comma separated string consisting of all slice elements.
+func (mvi *multiValueIntFlag) String() string {
+
+	// From the `flag` package docs:
+	// "The flag package may call the String method with a zero-valued
+	// receiver, such as a nil pointer."
+	if mvi == nil {
+		return ""
+	}
+
+	return strings.Join(textutils.IntSliceToStringSlice(*mvi), ", ")
 }
 
 // Set is called once by the flag package, in command line order, for each
 // flag present.
-func (i *multiValueFlag) Set(value string) error {
+func (mvs *multiValueStringFlag) Set(value string) error {
 
 	// split comma-separated string into multiple values, toss whitespace
 	items := strings.Split(value, ",")
@@ -54,7 +96,33 @@ func (i *multiValueFlag) Set(value string) error {
 	}
 
 	// add them to the collection
-	*i = append(*i, items...)
+	*mvs = append(*mvs, items...)
+
+	return nil
+}
+
+// Set is called once by the flag package, in command line order, for each
+// flag present.
+func (mvi *multiValueIntFlag) Set(value string) error {
+
+	// split comma-separated string into multiple values, toss whitespace,
+	// then convert port in string format to integer for later use
+	items := strings.Split(value, ",")
+	for i, v := range items {
+		items[i] = strings.TrimSpace(v)
+
+		port, strConvErr := strconv.Atoi(strings.TrimSpace(v))
+		if strConvErr != nil {
+			return fmt.Errorf(
+				"error processing flag; failed to convert string %q to int: %v",
+				v,
+				strConvErr,
+			)
+		}
+
+		*mvi = append(*mvi, port)
+	}
+
 	return nil
 }
 
@@ -65,7 +133,7 @@ type Config struct {
 	// SANsEntries is the list of Subject Alternate Names (SANs) to verify are
 	// present on the examined certificate. This value is provided a
 	// comma-separated list.
-	SANsEntries multiValueFlag
+	SANsEntries multiValueStringFlag
 
 	// Filename is the fully-qualified path to a file containing one or more
 	// certificates.
@@ -75,6 +143,12 @@ type Config struct {
 	// certificate-enabled service.
 	Server string
 
+	// CIDRRange is the list of CIDR IP ranges to scan for certs.
+	CIDRRange multiValueStringFlag
+
+	// ScanLimit is the maximum number of concurrent port scan attempts.
+	PortScanRateLimit int
+
 	// DNSName is the fully-qualified domain name associated with the
 	// certificate. This is usually specified when the FQDN or IP used to make
 	// the connection is different than the Common Name or Subject Alternate
@@ -83,6 +157,9 @@ type Config struct {
 
 	// Port is the TCP port used by the certifcate-enabled service.
 	Port int
+
+	// PortsList is the list of ports to be checked for certificates.
+	portsList multiValueIntFlag
 
 	// LoggingLevel is the supported logging level for this application.
 	LoggingLevel string
@@ -97,10 +174,16 @@ type Config struct {
 	// field as a CRITICAL state.
 	AgeCritical int
 
-	// Timeout is the number of seconds allowed before the connection attempt
+	// timeout is the number of seconds allowed before the connection attempt
 	// to a remote certificate-enabled service is abandoned and an error
 	// returned.
-	Timeout int
+	timeout int
+
+	// timeoutPortScan is the number of milliseconds allowed before the port
+	// connection attempt is abandoned and an error returned. This timeout is
+	// used specifically to quickly determine port state as part of bulk
+	// operations where speed is crucial.
+	timeoutPortScan int
 
 	// EmitBranding controls whether "generated by" text is included at the
 	// bottom of application output. This output is included in the Nagios
@@ -117,6 +200,30 @@ type Config struct {
 	// ShowVersion is a flag indicating whether the user opted to display only
 	// the version string and then immediately exit the application.
 	ShowVersion bool
+
+	// ShowHostsWithClosedPorts indicates whether hosts without any open ports
+	// are included in the port scan results summary output.
+	ShowHostsWithClosedPorts bool
+
+	// ShowHostsWithValidCerts indicates whether hosts with valid certificates
+	// are included in the overview summary output.
+	ShowHostsWithValidCerts bool
+
+	// ShowValidCerts indicates whether all certificates are included in
+	// output summary, even certificates which have passed all validity
+	// checks.
+	ShowValidCerts bool
+
+	// ShowOverview indicates whether a brief overview of certificate scan
+	// findings is provided, or whether the detailed certificate results list
+	// is shown at the end of scanning specified hosts.
+	ShowOverview bool
+
+	// ShowResultsDuringScan indicates whether host scan results should be
+	// shown during a port scan. See also ShowHostsWithClosedPorts. Enabling
+	// either of these options results in live scan result details being
+	// shown.
+	ShowPortScanResults bool
 
 	// Log is an embedded zerolog Logger initialized via config.New().
 	Log zerolog.Logger
@@ -149,21 +256,21 @@ func Branding(msg string) func() string {
 // provided flag and config file values. It is responsible for validating
 // user-provided values and initializing the logging settings used by this
 // application.
-func New(isPlugin bool) (*Config, error) {
+func New(appType AppType) (*Config, error) {
 	var config Config
 
-	config.handleFlagsConfig(isPlugin)
+	config.handleFlagsConfig(appType)
 
 	if config.ShowVersion {
 		return nil, ErrVersionRequested
 	}
 
-	if err := config.validate(isPlugin); err != nil {
+	if err := config.validate(appType); err != nil {
 		return nil, fmt.Errorf("configuration validation failed: %w", err)
 	}
 
 	// initialize logging just as soon as validation is complete
-	if err := config.setupLogging(isPlugin); err != nil {
+	if err := config.setupLogging(appType); err != nil {
 		return nil, fmt.Errorf(
 			"failed to set logging configuration: %w",
 			err,

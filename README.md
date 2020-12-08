@@ -15,8 +15,10 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
 
 - [Project home](#project-home)
 - [Overview](#overview)
-  - [check_certs](#check_certs)
-  - [lscert](#lscert)
+  - [`check_certs`](#check_certs)
+  - [`lscert`](#lscert)
+  - [`fixsn`](#fixsn)
+  - [`certsum`](#certsum)
 - [Features](#features)
 - [Changelog](#changelog)
 - [Requirements](#requirements)
@@ -26,9 +28,10 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
 - [Configuration options](#configuration-options)
   - [Threshold calculations](#threshold-calculations)
   - [Command-line arguments](#command-line-arguments)
-    - [Shared](#shared)
     - [`check_cert`](#check_cert)
     - [`lscert`](#lscert-1)
+    - [`fixsn`](#fixsn-1)
+    - [`certsum`](#certsum-1)
   - [Configuration file](#configuration-file)
 - [Examples](#examples)
   - [`check_cert` Nagios plugin](#check_cert-nagios-plugin)
@@ -39,6 +42,10 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
     - [OK results](#ok-results-1)
     - [WARNING results](#warning-results-1)
     - [CRITICAL results](#critical-results-1)
+  - [`fixsn` CLI tool](#fixsn-cli-tool)
+    - [Invalid input](#invalid-input)
+    - [Expected input](#expected-input)
+  - [`certsum` CLI tool](#certsum-cli-tool)
 - [License](#license)
 - [References](#references)
 
@@ -52,12 +59,14 @@ into the project.
 
 This repo contains various tools used to monitor/validate certificates.
 
-| Tool Name     | Status | Description                                                                            |
-| ------------- | ------ | -------------------------------------------------------------------------------------- |
-| `check_certs` | Alpha  | Nagios plugin used to monitor certificate chains                                       |
-| `lscert`      | Alpha  | Small CLI app used to generate a summary of certificate metadata and expiration status |
+| Tool Name     | Status | Description                                                                                                |
+| ------------- | ------ | ---------------------------------------------------------------------------------------------------------- |
+| `check_certs` | Beta   | Nagios plugin used to monitor certificate chains.                                                          |
+| `lscert`      | Beta   | Small CLI app used to generate a summary of certificate metadata and expiration status.                    |
+| `fixsn`       | Alpha  | Small CLI app used to convert a given base 10 serial number to base 16, colon-delimited hex string format. |
+| `certsum`     | Alpha  | CLI app used to scan one or more given CIDR IP ranges for certs and provide a summary report.              |
 
-### check_certs
+### `check_certs`
 
 Nagios plugin used to monitor certificate chains. In addition to the features
 shared with `lscert`, this app also validates the provided hostname against
@@ -68,25 +77,66 @@ needed by Nagios for quick identification of a problem while providing longer,
 more detailed information for use in email and Teams notifications
 ([atc0005/send2teams](https://github.com/atc0005/send2teams)).
 
-### lscert
+### `lscert`
 
-Small CLI tool to print a *very* basic summary of certificate metadata
-provided by a remote service at the specified fully-qualified domain name
-(e.g., www.github.com) and port (e.g., 443) or via a local certificate
-"bundle" or standalone leaf certificate file
-
-This tool is intended to quickly review the results of replacing a certificate
+Small CLI tool for quickly reviewing the results of replacing a certificate
 and/or troubleshoot why connections to a certificate-enabled service may be
 failing.
 
+Certificate metadata can be retrieved from:
+
+- a remote service at a specified fully-qualified domain name (e.g.,
+  www.github.com) or IP Address and port (e.g., 443)
+- a local certificate "bundle" or standalone leaf certificate file
+
+If specifying a host via IP Address, a warning will be emitted unless the IP
+Address is in the SANs list for the certificate. This warning can be ignored
+for the purposes of reviewing the cert details, Provide a valid FQDN as the
+server name or the "dns name" if you wish to apply hostname validation.
+
+### `fixsn`
+
+A small CLI app used to convert a given (assumed) base 10 number into a base
+16, colon delimited hex string representing a certificate serial number. Prior
+releases of this project improperly displayed serial numbers as base 10 values
+instead of base 16, colon delimited hex strings. Using this tool can be useful
+for one-off conversion of older values to the proper format (e.g., a certs
+list maintained in documentation).
+
+It is likely that this tool will be either removed or folded into another tool
+at a future date, unless others find it useful.
+
+### `certsum`
+
+`certsum` is an IP range cert scanner prototype. This tool is currently of
+"alpha" level quality; many of the exposed flags, help text and summary output
+is subject to change significantly in later releases.
+
+This tool is intended for scanning one or more given IP ranges in order to
+generate a report for discovered certificates.
+
+Performance is acceptable for smaller IP ranges, but this tool will require
+further refactoring to be useful for scanning larger IP ranges.
+
+Specifying partial/non-CIDR IP ranges is not supported at this time, though
+this is planned for future releases.
+
+Support is present (though limited) for filtering "OK" status hosts and certs
+to either increase or reduce the amount of information provided in the
+generated summary output. Two summary modes are provided to control the level
+of detail in the provided output.
+
 ## Features
 
-- Two tools for validating certificates
+- Multiple tools for validating certificates
   - `lscert` CLI tool
     - verify certificate used by specified service
     - verify local certificate "bundle" or standalone leaf certificate file
   - `check_cert` Nagios plugin
     - verify certificate used by specified service
+  - `certsum` CLI tool
+    - generate summary of discovered certificates from given IP ranges and
+      ports
 
 - Check expiration of all certificates in the *provided* certificate chain for
   cert-enabled services
@@ -96,9 +146,7 @@ failing.
     - critical threshold
 
 - Validate provided hostname against Common Name *or* one of the available
-  SANs entries
-  - the expected hostname can be supplied by the `--server` flag *or* the
-    `--dns-name` flag
+  SANs entries (see [configuration options](#configuration-options) )
 
 - Optional support for verifying SANs entries on a certificate against a
   provided list
@@ -125,8 +173,6 @@ failing.
     default), `debug` or `trace`.
 
 - Optional, user-specified timeout value for TCP connection attempt
-
-- Go modules support (vs classic `GOPATH` setup)
 
 ## Changelog
 
@@ -194,6 +240,8 @@ been tested.
          in top-level `vendor` folder
      - `go build -mod=vendor ./cmd/check_cert/`
      - `go build -mod=vendor ./cmd/lscert/`
+     - `go build -mod=vendor ./cmd/fixsn/`
+     - `go build -mod=vendor ./cmd/certsum/`
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
@@ -206,6 +254,8 @@ been tested.
    - if using `Makefile`
      - look in `/tmp/check-cert/release_assets/check_cert/`
      - look in `/tmp/check-cert/release_assets/lscert/`
+     - look in `/tmp/check-cert/release_assets/fixsn/`
+     - look in `/tmp/check-cert/release_assets/certsum/`
    - if using `go build`
      - look in `/tmp/check-cert/`
 
@@ -223,7 +273,7 @@ and 15 days for the `CRITICAL` threshold:
 
 1. The thresholds are calculated
     - `WARNING`: Now (exact time in UTC) + 30 days
-    - `CRITICAL`: Now (exact timein UTC) + 15 days
+    - `CRITICAL`: Now (exact time in UTC) + 15 days
 1. The certificate expiration date is checked and the very first match (in
    order) determines the status of the service check
     1. if the certificate expires *before* the current time, the status is
@@ -245,36 +295,71 @@ See GH-32 for additional info.
 - Flags *not* marked as required are for settings where a useful default is
   already defined, but may be overridden if desired.
 
-#### Shared
-
-These flags apply to both `check_cert` and `lscert` and are listed here to
-reduce duplication and help avoid having one table out of sync with the other.
+#### `check_cert`
 
 | Flag                 | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | -------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `branding`           | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `h`, `help`          | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `v`, `version`       | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `c`, `age-critical`  | No       | 15      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `w`, `age-warning`   | No       | 30      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `WARNING` state. If the certificate expires before this number of days, but not before the `age-critical` value, then the service check will be considered in a `WARNING` state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `ll`, `log-level`    | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `p`, `port`          | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `t`, `timeout`       | No       | `10`    | No     | *positive whole number*                                                 | Timeout value in seconds allowed before the connection attempt to a remote certificate-enabled service is abandoned and an error returned.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `se`, `sans-entries` | No       |         |        | *comma-separated list of values*                                        | One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `s`, `server`        | **Yes**  |         |        | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. This value is used to make the connection to the server in order to retrieve the certificate chain. For hosts with only a single certificate, this value is often the FQDN of the host itself, but for multi-certificate servers the user-specified value will be crucial in order to allow the remote host to select the appropriate certificate ([Server Name Indication support (SNI)](https://en.wikipedia.org/wiki/Subject_Alternative_Name)). For websites hosted on those servers, it is necessary to instead provide the FQDN of the site instead of the server hostname. For example, specify `www.example.org` instead of `host7.example.com`. Specify the site FQDN if in doubt. The user-specified value will also be validated against the Common Name and Subject Alternate Names fields *unless* the `dns-name` flag is also specified, in which case *this* value is only used for making the initial connection. |
-| `dn`, `dns-name`     | No       |         |        | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name of the remote system to be used for hostname verification. This option can be used for cases where the initial connection is made using a name or IP Address not associated with the certificate. See the `server` flag description for more information.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-
-#### `check_cert`
-
-| Flag       | Required | Default | Repeat | Possible   | Description                                                                                          |
-| ---------- | -------- | ------- | ------ | ---------- | ---------------------------------------------------------------------------------------------------- |
-| `branding` | No       | `false` | No     | `branding` | Toggles emission of branding details with plugin status details. This output is disabled by default. |
+| `t`, `timeout`       | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `se`, `sans-entries` | No       |         | No     | *comma-separated list of values*                                        | One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `s`, `server`        | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. This value is used to make the connection to the server in order to retrieve the certificate chain. For hosts with only a single certificate, this value is often the FQDN of the host itself, but for multi-certificate servers the user-specified value will be crucial in order to allow the remote host to select the appropriate certificate ([Server Name Indication support (SNI)](https://en.wikipedia.org/wiki/Subject_Alternative_Name)). For websites hosted on those servers, it is necessary to instead provide the FQDN of the site instead of the server hostname. For example, specify `www.example.org` instead of `host7.example.com`. Specify the site FQDN if in doubt. The user-specified value will also be validated against the Common Name and Subject Alternate Names fields *unless* the `dns-name` flag is also specified, in which case *this* value is only used for making the initial connection. |
+| `dn`, `dns-name`     | No       |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name of the remote system to be used for hostname verification. This option can be used for cases where the initial connection is made using a name or IP Address not associated with the certificate. See the `server` flag description for more information.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 #### `lscert`
 
-| Flag            | Required | Default | Repeat | Possible                     | Description                                                                                                       |
-| --------------- | -------- | ------- | ------ | ---------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `f`, `filename` | No       | `false` | No     | *valid file name characters* | Fully-qualified path to a file containing one or more certificates.                                               |
-| `text`          | No       | `false` | No     | `true`, `false`              | Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default. |
+| Flag                 | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `f`, `filename`      | No       | `false` | No     | *valid file name characters*                                            | Fully-qualified path to a file containing one or more certificates.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `text`               | No       | `false` | No     | `true`, `false`                                                         | Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `h`, `help`          | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `v`, `version`       | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `c`, `age-critical`  | No       | 15      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `w`, `age-warning`   | No       | 30      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `WARNING` state. If the certificate expires before this number of days, but not before the `age-critical` value, then the service check will be considered in a `WARNING` state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `ll`, `log-level`    | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `p`, `port`          | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `t`, `timeout`       | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `se`, `sans-entries` | No       |         | No     | *comma-separated list of values*                                        | One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `s`, `server`        | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. This value is used to make the connection to the server in order to retrieve the certificate chain. For hosts with only a single certificate, this value is often the FQDN of the host itself, but for multi-certificate servers the user-specified value will be crucial in order to allow the remote host to select the appropriate certificate ([Server Name Indication support (SNI)](https://en.wikipedia.org/wiki/Subject_Alternative_Name)). For websites hosted on those servers, it is necessary to instead provide the FQDN of the site instead of the server hostname. For example, specify `www.example.org` instead of `host7.example.com`. Specify the site FQDN if in doubt. The user-specified value will also be validated against the Common Name and Subject Alternate Names fields *unless* the `dns-name` flag is also specified, in which case *this* value is only used for making the initial connection. |
+| `dn`, `dns-name`     | No       |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name of the remote system to be used for hostname verification. This option can be used for cases where the initial connection is made using a name or IP Address not associated with the certificate. See the `server` flag description for more information.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+
+#### `fixsn`
+
+This tool does not accept any flags. Instead, it expects to receive just one
+argument: a base 10 formatted certificate serial number, handled internally as
+a `*big.Int` value. This value is converted to a base 16, colon-delimited hex
+string. This format is common to tooling used to examine certificates.
+
+See the [Examples](#examples) section for usage.
+
+#### `certsum`
+
+This tool is in early development. Options for this tool are subject to
+change, perhaps even significantly, in future releases.
+
+| Flag                                   | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `h`, `help`                            | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                |
+| `v`, `version`                         | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                         |
+| `c`, `age-critical`                    | No       | 15      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                                    |
+| `w`, `age-warning`                     | No       | 30      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `WARNING` state. If the certificate expires before this number of days, but not before the `age-critical` value, then the service check will be considered in a `WARNING` state.                                                                                                                                            |
+| `ll`, `log-level`                      | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                             |
+| `t`, `timeout`                         | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned.                                                                                                                                                                                       |
+| `se`, `sans-entries`                   | No       |         | No     | *comma-separated list of values*                                        | One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP. |
+| `st`, `scan-timeout`                   | No       | 200     | No     | *positive whole number of milliseconds*                                 | The number of milliseconds before a connection attempt during a port scan is abandoned and an error returned. This timeout value is separate from the general `timeout` value used when retrieving certificates. This setting is used specifically to quickly determine port state as part of bulk operations where speed is crucial.                                 |
+| `srl`, `scan-rate-limit`               | No       | 100     | No     | *positive whole number*                                                 | Maximum concurrent port scans. Remaining port scans are queued until an existing scan completes.                                                                                                                                                                                                                                                                      |
+| `cir`, `cidr-ip-range`                 | No       |         | No     | *one or more valid, comma-separated CIDR IP ranges*                     | List of comma-separated CIDR IP ranges to scan for certificates.                                                                                                                                                                                                                                                                                                      |
+| `p`, `ports`                           | No       | 443     | No     | *one or more valid, comma-separated TCP ports*                          | List of comma-separated TCP ports to check for certificates. If not specified, the list defaults to 443 only.                                                                                                                                                                                                                                                         |
+| `spsr`, `show-port-scan-results`       | No       | `false` | No     | `true`, `false`                                                         | Toggles listing host port scan results.                                                                                                                                                                                                                                                                                                                               |
+| `scp`, `show-closed-ports`             | No       | `false` | No     | `true`, `false`                                                         | Toggles listing all host port scan results, even for hosts without any specified ports in an open state.                                                                                                                                                                                                                                                              |
+| `shwvc`, `show-hosts-with-valid-certs` | No       | `false` | No     | `true`, `false`                                                         | Toggles listing all cert check results in overview output, even for hosts with valid certificates.                                                                                                                                                                                                                                                                    |
+| `svc`, `show-valid-certs`              | No       | `false` | No     | `true`, `false`                                                         | Toggles listing all certificates in output summary, even certificates which have passed all validity checks.                                                                                                                                                                                                                                                          |
+| `so`, `show-overview`                  | No       | `false` | No     | `true`, `false`                                                         | Toggles summary output view from detailed to overview.                                                                                                                                                                                                                                                                                                                |
 
 ### Configuration file
 
@@ -641,6 +726,54 @@ Some items to note in the `CERTIFICATES | SUMMARY` section:
   was that listing the first one to expire and then listing out the chain
   details in the following section (with explicit notes re expiration
   status) was sufficient coverage
+
+### `fixsn` CLI tool
+
+#### Invalid input
+
+```ShellSession
+$ ./fixsn badinput
+Error: Invalid serial number (in base 10 format)
+Example expected input: 336872288293767042001244177974291853363
+```
+
+#### Expected input
+
+```ShellSession
+$ ./fixsn 336872288293767042001244177974291853363
+FD:6F:3E:24:98:C2:5B:1D:08:00:00:00:00:47:F0:33
+```
+
+### `certsum` CLI tool
+
+This tool is in early development; the functionality shown here is
+intentionally brief as the output and options available are subject to change
+(perhaps even significantly) in future releases.
+
+Please see the list of available flags/options documented earlier in this
+README for further options.
+
+```ShellSession
+$ ./certsum --ports 443 --cidr-ip-range 192.168.5.0/24
+Total IPs from all ranges before deduping: 254
+Total IPs from all ranges after deduping: 254
+Beginning scan of ports: [443]
+Completed port scan
+Beginning certificate analysis
+..........................
+Completed certificate analysis
+
+Results:
+
+IP Address              Port    Subject or SANs                 Status (Type)                   Summary                         Serial
+---                     ---     ---                             ---                             ---                             ---
+192.168.5.104           443     HP Jetdirect 7FE7AF22           ⛔ (leaf; self-signed)          [EXPIRED] 3942d 12h ago         02
+192.168.5.3             443     VMware                          ⛔ (root)                       [EXPIRED] 571d 23h ago          DE:FD:50:2B:C5:7F:79:F4
+192.168.5.109           443     HP LaserJet M506 F2A68A         ⛔ (leaf; self-signed)          [CRITICAL] 1d 7h remaining      -29:25:F5:A8:D5:E2:FC:C3:71:77:F4:48:3A:09:2E:24:0F:0E:37:1A
+192.168.5.83            443     HP Jetdirect 4639304E           ⛔ (leaf; self-signed)          [EXPIRED] 2175d 12h ago         47:F0:56:50
+192.168.5.165           443     192.168.5.165                   ⛔ (leaf; self-signed)          [EXPIRED] 1519d 7h ago          EF:E5:A3:0E:2F:FA:C1:3A
+192.168.5.183           443     192.168.5.183                   ⛔ (leaf; self-signed)          [EXPIRED] 1034d 19h ago         F7:A2:CD:4A:F2:A0:63:10
+```
 
 ## License
 
