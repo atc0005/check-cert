@@ -26,6 +26,25 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.10] - 2020-12-12
+
+### Changed
+
+- Dependencies
+  - built using Go 1.15.6
+    - Statically linked
+    - Windows (x86, x64)
+    - Linux (x86, x64)
+  - `actions/setup-node`
+    - `v2.1.2` to `v2.1.3`
+
+### Fixed
+
+- Certificate serial number reported in wrong format
+- Refactor config, logging packages
+- Makefile: version tagging broken
+  - note: did not make it into a public release
+
 ## [v0.1.9]- 2020-11-10
 
 ### Changed
@@ -384,7 +403,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.9...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.10...HEAD
+[v0.1.10]: https://github.com/atc0005/check-cert/releases/tag/v0.1.10
 [v0.1.9]: https://github.com/atc0005/check-cert/releases/tag/v0.1.9
 [v0.1.8]: https://github.com/atc0005/check-cert/releases/tag/v0.1.8
 [v0.1.7]: https://github.com/atc0005/check-cert/releases/tag/v0.1.7
