@@ -48,3 +48,38 @@ func PrintHeader(headerText string) {
 		headerBorderStr,
 	)
 }
+
+// InsertDelimiter inserts a delimiter into the provided string every pos
+// characters. If the length of the provided string is less than pos + 1
+// characters the original string is returned unmodified as we are unable to
+// insert delimiter between blocks of characters of specified (pos) size.
+func InsertDelimiter(s string, delimiter string, pos int) string {
+
+	if len(s) < pos+1 {
+		return s
+	}
+
+	// convert string to rune slice in order to use unicode package functions
+	// (which expect to work with runes).
+	r := []rune(s)
+
+	// to track position in string
+	var ctr int
+
+	var delimitedStr string
+	for i, v := range r {
+		c := string(v)
+		ctr++
+
+		// add delimiter when we have reached the specified position in the
+		// string, provided that we've not reached the end of the string.
+		if (ctr == pos) && (i+1 != len(r)) {
+			delimitedStr += c + delimiter
+			ctr = 0
+			continue
+		}
+		delimitedStr += c
+	}
+
+	return delimitedStr
+}

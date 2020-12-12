@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"math/big"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -242,6 +243,36 @@ func FormattedExpiration(expireTime time.Time) string {
 
 }
 
+// FormatCertSerialNumber receives a certificate serial number in its native
+// type and formats it in the text format used by OpenSSL (and many other
+// tools).
+//
+// Example: DE:FD:50:2B:C5:7F:79:F4
+func FormatCertSerialNumber(sn *big.Int) string {
+
+	// convert serial number from native *bit.Int format to a hex string
+	snHexStr := sn.Text(16)
+
+	delimiterPosition := 2
+	delimiter := ":"
+
+	// ignore the leading negative sign if present
+	if sn.Sign() == -1 {
+		snHexStr = strings.TrimPrefix(snHexStr, "-")
+	}
+
+	formattedSerialNum := textutils.InsertDelimiter(snHexStr, delimiter, delimiterPosition)
+	formattedSerialNum = strings.ToUpper(formattedSerialNum)
+
+	// add back negative sign if originally present
+	if sn.Sign() == -1 {
+		return "-" + formattedSerialNum
+	}
+
+	return formattedSerialNum
+
+}
+
 // ExpirationStatus receives a certificate and the expiration threshold values
 // for CRITICAL and WARNING states and returns a human-readable string
 // indicating the overall status at a glance.
@@ -354,7 +385,7 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 			nagios.CheckOutputEOL,
 			ConvertKeyIDToHexStr(certificate.AuthorityKeyId),
 			nagios.CheckOutputEOL,
-			certificate.SerialNumber,
+			FormatCertSerialNumber(certificate.SerialNumber),
 			nagios.CheckOutputEOL,
 			certificate.NotBefore.Format(CertValidityDateLayout),
 			nagios.CheckOutputEOL,
