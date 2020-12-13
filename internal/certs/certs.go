@@ -322,10 +322,13 @@ func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning 
 // assumed to be an indication that a certificate is not a root CA.
 //
 // https://en.wikipedia.org/wiki/X.509#Root_certificate
+// https://tools.ietf.org/html/rfc5280
 func isRootCACert(cert *x509.Certificate) bool {
 
 	if cert.Issuer.String() == cert.Subject.String() {
 
+		// The cA boolean indicates whether the certified public key may be
+		// used to verify certificate signatures.
 		if cert.IsCA {
 			return true
 		}
@@ -336,11 +339,147 @@ func isRootCACert(cert *x509.Certificate) bool {
 			cert.Signature,
 		)
 		if sigVerifyErr == nil {
+
 			// issuer and subject fields are identical, its public key was
-			// successfully used to validate its signature
+			// successfully used to validate its signature. This is a
+			// self-signed certificate. Depending on other criteria, this is
+			// either a certificate authority certificate, or a self-signed
+			// leaf certificate.
+
+			switch cert.Version {
+
+			case 1, 2:
+				// not enough to work with to say that we are *not* looking at
+				// a v1 or v2 CA cert. Only with v3 fields can we be more
+				// confident of the intended purpose.
+				return true
+
+			case 3:
+
+				// Extended key usage
+				//
+				// This extension indicates one or more purposes for which the
+				// certified public key may be used, in addition to or in
+				// place of the basic purposes indicated in the key usage
+				// extension. In general, this extension will appear only in
+				// end entity certificates.
+				if cert.ExtKeyUsage != nil {
+					return false
+				}
+
+				// CA certs are intended for cert and CRL signing.
+				//
+				// In the majority (all?) of cases, the cA boolean field will
+				// already be set if either of these under `X509v3 Basic
+				// Constraints` are specified.
+				switch cert.KeyUsage {
+				case cert.KeyUsage | x509.KeyUsageCertSign | x509.KeyUsageCRLSign:
+					return true
+				case cert.KeyUsage | x509.KeyUsageCertSign:
+					return true
+				}
+
+			default:
+
+				// if we make it this far we've probably missed a check
+				// somewhere
+				return false
+			}
+
+		}
+
+	}
+
+	return false
+
+}
+
+// isIntermediateCACert is a helper function that attempts to validate whether
+// a given certificate is an intermediate CA certificate. Many of the same
+// checks as for a root CA cert are applied here, but are adjusted
+// accordingly.
+//
+// https://en.wikipedia.org/wiki/X.509
+// https://tools.ietf.org/html/rfc5280
+func isIntermediateCACert(cert *x509.Certificate) bool {
+
+	if cert.Issuer.String() != cert.Subject.String() {
+
+		// The cA boolean indicates whether the certified public key may be
+		// used to verify certificate signatures.
+		if cert.IsCA {
 			return true
 		}
 
+		// not enough to work with to say that we are *not* looking at
+		// a v1 or v2 CA cert. Only with v3 fields can we be more
+		// confident of the intended purpose.
+		if cert.Version == 3 {
+			// Extended key usage
+			//
+			// This extension indicates one or more purposes for which the
+			// certified public key may be used, in addition to or in
+			// place of the basic purposes indicated in the key usage
+			// extension. In general, this extension will appear only in
+			// end entity certificates.
+			if cert.ExtKeyUsage != nil {
+				return false
+			}
+
+			// CA certs are intended for cert and CRL signing.
+			//
+			// In the majority (all?) of cases, the cA boolean field will
+			// already be set if either of these under `X509v3 Basic
+			// Constraints` are specified.
+			switch cert.KeyUsage {
+			case cert.KeyUsage | x509.KeyUsageCertSign | x509.KeyUsageCRLSign:
+				return true
+			case cert.KeyUsage | x509.KeyUsageCertSign:
+				return true
+			}
+		}
+	}
+
+	return false
+
+}
+
+// isLeafCert is a helper function that attempts to validate whether a given
+// certificate is a leaf certificate.
+//
+// https://en.wikipedia.org/wiki/X.509
+// https://tools.ietf.org/html/rfc5280
+func isLeafCert(cert *x509.Certificate) bool {
+
+	// The cA boolean indicates whether the certified public key may be
+	// used to verify certificate signatures.
+	if cert.IsCA {
+		return false
+	}
+
+	// not enough to work with to say that we are *not* looking at
+	// a v1 or v2 CA cert. Only with v3 fields can we be more
+	// confident of the intended purpose.
+	if cert.Version == 3 {
+		// Extended key usage
+		//
+		// This extension indicates one or more purposes for which the
+		// certified public key may be used, in addition to or in
+		// place of the basic purposes indicated in the key usage
+		// extension. In general, this extension will appear only in
+		// end entity certificates.
+		if cert.ExtKeyUsage != nil {
+			return true
+		}
+
+		// CA certs are intended for cert and CRL signing. If either are
+		// present, this is not a leaf certificate.
+		switch cert.KeyUsage {
+		case cert.KeyUsage | x509.KeyUsageCertSign | x509.KeyUsageCRLSign:
+			return false
+		case cert.KeyUsage | x509.KeyUsageCertSign:
+			return false
+		}
 	}
 
 	return false
@@ -355,9 +494,9 @@ func ChainPosition(cert *x509.Certificate) string {
 
 	case isRootCACert(cert):
 		return certChainPositionRoot
-	case cert.IsCA:
+	case isIntermediateCACert(cert):
 		return certChainPositionIntermediate
-	case !cert.IsCA:
+	case isLeafCert(cert):
 		return certChainPositionLeaf
 	default:
 		return certChainPositionUnknown
