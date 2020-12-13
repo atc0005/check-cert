@@ -26,6 +26,14 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.13] - 2020-12-13
+
+### Fixed
+
+- Self-signed leaf certificate misidentified as root certificate
+- Nagios plugin: Logging output intended for debugging mixing with output
+  intended for console
+
 ## [v0.1.12] - 2020-12-13
 
 ### Fixed
@@ -416,7 +424,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.12...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.13...HEAD
+[v0.1.13]: https://github.com/atc0005/check-cert/releases/tag/v0.1.13
 [v0.1.12]: https://github.com/atc0005/check-cert/releases/tag/v0.1.12
 [v0.1.11]: https://github.com/atc0005/check-cert/releases/tag/v0.1.11
 [v0.1.10]: https://github.com/atc0005/check-cert/releases/tag/v0.1.10
