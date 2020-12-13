@@ -95,12 +95,25 @@ func setLoggingLevel(logLevel string) error {
 // application
 func (c *Config) setupLogging(isPlugin bool) error {
 
+	var output *os.File
+
+	switch {
+	case isPlugin:
+		// plugin logging goes to stderr to prevent mixing in with stdout output
+		// intended for the Nagios console
+		output = os.Stderr
+
+	case !isPlugin:
+		// CLI app logging goes to stdout
+		output = os.Stdout
+	}
+
 	// We set some common fields here so that we don't have to repeat them
 	// explicitly later and then set additional fields while processing each
 	// email account. This approach is intended to help standardize the log
 	// messages to make them easier to search through later when
 	// troubleshooting.
-	c.Log = zerolog.New(os.Stdout).With().Caller().
+	c.Log = zerolog.New(output).With().Caller().
 		Str("version", Version()).
 		Str("logging_level", c.LoggingLevel).
 		Bool("is_plugin", isPlugin).
