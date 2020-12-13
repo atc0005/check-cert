@@ -312,7 +312,7 @@ Certificate 1 of 2 (leaf):
         KeyID: 8E:A3:6C:47:12:A7:A:7:5B:94:51:D6:2A:3F:72:F9:35:6:45:2C
         Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
         IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
-        Serial: 336872288293767042001244177974291853363
+        Serial: FD:6F:3E:24:98:C2:5B:1D:08:00:00:00:00:47:F0:33
         Expiration: 2020-09-09 14:31:22 +0000 UTC
         Status: [OK] 65d 3h remaining
 
@@ -322,7 +322,7 @@ Certificate 2 of 2 (intermediate):
         KeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
         Issuer: CN=GlobalSign,OU=GlobalSign Root CA - R2,O=GlobalSign
         IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
-        Serial: 149699596615803609916394524856
+        Serial: 01:E3:B4:9A:A1:8D:8A:A9:81:25:69:50:B8
         Expiration: 2021-12-15 00:00:42 +0000 UTC
         Status: [OK] 526d 12h remaining
 ```
@@ -359,7 +359,7 @@ Certificate 1 of 2 (leaf):
         KeyID: 8E:A3:6C:47:12:A7:A:7:5B:94:51:D6:2A:3F:72:F9:35:6:45:2C
         Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
         IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
-        Serial: 336872288293767042001244177974291853363
+        Serial: FD:6F:3E:24:98:C2:5B:1D:08:00:00:00:00:47:F0:33
         Expiration: 2020-09-09 14:31:22 +0000 UTC
         Status: [WARNING] 65d 3h remaining
 
@@ -369,7 +369,7 @@ Certificate 2 of 2 (intermediate):
         KeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
         Issuer: CN=GlobalSign,OU=GlobalSign Root CA - R2,O=GlobalSign
         IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
-        Serial: 149699596615803609916394524856
+        Serial: 01:E3:B4:9A:A1:8D:8A:A9:81:25:69:50:B8
         Expiration: 2021-12-15 00:00:42 +0000 UTC
         Status: [OK] 526d 12h remaining
 ```
@@ -425,7 +425,7 @@ Certificate 1 of 3 (leaf):
         KeyID: 9D:EE:C1:7B:81:B:3A:47:69:71:18:7D:11:37:93:BC:A5:1B:3F:FB
         Issuer: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         IssuerKeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
-        Serial: 99565320202650452861752791156765321481
+        Serial: 4A:E7:95:49:FA:9A:BE:3F:10:0F:17:A4:78:E1:69:09
         Expiration: 2015-04-12 23:59:59 +0000 UTC
         Status: [EXPIRED] 1911d 11h ago
 
@@ -435,7 +435,7 @@ Certificate 2 of 3 (intermediate):
         KeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
         Issuer: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         IssuerKeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
-        Serial: 57397899145990363081023081275480378375
+        Serial: 2B:2E:6E:EA:D9:75:36:6C:14:8A:6E:DB:A3:7C:8C:07
         Expiration: 2029-02-11 23:59:59 +0000 UTC
         Status: [OK] 3142d 12h remaining
 
@@ -445,7 +445,7 @@ Certificate 3 of 3 (intermediate):
         KeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
         Issuer: CN=AddTrust External CA Root,OU=AddTrust External TTP Network,O=AddTrust AB,C=SE
         IssuerKeyID: AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:3:BD:E0:24:CB:54:1A
-        Serial: 52374340215108295845375962883522092578
+        Serial: 27:66:EE:56:EB:49:F3:8E:AB:D7:70:A2:FC:84:DE:22
         Expiration: 2020-05-30 10:48:38 +0000 UTC
         Status: [EXPIRED] 37d 0h ago
 ```
@@ -491,7 +491,7 @@ Certificate 1 of 2 (leaf):
         KeyID: 8E:A3:6C:47:12:A7:A:7:5B:94:51:D6:2A:3F:72:F9:35:6:45:2C
         Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
         IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
-        Serial: 336872288293767042001244177974291853363
+        Serial: FD:6F:3E:24:98:C2:5B:1D:08:00:00:00:00:47:F0:33
         Expiration: 2020-09-09 14:31:22 +0000 UTC
         Status: [OK] 65d 3h remaining
 
@@ -501,7 +501,7 @@ Certificate 2 of 2 (intermediate):
         KeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
         Issuer: CN=GlobalSign,OU=GlobalSign Root CA - R2,O=GlobalSign
         IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
-        Serial: 149699596615803609916394524856
+        Serial: 01:E3:B4:9A:A1:8D:8A:A9:81:25:69:50:B8
         Expiration: 2021-12-15 00:00:42 +0000 UTC
         Status: [OK] 526d 12h remaining
 ```
@@ -542,7 +542,7 @@ Certificate 1 of 2 (leaf):
         KeyID: 8E:A3:6C:47:12:A7:A:7:5B:94:51:D6:2A:3F:72:F9:35:6:45:2C
         Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
         IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
-        Serial: 336872288293767042001244177974291853363
+        Serial: FD:6F:3E:24:98:C2:5B:1D:08:00:00:00:00:47:F0:33
         Expiration: 2020-09-09 14:31:22 +0000 UTC
         Status: [WARNING] 65d 3h remaining
 
@@ -552,7 +552,7 @@ Certificate 2 of 2 (intermediate):
         KeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
         Issuer: CN=GlobalSign,OU=GlobalSign Root CA - R2,O=GlobalSign
         IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
-        Serial: 149699596615803609916394524856
+        Serial: 01:E3:B4:9A:A1:8D:8A:A9:81:25:69:50:B8
         Expiration: 2021-12-15 00:00:42 +0000 UTC
         Status: [OK] 526d 12h remaining
 ```
@@ -605,7 +605,7 @@ Certificate 1 of 3 (leaf):
         KeyID: 9D:EE:C1:7B:81:B:3A:47:69:71:18:7D:11:37:93:BC:A5:1B:3F:FB
         Issuer: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         IssuerKeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
-        Serial: 99565320202650452861752791156765321481
+        Serial: 4A:E7:95:49:FA:9A:BE:3F:10:0F:17:A4:78:E1:69:09
         Expiration: 2015-04-12 23:59:59 +0000 UTC
         Status: [EXPIRED] 1911d 11h ago
 
@@ -615,7 +615,7 @@ Certificate 2 of 3 (intermediate):
         KeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
         Issuer: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         IssuerKeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
-        Serial: 57397899145990363081023081275480378375
+        Serial: 2B:2E:6E:EA:D9:75:36:6C:14:8A:6E:DB:A3:7C:8C:07
         Expiration: 2029-02-11 23:59:59 +0000 UTC
         Status: [OK] 3142d 12h remaining
 
@@ -625,7 +625,7 @@ Certificate 3 of 3 (intermediate):
         KeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
         Issuer: CN=AddTrust External CA Root,OU=AddTrust External TTP Network,O=AddTrust AB,C=SE
         IssuerKeyID: AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:3:BD:E0:24:CB:54:1A
-        Serial: 52374340215108295845375962883522092578
+        Serial: 27:66:EE:56:EB:49:F3:8E:AB:D7:70:A2:FC:84:DE:22
         Expiration: 2020-05-30 10:48:38 +0000 UTC
         Status: [EXPIRED] 37d 0h ago
 ```
