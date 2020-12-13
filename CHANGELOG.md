@@ -26,6 +26,13 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.11] - 2020-12-13
+
+### Fixed
+
+- README: Examples include serial numbers in wrong format
+- Certificate serial number missing leading zero
+
 ## [v0.1.10] - 2020-12-12
 
 ### Changed
@@ -403,7 +410,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.10...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.11...HEAD
+[v0.1.11]: https://github.com/atc0005/check-cert/releases/tag/v0.1.11
 [v0.1.10]: https://github.com/atc0005/check-cert/releases/tag/v0.1.10
 [v0.1.9]: https://github.com/atc0005/check-cert/releases/tag/v0.1.9
 [v0.1.8]: https://github.com/atc0005/check-cert/releases/tag/v0.1.8
