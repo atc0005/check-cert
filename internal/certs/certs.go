@@ -251,7 +251,11 @@ func FormattedExpiration(expireTime time.Time) string {
 func FormatCertSerialNumber(sn *big.Int) string {
 
 	// convert serial number from native *bit.Int format to a hex string
-	snHexStr := sn.Text(16)
+	// snHexStr := sn.Text(16)
+	//
+	// use Sprintf hex formatting in order to retain leading zero (GH-114)
+	// credit: inspired by discussion on mozilla/tls-observatory#245
+	snHexStr := fmt.Sprintf("%X", sn.Bytes())
 
 	delimiterPosition := 2
 	delimiter := ":"
