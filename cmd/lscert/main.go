@@ -204,7 +204,7 @@ func main() {
 		firstSANsEntry := strings.ToLower(strings.TrimSpace(cfg.SANsEntries[0]))
 		if firstSANsEntry != strings.ToLower(strings.TrimSpace(config.SkipSANSCheckKeyword)) {
 
-			if mismatched, err := certs.CheckSANsEntries(certChain[0], cfg.SANsEntries); err != nil {
+			if mismatched, err := certs.CheckSANsEntries(certChain[0], certChain, cfg.SANsEntries); err != nil {
 
 				log.Debug().
 					Err(err).

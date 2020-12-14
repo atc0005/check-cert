@@ -28,10 +28,11 @@ import (
 const CertValidityDateLayout string = "2006-01-02 15:04:05 -0700 MST"
 
 const (
-	certChainPositionLeaf         string = "leaf"
-	certChainPositionIntermediate string = "intermediate"
-	certChainPositionRoot         string = "root"
-	certChainPositionUnknown      string = "UNKNOWN cert chain position; please submit a bug report"
+	certChainPositionLeaf           string = "leaf"
+	certChainPositionLeafSelfSigned string = "leaf; self-signed"
+	certChainPositionIntermediate   string = "intermediate"
+	certChainPositionRoot           string = "root"
+	certChainPositionUnknown        string = "UNKNOWN cert chain position; please submit a bug report"
 )
 
 // CertCheckOneLineSummaryTmpl is a shared template string used for emitting
@@ -315,115 +316,115 @@ func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning 
 
 }
 
-// isRootCACert is a helper function that attempts to validate whether a given
-// certificate is a root CA certificate by asserting that its issuer and
-// subject fields are the same, and that its signature can be validated with
-// its own public key. Any errors encountered during signature validation are
-// assumed to be an indication that a certificate is not a root CA.
-//
-// https://en.wikipedia.org/wiki/X.509#Root_certificate
-// https://tools.ietf.org/html/rfc5280
-func isRootCACert(cert *x509.Certificate) bool {
+// isSelfSigned is a helper function that attempts to validate whether a given
+// certificate is self-signed by asserting that its signature can be validated
+// with its own public key. Any errors encountered during signature validation
+// are assumed to be an indication that a certificate is not self-signed.
+func isSelfSigned(cert *x509.Certificate) bool {
 
 	if cert.Issuer.String() == cert.Subject.String() {
-
-		// The cA boolean indicates whether the certified public key may be
-		// used to verify certificate signatures.
-		if cert.IsCA {
-			return true
-		}
 
 		sigVerifyErr := cert.CheckSignature(
 			cert.SignatureAlgorithm,
 			cert.RawTBSCertificate,
 			cert.Signature,
 		)
-		if sigVerifyErr == nil {
 
-			// issuer and subject fields are identical, its public key was
-			// successfully used to validate its signature. This is a
-			// self-signed certificate. Depending on other criteria, this is
-			// either a certificate authority certificate, or a self-signed
-			// leaf certificate.
-
-			switch cert.Version {
-
-			case 1, 2:
-				// not enough to work with to say that we are *not* looking at
-				// a v1 or v2 CA cert. Only with v3 fields can we be more
-				// confident of the intended purpose.
-				return true
-
-			case 3:
-
-				// Extended key usage
-				//
-				// This extension indicates one or more purposes for which the
-				// certified public key may be used, in addition to or in
-				// place of the basic purposes indicated in the key usage
-				// extension. In general, this extension will appear only in
-				// end entity certificates.
-				if cert.ExtKeyUsage != nil {
-					return false
-				}
-
-				// CA certs are intended for cert and CRL signing.
-				//
-				// In the majority (all?) of cases, the cA boolean field will
-				// already be set if either of these under `X509v3 Basic
-				// Constraints` are specified.
-				switch cert.KeyUsage {
-				case cert.KeyUsage | x509.KeyUsageCertSign | x509.KeyUsageCRLSign:
-					return true
-				case cert.KeyUsage | x509.KeyUsageCertSign:
-					return true
-				}
-
-			default:
-
-				// if we make it this far we've probably missed a check
-				// somewhere
-				return false
-			}
-
-		}
+		return sigVerifyErr == nil
 
 	}
 
 	return false
-
 }
 
-// isIntermediateCACert is a helper function that attempts to validate whether
-// a given certificate is an intermediate CA certificate. Many of the same
-// checks as for a root CA cert are applied here, but are adjusted
-// accordingly.
+// ChainPosition receives a cert and the cert chain that it belongs to and
+// returns a string indicating what position or "role" it occurpies in the
+// certificate chain.
 //
 // https://en.wikipedia.org/wiki/X.509
 // https://tools.ietf.org/html/rfc5280
-func isIntermediateCACert(cert *x509.Certificate) bool {
+func ChainPosition(cert *x509.Certificate, certChain []*x509.Certificate) string {
 
-	if cert.Issuer.String() != cert.Subject.String() {
+	// We require a valid certificate chain. Fail if not provided.
+	if certChain == nil {
+		return certChainPositionUnknown
+	}
 
-		// The cA boolean indicates whether the certified public key may be
-		// used to verify certificate signatures.
-		if cert.IsCA {
-			return true
+	switch cert.Version {
+
+	// Because v1 and v2 certs lack the more descriptive "intention"
+	// fields of v3 certs, we are limited in what checks we can apply. We
+	// rely on a combination of self-signed and literal chain position to
+	// help determine the purpose of each v1 and v2 certificate.
+	case 1, 2:
+
+		switch {
+		case isSelfSigned(cert):
+			if cert == certChain[0] {
+				return certChainPositionLeafSelfSigned
+			}
+
+			return certChainPositionRoot
+
+		default:
+			if cert == certChain[0] {
+				return certChainPositionLeaf
+			}
+
+			return certChainPositionIntermediate
 		}
 
-		// not enough to work with to say that we are *not* looking at
-		// a v1 or v2 CA cert. Only with v3 fields can we be more
-		// confident of the intended purpose.
-		if cert.Version == 3 {
-			// Extended key usage
-			//
-			// This extension indicates one or more purposes for which the
-			// certified public key may be used, in addition to or in
-			// place of the basic purposes indicated in the key usage
-			// extension. In general, this extension will appear only in
-			// end entity certificates.
+	case 3:
+
+		switch {
+		case isSelfSigned(cert):
+
+			// FIXME: What pattern to use for self-signed v3 leaf?
+
+			// The cA boolean indicates whether the certified public key may be
+			// used to verify certificate signatures.
+			if cert.IsCA {
+				return certChainPositionRoot
+			}
+
+			// The Extended key usage extension indicates one or more purposes
+			// for which the certified public key may be used, in addition to
+			// or in place of the basic purposes indicated in the key usage
+			// extension. In general, this extension will appear only in end
+			// entity certificates.
 			if cert.ExtKeyUsage != nil {
-				return false
+				return certChainPositionLeafSelfSigned
+			}
+
+			// CA certs are intended for cert and CRL signing.
+			//
+			// In the majority of cases (all?), the cA boolean field will
+			// already be set if either of these under `X509v3 Basic
+			// Constraints` are specified.
+			switch cert.KeyUsage {
+			case cert.KeyUsage | x509.KeyUsageCertSign | x509.KeyUsageCRLSign:
+				return certChainPositionRoot
+			case cert.KeyUsage | x509.KeyUsageCertSign:
+				return certChainPositionRoot
+			default:
+				return certChainPositionLeafSelfSigned
+			}
+
+		default:
+
+			// The cA boolean indicates whether the certified public key may be
+			// used to verify certificate signatures.
+			if cert.IsCA {
+				return certChainPositionIntermediate
+			}
+
+			// The Extended key usage extension indicates one or more purposes
+			// for which the certified public key may be used, in addition to
+			// or in place of the basic purposes indicated in the key usage
+			// extension. In general, this extension will appear only in end
+			// entity certificates.
+			if cert.ExtKeyUsage != nil {
+				return certChainPositionLeaf
 			}
 
 			// CA certs are intended for cert and CRL signing.
@@ -433,74 +434,18 @@ func isIntermediateCACert(cert *x509.Certificate) bool {
 			// Constraints` are specified.
 			switch cert.KeyUsage {
 			case cert.KeyUsage | x509.KeyUsageCertSign | x509.KeyUsageCRLSign:
-				return true
+				return certChainPositionIntermediate
 			case cert.KeyUsage | x509.KeyUsageCertSign:
-				return true
+				return certChainPositionIntermediate
+			default:
+				return certChainPositionLeaf
 			}
+
 		}
 	}
 
-	return false
-
-}
-
-// isLeafCert is a helper function that attempts to validate whether a given
-// certificate is a leaf certificate.
-//
-// https://en.wikipedia.org/wiki/X.509
-// https://tools.ietf.org/html/rfc5280
-func isLeafCert(cert *x509.Certificate) bool {
-
-	// The cA boolean indicates whether the certified public key may be
-	// used to verify certificate signatures.
-	if cert.IsCA {
-		return false
-	}
-
-	// not enough to work with to say that we are *not* looking at
-	// a v1 or v2 CA cert. Only with v3 fields can we be more
-	// confident of the intended purpose.
-	if cert.Version == 3 {
-		// Extended key usage
-		//
-		// This extension indicates one or more purposes for which the
-		// certified public key may be used, in addition to or in
-		// place of the basic purposes indicated in the key usage
-		// extension. In general, this extension will appear only in
-		// end entity certificates.
-		if cert.ExtKeyUsage != nil {
-			return true
-		}
-
-		// CA certs are intended for cert and CRL signing. If either are
-		// present, this is not a leaf certificate.
-		switch cert.KeyUsage {
-		case cert.KeyUsage | x509.KeyUsageCertSign | x509.KeyUsageCRLSign:
-			return false
-		case cert.KeyUsage | x509.KeyUsageCertSign:
-			return false
-		}
-	}
-
-	return false
-
-}
-
-// ChainPosition receives a cert and returns a string indicating what position
-// or "role" it occurpies in the certificate chain
-func ChainPosition(cert *x509.Certificate) string {
-
-	switch {
-
-	case isRootCACert(cert):
-		return certChainPositionRoot
-	case isIntermediateCACert(cert):
-		return certChainPositionIntermediate
-	case isLeafCert(cert):
-		return certChainPositionLeaf
-	default:
-		return certChainPositionUnknown
-	}
+	// no known match, so position unknown
+	return certChainPositionUnknown
 
 }
 
@@ -516,7 +461,7 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 
 	for idx, certificate := range certChain {
 
-		certPosition := ChainPosition(certificate)
+		certPosition := ChainPosition(certificate, certChain)
 
 		expiresText := ExpirationStatus(
 			certificate,
@@ -571,10 +516,11 @@ func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, a
 
 }
 
-// CheckSANsEntries receives a x509 certificate and a list of expected SANs
-// entries that should be present for the certificate. The number of unmatched
-// SANs entries is returned along with an error if validation failed.
-func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) (int, error) {
+// CheckSANsEntries receives a x509 certificate, the x509 certificate chain it
+// is a part of and a list of expected SANs entries that should be present for
+// the certificate. The number of unmatched SANs entries is returned along
+// with an error if validation failed.
+func CheckSANsEntries(cert *x509.Certificate, certChain []*x509.Certificate, expectedEntries []string) (int, error) {
 
 	unmatchedSANsEntriesFromList := make([]string, 0, len(expectedEntries))
 	unmatchedSANsEntriesFromCert := make([]string, 0, len(cert.DNSNames))
@@ -599,7 +545,7 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) (int, er
 			return len(unmatchedSANsEntriesFromList), fmt.Errorf(
 				"%d specified SANs entries missing from %s certificate: %v",
 				len(unmatchedSANsEntriesFromList),
-				ChainPosition(cert),
+				ChainPosition(cert, certChain),
 				unmatchedSANsEntriesFromList,
 			)
 		}
@@ -617,7 +563,7 @@ func CheckSANsEntries(cert *x509.Certificate, expectedEntries []string) (int, er
 		return len(unmatchedSANsEntriesFromCert), fmt.Errorf(
 			"%d SANs entries on %s certificate not specified in provided list: %v",
 			len(unmatchedSANsEntriesFromCert),
-			ChainPosition(cert),
+			ChainPosition(cert, certChain),
 			unmatchedSANsEntriesFromCert,
 		)
 
@@ -747,7 +693,7 @@ func OneLineCheckSummary(serviceState string, certChain []*x509.Certificate, cer
 	summary := fmt.Sprintf(
 		summaryTemplate,
 		serviceState,
-		ChainPosition(nextCertToExpire),
+		ChainPosition(nextCertToExpire, certChain),
 		nextCertToExpireServerName,
 		FormattedExpiration(nextCertToExpire.NotAfter),
 		nextCertToExpire.NotAfter.Format(CertValidityDateLayout),
