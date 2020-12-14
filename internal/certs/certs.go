@@ -8,8 +8,16 @@
 package certs
 
 import (
+	"crypto"
+
+	// We use this to verify MD5WithRSA signatures.
+	// nolint:gosec
+	"crypto/md5"
+
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -330,7 +338,66 @@ func isSelfSigned(cert *x509.Certificate) bool {
 			cert.Signature,
 		)
 
-		return sigVerifyErr == nil
+		switch {
+
+		// examine signature verification errors
+		case errors.Is(sigVerifyErr, x509.InsecureAlgorithmError(cert.SignatureAlgorithm)):
+
+			// fmt.Println("errors.Is match")
+
+			// Handle MD5 signature verification ourselves since Go considers
+			// the MD5 algorithm to be insecure (rightly so).
+			if cert.SignatureAlgorithm == x509.MD5WithRSA {
+
+				// fmt.Println("SignatureAlgorithm match")
+
+				// nolint:gosec
+				h := md5.New()
+				if _, err := h.Write(cert.RawTBSCertificate); err != nil {
+					// fmt.Println(
+					// 	"isSelfSigned: failed to generate MD5 hash of RawTBSCertificate:",
+					// 	err,
+					// )
+					return false
+				}
+				hashedBytes := h.Sum(nil)
+
+				if pub, ok := cert.PublicKey.(*rsa.PublicKey); ok {
+
+					// fmt.Println("type assertion for rsa.PublicKey successful")
+
+					md5RSASigVerifyErr := rsa.VerifyPKCS1v15(
+						pub, crypto.MD5, hashedBytes, cert.Signature,
+					)
+
+					switch {
+
+					case md5RSASigVerifyErr != nil:
+						// fmt.Println(
+						// 	"isSelfSigned: failed to validate MD5WithRSA signature:",
+						// 	md5RSASigVerifyErr,
+						// )
+
+						return false
+
+					case md5RSASigVerifyErr == nil:
+						// fmt.Println("MD5 signature verified")
+
+						return true
+					}
+
+				}
+
+			}
+
+			return false
+
+		// no problems verifying self-signed signature
+		case sigVerifyErr == nil:
+
+			return true
+
+		}
 
 	}
 
