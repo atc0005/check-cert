@@ -8,10 +8,8 @@
 package main
 
 import (
-	"crypto/tls"
 	"errors"
 	"fmt"
-	"net"
 	"strings"
 	"time"
 
@@ -19,6 +17,7 @@ import (
 
 	"github.com/atc0005/check-certs/internal/certs"
 	"github.com/atc0005/check-certs/internal/config"
+	"github.com/atc0005/check-certs/internal/net"
 	"github.com/atc0005/go-nagios"
 )
 
@@ -34,8 +33,7 @@ func main() {
 	defer nagiosExitState.ReturnCheckResults()
 
 	// Setup configuration by parsing user-provided flags.
-	isPlugin := true
-	cfg, cfgErr := config.New(isPlugin)
+	cfg, cfgErr := config.New(config.AppType{Plugin: true})
 	switch {
 	case errors.Is(cfgErr, config.ErrVersionRequested):
 		fmt.Println(config.Version())
@@ -80,50 +78,30 @@ func main() {
 
 	log := cfg.Log.With().
 		Str("expected_sans_entries", cfg.SANsEntries.String()).
+		Str("server", cfg.Server).
+		Int("port", cfg.Port).
 		Logger()
 
-	server := fmt.Sprintf("%s:%d", cfg.Server, cfg.Port)
+	certChain, certFetchErr := net.GetCerts(cfg.Server, cfg.Port, cfg.Timeout(), log)
+	if certFetchErr != nil {
+		log.Error().Err(certFetchErr).Msg(
+			"error fetching certificates chain")
 
-	log.Debug().Msg("Connecting to remote server")
-	tlsConfig := tls.Config{
-		// Allow insecure connection so that we can check not only the initial
-		// certificate (which may be expired), but others in the chain also to
-		// potentially catch any intermediates which may also be expired.
-		// Also, ignore security (gosec) linting warnings re this choice.
-		// nolint:gosec
-		InsecureSkipVerify: true,
-	}
-
-	// Create custom dialer with user-specified timeout value
-	dialer := &net.Dialer{
-		Timeout: time.Duration(cfg.Timeout) * time.Second,
-	}
-
-	conn, connErr := tls.DialWithDialer(dialer, "tcp", server, &tlsConfig)
-	if connErr != nil {
-		nagiosExitState.LastError = connErr
+		nagiosExitState.LastError = certFetchErr
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
-			"%s: Error connecting to %s",
+			"%s: Error fetching certificates from port %d on %s",
 			nagios.StateCRITICALLabel,
-			server,
+			cfg.Port,
+			cfg.Server,
 		)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-		log.Error().Err(connErr).Msg("error connecting to server")
 
 		// no need to go any further, we *want* to exit right away; we don't
 		// have a connection to the remote server and there isn't anything
 		// further we can do
 		return
-	}
-	defer func() {
-		if err := conn.Close(); err != nil {
-			log.Error().Err(err).Msgf("error closing connection to server")
-		}
-	}()
-	log.Debug().Msg("Connected")
 
-	// certificate chain presented by remote peer
-	certChain := conn.ConnectionState().PeerCertificates
+	}
 
 	certsSummary := certs.ChainSummary(
 		certChain,
@@ -137,9 +115,10 @@ func main() {
 		noCertsErr := fmt.Errorf("no certificates found")
 		nagiosExitState.LastError = noCertsErr
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
-			"%s: 0 certificates found at %q",
+			"%s: 0 certificates found at port %d on %q",
 			nagios.StateCRITICALLabel,
-			server,
+			cfg.Port,
+			cfg.Server,
 		)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 		log.Error().Err(noCertsErr).Msg("no certificates found")

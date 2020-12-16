@@ -30,5 +30,7 @@ scratch/
 
 # Ignore one-off CLI app builds
 /lscert
+/fixsn
+/certsum
 
 /release_assets

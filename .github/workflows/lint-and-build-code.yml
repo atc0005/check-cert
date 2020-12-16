@@ -84,3 +84,5 @@ jobs:
         run: |
           go build -v -mod=vendor ./cmd/check_cert
           go build -v -mod=vendor ./cmd/lscert
+          go build -v -mod=vendor ./cmd/fixsn
+          go build -v -mod=vendor ./cmd/certsum
