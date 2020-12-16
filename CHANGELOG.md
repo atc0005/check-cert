@@ -26,6 +26,13 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.2.0] - 2020-12-16
+
+### Added
+
+- Add IP range cert scanner prototype: `certsum`
+- Add support for verifying MD5-RSA signatures
+
 ## [v0.1.14] - 2020-12-14
 
 ### Fixed
@@ -431,7 +438,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.1.14...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.2.0...HEAD
+[v0.2.0]: https://github.com/atc0005/check-cert/releases/tag/v0.2.0
 [v0.1.14]: https://github.com/atc0005/check-cert/releases/tag/v0.1.14
 [v0.1.13]: https://github.com/atc0005/check-cert/releases/tag/v0.1.13
 [v0.1.12]: https://github.com/atc0005/check-cert/releases/tag/v0.1.12
