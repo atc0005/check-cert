@@ -32,3 +32,13 @@ func (c Config) CertPorts() []int {
 
 	return []int{defaultPortsListEntry}
 }
+
+// IPAddresses returns a list of individual IP Addresses expanded from any
+// user-specified IP Address ranges.
+func (c Config) IPAddresses() []string {
+	if c.ipAddresses.expanded != nil {
+		return c.ipAddresses.expanded
+	}
+
+	return []string{}
+}

@@ -46,21 +46,8 @@ func main() {
 		Int("port_scan_timeout", int(cfg.TimeoutPortScan())).
 		Logger()
 
-	log.Debug().Msgf("CIDR range: %v", cfg.CIDRRange)
-
-	givenIPsList := make([]string, 0, 1024)
-	for _, ipRange := range cfg.CIDRRange {
-		ips, count, err := netutils.Hosts(ipRange)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve hosts from range")
-		}
-		log.Debug().
-			Int("ips_in_range", count).
-			Str("range", ipRange).
-			Msg("")
-		givenIPsList = append(givenIPsList, ips...)
-	}
-
+	givenIPsList := cfg.IPAddresses()
+	log.Debug().Msgf("IP Addresses: %v", givenIPsList)
 	fmt.Println("Total IPs from all ranges before deduping:", len(givenIPsList))
 
 	ipsList := textutils.DedupeList(givenIPsList)

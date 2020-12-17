@@ -12,28 +12,22 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
 )
 
-// PortCheckResult indicates whether a TCP port is open and what error (if
-// any) occurred checking the port.
-type PortCheckResult struct {
-	IPAddress net.IPAddr
-	Port      int
-	Open      bool
-	Err       error
+// IndexSize returns the number of entries in the index.
+func (idx IPv4AddressOctetsIndex) IndexSize() int {
+	var mapEntriesSize int
+	for i := range idx {
+		mapEntriesSize += len(idx[i])
+	}
+
+	return mapEntriesSize
 }
-
-// PortCheckResults is a collection of PortCheckResult intended for bulk
-// operations such as filtering or generating summaries.
-type PortCheckResults []PortCheckResult
-
-// PortCheckResultsIndex maps the results slice from scan attempts against a
-// specified list of ports to an IP Address associated with scanned ports.
-type PortCheckResultsIndex map[string]PortCheckResults
 
 // HasOpenPort indicates whether at least one specified port was found to be
 // open for a scanned host.
@@ -101,13 +95,13 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 
 }
 
-// Hosts converts a CIDR network pattern into a slice of hosts within that
+// CIDRHosts converts a CIDR network pattern into a slice of hosts within that
 // network, the total count of hosts and an error if any occurred.
 //
 // https://stackoverflow.com/questions/60540465/go-how-to-list-all-ips-in-a-network
 // https://play.golang.org/p/fe-F2k6prlA
 // https://gist.github.com/kotakanbe/d3059af990252ba89a82
-func Hosts(cidr string) ([]string, int, error) {
+func CIDRHosts(cidr string) ([]string, int, error) {
 	ip, ipnet, err := net.ParseCIDR(cidr)
 	if err != nil {
 		return nil, 0, err
@@ -201,4 +195,242 @@ func GetCerts(server string, port int, timeout time.Duration, logger zerolog.Log
 	logger.Debug().Msg("Successfully closed connection to server")
 
 	return certChain, nil
+}
+
+// IsCIDR indicates whether a specified string is a CIDR notation IP address
+// and prefix length, like "192.0.2.0/24" or "2001:db8::/32", as defined in
+// RFC 4632 and RFC 4291.
+func IsCIDR(s string) bool {
+	_, _, err := net.ParseCIDR(s)
+
+	return err == nil
+}
+
+// octetWithinBounds indicates whether a specified value is within the lower
+// and upper ranges of an IPv4 octet.
+func octetWithinBounds(i int) bool {
+
+	return i >= 0 && i <= 255
+}
+
+// ExpandIPAddress accepts a string value representing either an individual IP
+// Address, a CIDR IP range or a partial (dash-separated) range (e.g.,
+// 192.168.2.10-15). IP Address ranges  and expands to scan for certificates.
+func ExpandIPAddress(s string) ([]string, error) {
+
+	givenIPsList := make([]string, 0, 1024)
+
+	switch {
+
+	// assume that user specified a CIDR mask
+	case strings.Contains(s, "/"):
+
+		if IsCIDR(s) {
+			ipAddrs, _, err := CIDRHosts(s)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing CIDR range: %s", err)
+			}
+			// fmt.Printf("%q is a CIDR rangeof %d IPs\n", s, count)
+			givenIPsList = append(givenIPsList, ipAddrs...)
+
+			return givenIPsList, nil
+		}
+
+		return nil, fmt.Errorf("%q contains slash, but fails CIDR parsing", s)
+
+	// valid (presumably single) IPv4 or IPv6 address
+	case net.ParseIP(s) != nil:
+
+		// fmt.Printf("%q is an IP Address\n", s)
+		givenIPsList = append(givenIPsList, s)
+
+		return givenIPsList, nil
+
+	// no CIDR mask, and not a single IP Address (earlier check would have
+	// triggered), so potentially a partial range of IPv4 Addresses
+	case strings.Contains(s, "."):
+
+		octets := strings.Split(s, ".")
+
+		if len(octets) != 4 {
+			return nil, fmt.Errorf(
+				"%q (%d octets) not IPv4 Address; does not contain 4 octets",
+				s,
+				len(octets),
+			)
+		}
+
+		// fmt.Printf("%q is a potential IP Address range\n", s)
+
+		// reminder: at this point single IP Address was handled by earlier
+		// switch case. We are either dealing with a partial range or invalid
+		// value.
+
+		// check for dash character used to specify partial IP range
+		if !strings.Contains(s, "-") {
+			return nil, fmt.Errorf(
+				"%q not IP Address range; does not contain dash character",
+				s,
+			)
+		}
+
+		ipAddrOctIdx := make(IPv4AddressOctetsIndex)
+
+		for octIdx := range octets {
+
+			// split on dashes, loop over that
+			halves := strings.Split(octets[octIdx], "-")
+
+			switch {
+
+			// dash is not present
+			case len(halves) == 1:
+
+				// fmt.Printf("DEBUG: octet %d does not have a dash\n", octIdx)
+
+				num, err := strconv.Atoi(halves[0])
+				if err != nil {
+					return nil, fmt.Errorf(
+						"octet %q of IP pattern %q invalid; "+
+							"non-numeric values present",
+						octets[octIdx],
+						s,
+					)
+				}
+
+				if !octetWithinBounds(num) {
+					return nil, fmt.Errorf(
+						"octet %q of IP pattern %q outside lower (0), upper (255) bounds",
+						octets[octIdx],
+						s,
+					)
+				}
+
+				// extend values for this octet
+				ipAddrOctIdx[octIdx] = append(ipAddrOctIdx[octIdx], num)
+
+				// fmt.Printf("DEBUG: %+v\n", ipAddrOctIdx)
+
+			// one dash present, this is a range separator
+			case len(halves) == 2:
+
+				rangeStart, err := strconv.Atoi(halves[0])
+				if err != nil {
+					return nil, fmt.Errorf(
+						"octet %q of IP pattern %q invalid; "+
+							"non-numeric values present",
+						octets[octIdx],
+						s,
+					)
+				}
+
+				rangeEnd, err := strconv.Atoi(halves[1])
+				if err != nil {
+					return nil, fmt.Errorf(
+						"octet %q of IP pattern %q invalid; "+
+							"non-numeric values present",
+						octets[octIdx],
+						s,
+					)
+				}
+
+				switch {
+				case rangeStart > rangeEnd:
+					return nil, fmt.Errorf(
+						"%q is invalid octet range; "+
+							"given start value %d greater than end value %d",
+						octets[octIdx],
+						rangeStart,
+						rangeEnd,
+					)
+
+				case rangeStart == rangeEnd:
+					return nil, fmt.Errorf(
+						"%q is invalid octet range; "+
+							"given start value %d equal to end value %d",
+						octets[octIdx],
+						rangeStart,
+						rangeEnd,
+					)
+				}
+
+				for i := rangeStart; i <= rangeEnd; i++ {
+					if !octetWithinBounds(i) {
+						return nil, fmt.Errorf(
+							"octet %q of IP pattern %q outside lower (0), upper (255) bounds",
+							octets[octIdx],
+							s,
+						)
+					}
+
+					// extend values for this octet
+					ipAddrOctIdx[octIdx] = append(ipAddrOctIdx[octIdx], i)
+					// fmt.Printf("DEBUG: %+v\n", ipAddrOctIdx)
+				}
+
+			// more than one dash present in octet, malformed range
+			default:
+
+				numDashes := strings.Count(octets[octIdx], "-")
+				return nil, fmt.Errorf(
+					"%d dash separators in octet %q (%d of %d); expected one",
+					numDashes,
+					octIdx,
+					octIdx+1,
+					len(octets),
+				)
+			}
+
+		}
+
+		// internal state validity check
+		if len(ipAddrOctIdx) != len(octets) {
+			return nil, fmt.Errorf(
+				"ipAddress octet map size incorrect; got %d, wanted %d",
+				len(ipAddrOctIdx),
+				len(octets),
+			)
+		}
+
+		// Ex IP: 192.168.5.10
+		// 192(w).168(x).5(y).10(z)
+		for i := range ipAddrOctIdx[0] {
+			w := strconv.Itoa(ipAddrOctIdx[0][i])
+
+			for j := range ipAddrOctIdx[1] {
+				x := strconv.Itoa(ipAddrOctIdx[1][j])
+
+				for k := range ipAddrOctIdx[2] {
+					y := strconv.Itoa(ipAddrOctIdx[2][k])
+
+					for l := range ipAddrOctIdx[3] {
+						z := strconv.Itoa(ipAddrOctIdx[3][l])
+
+						// fmt.Println(strings.Join([]string{w, x, y, z}, "."))
+						ipAddrString := strings.Join([]string{w, x, y, z}, ".")
+
+						// TODO: Is this worth failing execution, or should we
+						// emit a WARNING level message instead? Probably best
+						// to implement a specific error type that we can
+						// match on to determine severity.
+						if net.ParseIP(ipAddrString) == nil {
+							return nil, fmt.Errorf(
+								"%q (from parsed range) is an invalid IP Address",
+								ipAddrString,
+							)
+						}
+
+						givenIPsList = append(givenIPsList, ipAddrString)
+					}
+				}
+			}
+		}
+
+		return givenIPsList, nil
+
+	default:
+		return nil, fmt.Errorf(
+			"%q not recognized as IP Address or IP Address range", s,
+		)
+	}
 }
