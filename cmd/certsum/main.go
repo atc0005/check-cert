@@ -17,7 +17,7 @@ import (
 
 	"github.com/atc0005/check-certs/internal/certs"
 	"github.com/atc0005/check-certs/internal/config"
-	"github.com/atc0005/check-certs/internal/net"
+	"github.com/atc0005/check-certs/internal/netutils"
 	"github.com/atc0005/check-certs/internal/textutils"
 )
 
@@ -50,7 +50,7 @@ func main() {
 
 	givenIPsList := make([]string, 0, 1024)
 	for _, ipRange := range cfg.CIDRRange {
-		ips, count, err := net.Hosts(ipRange)
+		ips, count, err := netutils.Hosts(ipRange)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve hosts from range")
 		}
@@ -72,12 +72,12 @@ func main() {
 	var collWG sync.WaitGroup
 
 	rateLimiter := make(chan struct{}, cfg.PortScanRateLimit)
-	results := make(chan net.PortCheckResult)
-	resultsIndex := make(net.PortCheckResultsIndex)
+	results := make(chan netutils.PortCheckResult)
+	resultsIndex := make(netutils.PortCheckResultsIndex)
 
 	// Spin off scan results collector
 	collWG.Add(1)
-	go func(resultsIdx net.PortCheckResultsIndex, results <-chan net.PortCheckResult) {
+	go func(resultsIdx netutils.PortCheckResultsIndex, results <-chan netutils.PortCheckResult) {
 
 		log.Debug().Msg("starting collector routine")
 
@@ -117,10 +117,10 @@ func main() {
 				ipAddr string,
 				port int,
 				scanTimeout time.Duration,
-				resultsChan <-chan net.PortCheckResult,
+				resultsChan <-chan netutils.PortCheckResult,
 			) {
 
-				portState := net.CheckPort(ipAddr, port, scanTimeout)
+				portState := netutils.CheckPort(ipAddr, port, scanTimeout)
 				if portState.Err != nil {
 					// TODO: Check specific error type to determine how to
 					// proceed. For now, we'll just emit the error and
@@ -197,7 +197,7 @@ func main() {
 		for _, result := range checkResults {
 			if result.Open {
 				var certFetchErr error
-				certChain, certFetchErr := net.GetCerts(
+				certChain, certFetchErr := netutils.GetCerts(
 					result.IPAddress.String(),
 					result.Port,
 					cfg.Timeout(),

@@ -17,7 +17,7 @@ import (
 
 	"github.com/atc0005/check-certs/internal/certs"
 	"github.com/atc0005/check-certs/internal/config"
-	"github.com/atc0005/check-certs/internal/net"
+	"github.com/atc0005/check-certs/internal/netutils"
 	"github.com/atc0005/go-nagios"
 )
 
@@ -82,7 +82,7 @@ func main() {
 		Int("port", cfg.Port).
 		Logger()
 
-	certChain, certFetchErr := net.GetCerts(cfg.Server, cfg.Port, cfg.Timeout(), log)
+	certChain, certFetchErr := netutils.GetCerts(cfg.Server, cfg.Port, cfg.Timeout(), log)
 	if certFetchErr != nil {
 		log.Error().Err(certFetchErr).Msg(
 			"error fetching certificates chain")
