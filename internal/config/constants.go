@@ -24,7 +24,7 @@ const (
 	dnsNameFlagHelp                  string = "The fully-qualified domain name of the remote system to be used for hostname verification. This option can be used for cases where make the initial connection using a name or IP not associated with the certificate."
 	logLevelFlagHelp                 string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
 	serverFlagHelp                   string = "The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. The value provided will be validated against the Common Name and Subject Alternate Names fields."
-	ipAddressesFlagHelp              string = "List of comma-separated individual IP Addresses, CIDR IP ranges or partial (dash-separated) ranges (e.g., 192.168.2.10-15) to scan for certificates."
+	hostsFlagHelp                    string = "List of comma-separated individual IP Addresses, CIDR IP ranges, partial (dash-separated) ranges (e.g., 192.168.2.10-15), hostnames or FQDNs to scan for certificates."
 	portFlagHelp                     string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
 	portsListFlagHelp                string = "List of comma-separated TCP ports to check for certificates. If not specified, the list defaults to 443 only."
 	timeoutFlagHelp                  string = "Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned."
@@ -97,6 +97,6 @@ const (
 	appTypeScanner   string = "scanner"
 )
 
-// limit number of IP Address "printed" by the Stringer interface to a
+// limit number of IP Addresses "printed" by the Stringer interface to a
 // human-readable number
-const mvipPrintLimit int = 50
+const mvhPrintLimit int = 50

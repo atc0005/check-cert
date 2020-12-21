@@ -18,7 +18,7 @@ FEATURES
 
 • CLI tool for verifying certificates of certificate-enabled services or files
 
-• CLI tool for generating summary of discovered certificates from given IP Addresses (single and ranges) and ports
+• CLI tool for generating summary of discovered certificates from given hosts (single or IP Address ranges, hostnames or FQDNs) and ports
 
 USAGE
 

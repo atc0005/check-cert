@@ -60,10 +60,10 @@ type multiValueStringFlag []string
 // our flags.
 type multiValueIntFlag []int
 
-// multiValueIPAddressFlag is a custom type that satisfies the flag.Value
-// interface in order to accept multiple IP Addresses via individual or range
-// values for some of our flags.
-type multiValueIPAddressFlag struct {
+// multiValueHostsFlag is a custom type that satisfies the flag.Value
+// interface in order to accept multiple IP Addresses, hostnames or FQDNs for
+// some of our flags.
+type multiValueHostsFlag struct {
 	given    []string
 	expanded []string
 }
@@ -98,27 +98,27 @@ func (mvi *multiValueIntFlag) String() string {
 // This implementation of the Stringer interface intentionally references the
 // slice of user-specified values while using the getter method to retrieve
 // the final list of IP Addresses.
-func (mvip *multiValueIPAddressFlag) String() string {
+func (mvh *multiValueHostsFlag) String() string {
 
 	switch {
 
 	// From the `flag` package docs:
 	// "The flag package may call the String method with a zero-valued
 	// receiver, such as a nil pointer."
-	case mvip == nil:
+	case mvh == nil:
 		return ""
 
-	case len(mvip.given) > mvipPrintLimit:
+	case len(mvh.given) > mvhPrintLimit:
 		return fmt.Sprintf(
 			"Provided IPs list has %d IPs (skipping printing of large list)",
-			len(mvip.given),
+			len(mvh.given),
 		)
 
 	default:
 		return fmt.Sprintf(
 			"Provided IPs list (%d IPs): %v",
-			len(mvip.given),
-			strings.Join(mvip.given, ", "),
+			len(mvh.given),
+			strings.Join(mvh.given, ", "),
 		)
 
 	}
@@ -126,7 +126,7 @@ func (mvip *multiValueIPAddressFlag) String() string {
 
 // Set is called once by the flag package, in command line order, for each
 // flag present.
-func (mvip *multiValueIPAddressFlag) Set(value string) error {
+func (mvh *multiValueHostsFlag) Set(value string) error {
 
 	// split comma-separated string into multiple values, toss whitespace
 	items := strings.Split(value, ",")
@@ -136,15 +136,15 @@ func (mvip *multiValueIPAddressFlag) Set(value string) error {
 
 	// add them to the collection of user-specified IP Address (single and
 	// range) values.
-	mvip.given = append(mvip.given, items...)
+	mvh.given = append(mvh.given, items...)
 
 	// convert here
-	for i := range mvip.given {
-		ips, err := netutils.ExpandIPAddress(mvip.given[i])
+	for i := range mvh.given {
+		ips, err := netutils.ExpandIPAddress(mvh.given[i])
 		if err != nil {
 			return err
 		}
-		mvip.expanded = append(mvip.expanded, ips...)
+		mvh.expanded = append(mvh.expanded, ips...)
 	}
 
 	return nil
@@ -208,9 +208,9 @@ type Config struct {
 	// certificate-enabled service.
 	Server string
 
-	// ipAddresses is the list of IP Addresses (single and ranges) to scan for
-	// certs.
-	ipAddresses multiValueIPAddressFlag
+	// hosts is the list of IP Addresses (single and ranges), hostnames or
+	// FQDNs to scan for certs.
+	hosts multiValueHostsFlag
 
 	// ScanLimit is the maximum number of concurrent port scan attempts.
 	PortScanRateLimit int

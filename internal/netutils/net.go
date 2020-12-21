@@ -10,6 +10,7 @@ package netutils
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -18,6 +19,11 @@ import (
 
 	"github.com/rs/zerolog"
 )
+
+// ErrUnrecognizedHostOrIPValue indicates that a given string value is
+// unrecognized as a valid FQDN, single IP Address or range (partial or CIDR).
+// This is usually not a temporary error condition.
+var ErrUnrecognizedHostOrIPValue error = errors.New("unrecognized FQDN, single IP Address or range")
 
 // IndexSize returns the number of entries in the index.
 func (idx IPv4AddressOctetsIndex) IndexSize() int {
@@ -213,6 +219,17 @@ func octetWithinBounds(i int) bool {
 	return i >= 0 && i <= 255
 }
 
+// isIPv4AddrCandidate asserts that provided string can be converted directly
+// to an integer after any octet separators and partial range dash specifiers
+// are removed.
+func isIPv4AddrCandidate(s string) bool {
+
+	s = strings.Trim(s, ".-")
+	_, err := strconv.Atoi(s)
+
+	return err == nil
+}
+
 // ExpandIPAddress accepts a string value representing either an individual IP
 // Address, a CIDR IP range or a partial (dash-separated) range (e.g.,
 // 192.168.2.10-15). IP Address ranges  and expands to scan for certificates.
@@ -246,9 +263,9 @@ func ExpandIPAddress(s string) ([]string, error) {
 
 		return givenIPsList, nil
 
-	// no CIDR mask, and not a single IP Address (earlier check would have
-	// triggered), so potentially a partial range of IPv4 Addresses
-	case strings.Contains(s, "."):
+	// no CIDR mask, not a single IP Address (earlier check would have
+	// triggered), and so potentially a partial range of IPv4 Addresses
+	case isIPv4AddrCandidate(s) && strings.Contains(s, "."):
 
 		octets := strings.Split(s, ".")
 
@@ -428,9 +445,24 @@ func ExpandIPAddress(s string) ([]string, error) {
 
 		return givenIPsList, nil
 
+	// not a CIDR range, IP Address or partial IP Address range, so
+	// potentially a hostname or FQDN (or completely invalid)
 	default:
-		return nil, fmt.Errorf(
-			"%q not recognized as IP Address or IP Address range", s,
-		)
+
+		// attempt to parse the value as a hostname or FQDN
+		results, lookupErr := net.LookupHost(s)
+		if lookupErr != nil {
+			return nil, fmt.Errorf(
+				"%q invalid; %w: %s",
+				s,
+				ErrUnrecognizedHostOrIPValue,
+				lookupErr.Error(),
+			)
+		}
+
+		givenIPsList = append(givenIPsList, results...)
+
+		return givenIPsList, nil
+
 	}
 }
