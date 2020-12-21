@@ -34,10 +34,10 @@ func (c Config) CertPorts() []int {
 }
 
 // IPAddresses returns a list of individual IP Addresses expanded from any
-// user-specified IP Address ranges.
+// user-specified IP Addresses (single or ranges), hostnames or FQDNs.
 func (c Config) IPAddresses() []string {
-	if c.ipAddresses.expanded != nil {
-		return c.ipAddresses.expanded
+	if c.hosts.expanded != nil {
+		return c.hosts.expanded
 	}
 
 	return []string{}

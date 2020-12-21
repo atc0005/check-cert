@@ -50,6 +50,8 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
     - [Partial range](#partial-range)
     - [Partial range and a single IP Address](#partial-range-and-a-single-ip-address)
     - [Partial range, CIDR range and a single IP Address](#partial-range-cidr-range-and-a-single-ip-address)
+    - [Single IP Address and a FQDN](#single-ip-address-and-a-fqdn)
+    - [Show all scan results](#show-all-scan-results)
 - [License](#license)
 - [References](#references)
 
@@ -129,6 +131,11 @@ IP Addresses may be specified as comma-separated values:
 - partial ranges
   - using partial implementation of octet range addressing (e.g.,
     192.168.2.10-15)
+- Fully-qualified domain names (FQDNs)
+- Hostnames (**fragile**)
+  - this is highly dependent on your DNS configuration, particularly any
+    configured search list (aka, `DNS Suffix Search List` in Windows
+    terminology) entries used to qualify short/hostname values
 
 Support is present (though limited) for filtering "OK" status hosts and certs
 to either increase or reduce the amount of information provided in the
@@ -144,8 +151,8 @@ of detail in the provided output.
   - `check_cert` Nagios plugin
     - verify certificate used by specified service
   - `certsum` CLI tool
-    - generate summary of discovered certificates from given IP Addresses
-      (single and ranges) and ports
+    - generate summary of discovered certificates from given hosts (single or
+      IP Address ranges, hostnames or FQDNs) and ports
 
 - Check expiration of all certificates in the *provided* certificate chain for
   cert-enabled services
@@ -351,24 +358,24 @@ See the [Examples](#examples) section for usage.
 This tool is in early development. Options for this tool are subject to
 change, perhaps even significantly, in future releases.
 
-| Flag                                   | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                                                           |
-| -------------------------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `h`, `help`                            | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                |
-| `v`, `version`                         | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                         |
-| `c`, `age-critical`                    | No       | 15      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                                    |
-| `w`, `age-warning`                     | No       | 30      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `WARNING` state. If the certificate expires before this number of days, but not before the `age-critical` value, then the service check will be considered in a `WARNING` state.                                                                                                                                            |
-| `ll`, `log-level`                      | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                             |
-| `t`, `timeout`                         | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned.                                                                                                                                                                                       |
-| `se`, `sans-entries`                   | No       |         | No     | *comma-separated list of values*                                        | One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP. |
-| `st`, `scan-timeout`                   | No       | 200     | No     | *positive whole number of milliseconds*                                 | The number of milliseconds before a connection attempt during a port scan is abandoned and an error returned. This timeout value is separate from the general `timeout` value used when retrieving certificates. This setting is used specifically to quickly determine port state as part of bulk operations where speed is crucial.                                 |
-| `srl`, `scan-rate-limit`               | No       | 100     | No     | *positive whole number*                                                 | Maximum concurrent port scans. Remaining port scans are queued until an existing scan completes.                                                                                                                                                                                                                                                                      |
-| `ips`, `ip-addresses`                  | No       |         | No     | *one or more valid, comma-separated IP Addresses or ranges*             | List of comma-separated individual IP Addresses, CIDR IP ranges or partial (dash-separated) ranges (e.g., 192.168.2.10-15) to scan for certificates.                                                                                                                                                                                                                  |
-| `p`, `ports`                           | No       | 443     | No     | *one or more valid, comma-separated TCP ports*                          | List of comma-separated TCP ports to check for certificates. If not specified, the list defaults to 443 only.                                                                                                                                                                                                                                                         |
-| `spsr`, `show-port-scan-results`       | No       | `false` | No     | `true`, `false`                                                         | Toggles listing host port scan results.                                                                                                                                                                                                                                                                                                                               |
-| `scp`, `show-closed-ports`             | No       | `false` | No     | `true`, `false`                                                         | Toggles listing all host port scan results, even for hosts without any specified ports in an open state.                                                                                                                                                                                                                                                              |
-| `shwvc`, `show-hosts-with-valid-certs` | No       | `false` | No     | `true`, `false`                                                         | Toggles listing all cert check results in overview output, even for hosts with valid certificates.                                                                                                                                                                                                                                                                    |
-| `svc`, `show-valid-certs`              | No       | `false` | No     | `true`, `false`                                                         | Toggles listing all certificates in output summary, even certificates which have passed all validity checks.                                                                                                                                                                                                                                                          |
-| `so`, `show-overview`                  | No       | `false` | No     | `true`, `false`                                                         | Toggles summary output view from detailed to overview.                                                                                                                                                                                                                                                                                                                |
+| Flag                                   | Required | Default | Repeat | Possible                                                                                | Description                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------------------------- | -------- | ------- | ------ | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `h`, `help`                            | No       | `false` | No     | `h`, `help`                                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                |
+| `v`, `version`                         | No       | `false` | No     | `v`, `version`                                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                         |
+| `c`, `age-critical`                    | No       | 15      | No     | *positive whole number of days*                                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                                    |
+| `w`, `age-warning`                     | No       | 30      | No     | *positive whole number of days*                                                         | The threshold for the certificate check's `WARNING` state. If the certificate expires before this number of days, but not before the `age-critical` value, then the service check will be considered in a `WARNING` state.                                                                                                                                            |
+| `ll`, `log-level`                      | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace`                 | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                             |
+| `t`, `timeout`                         | No       | `10`    | No     | *positive whole number of seconds*                                                      | Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned.                                                                                                                                                                                       |
+| `se`, `sans-entries`                   | No       |         | No     | *comma-separated list of values*                                                        | One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP. |
+| `st`, `scan-timeout`                   | No       | 200     | No     | *positive whole number of milliseconds*                                                 | The number of milliseconds before a connection attempt during a port scan is abandoned and an error returned. This timeout value is separate from the general `timeout` value used when retrieving certificates. This setting is used specifically to quickly determine port state as part of bulk operations where speed is crucial.                                 |
+| `srl`, `scan-rate-limit`               | No       | 100     | No     | *positive whole number*                                                                 | Maximum concurrent port scans. Remaining port scans are queued until an existing scan completes.                                                                                                                                                                                                                                                                      |
+| `ips`, `hosts`                         | No       |         | No     | *one or more valid, comma-separated IP Addresses (single or range), hostnames or FQDNs* | List of comma-separated individual IP Addresses, CIDR IP ranges, partial (dash-separated) ranges (e.g., 192.168.2.10-15), hostnames or FQDNs to scan for certificates.                                                                                                                                                                                                |
+| `p`, `ports`                           | No       | 443     | No     | *one or more valid, comma-separated TCP ports*                                          | List of comma-separated TCP ports to check for certificates. If not specified, the list defaults to 443 only.                                                                                                                                                                                                                                                         |
+| `spsr`, `show-port-scan-results`       | No       | `false` | No     | `true`, `false`                                                                         | Toggles listing host port scan results.                                                                                                                                                                                                                                                                                                                               |
+| `scp`, `show-closed-ports`             | No       | `false` | No     | `true`, `false`                                                                         | Toggles listing all host port scan results, even for hosts without any specified ports in an open state.                                                                                                                                                                                                                                                              |
+| `shwvc`, `show-hosts-with-valid-certs` | No       | `false` | No     | `true`, `false`                                                                         | Toggles listing all cert check results in overview output, even for hosts with valid certificates.                                                                                                                                                                                                                                                                    |
+| `svc`, `show-valid-certs`              | No       | `false` | No     | `true`, `false`                                                                         | Toggles listing all certificates in output summary, even certificates which have passed all validity checks.                                                                                                                                                                                                                                                          |
+| `so`, `show-overview`                  | No       | `false` | No     | `true`, `false`                                                                         | Toggles summary output view from detailed to overview.                                                                                                                                                                                                                                                                                                                |
 
 ### Configuration file
 
@@ -755,8 +762,7 @@ FD:6F:3E:24:98:C2:5B:1D:08:00:00:00:00:47:F0:33
 
 ### `certsum` CLI tool
 
-This tool is in early development; the functionality shown here is
-intentionally brief as the output and options available are subject to change
+This tool is in early development and options available are subject to change
 (perhaps even significantly) in future releases.
 
 Please see the list of available flags/options documented earlier in this
@@ -764,10 +770,8 @@ README for further options.
 
 #### CIDR range
 
-Using a short flag name here.
-
 ```ShellSession
-$ ./certsum --ports 443 --ips 192.168.5.0/24
+$ ./certsum --ports 443 --hosts 192.168.5.0/24
 Total IPs from all ranges before deduping: 254
 Total IPs from all ranges after deduping: 254
 Beginning scan of ports: [443]
@@ -795,7 +799,7 @@ Here we specify a partial range using a syntax intentionally similar to the
 within an octet (in order to exclude IPs) are not supported at this time.
 
 ```ShellSession
-$ ./certsum --ports 443 --ip-addresses 192.168.5.104-110
+$ ./certsum --ports 443 --hosts 192.168.5.104-110
 Total IPs from all ranges before deduping: 6
 Total IPs from all ranges after deduping: 6
 Beginning scan of ports: [443]
@@ -815,7 +819,7 @@ IP Address              Port    Subject or SANs                 Status (Type)   
 #### Partial range and a single IP Address
 
 ```ShellSession
-$ ./certsum --ports 443 --ip-addresses 192.168.5.3,192.168.5.104-110
+$ ./certsum --ports 443 --hosts 192.168.5.3,192.168.5.104-110
 Total IPs from all ranges before deduping: 7
 Total IPs from all ranges after deduping: 7
 Beginning scan of ports: [443]
@@ -836,7 +840,7 @@ IP Address              Port    Subject or SANs                 Status (Type)   
 #### Partial range, CIDR range and a single IP Address
 
 ```ShellSession
-$ ./certsum --ports 443 --ip-addresses 192.168.5.3,192.168.5.104-110,192.168.2.0/24
+$ ./certsum --ports 443 --hosts 192.168.5.3,192.168.5.104-110,192.168.2.0/24
 Total IPs from all ranges before deduping: 260
 Total IPs from all ranges after deduping: 260
 Beginning scan of ports: [443]
@@ -847,6 +851,57 @@ Beginning certificate analysis
 
 Only the lead-in text is included as the output closely matches the other
 examples.
+
+#### Single IP Address and a FQDN
+
+Of note:
+
+- Default HTTPS port (because we did not specify one)
+- We are using a FQDN
+
+```ShellSession
+$ ./certsum --hosts 192.168.5.3,expired.badssl.com
+Total IPs from all ranges before deduping: 2
+Total IPs from all ranges after deduping: 2
+Beginning scan of ports: [443]
+Completed port scan
+Beginning certificate analysis
+..
+Completed certificate analysis
+
+Results:
+
+IP Address              Port    Subject or SANs                                 Status (Type)           Summary                         Serial
+---                     ---     ---                                             ---                     ---                             ---
+192.168.5.3             443     VMware                                          ⛔ (root)               [EXPIRED] 577d 0h ago           DE:FD:50:2B:C5:7F:79:F4
+104.154.89.105          443     badssl-fallback-unknown-subdomain-or-no-sni     ⛔ (leaf)               [EXPIRED] 865d 13h ago          CD:BC:5A:4A:EC:97:67:B1
+```
+
+#### Show all scan results
+
+We include an additional scan target without a certificate to illustrate what
+would normally be muted/hidden away with the default scan results.
+
+```ShellSession
+$ ./certsum --hosts 192.168.5.3,expired.badssl.com,scanme.nmap.org --show-valid-certs --show-port-scan-results --show-hosts-with-valid-certs --show-closed-ports
+Total IPs from all ranges before deduping: 4
+Total IPs from all ranges after deduping: 4
+Beginning scan of ports: [443]
+Completed port scan
+Beginning certificate analysis
+192.168.5.3: [443: true]
+104.154.89.105: [443: true]
+45.33.32.156: [None]
+2600:3c01::f03c:91ff:fe18:bb2f: [None]
+Completed certificate analysis
+
+Results:
+
+IP Address              Port    Subject or SANs                                 Status (Type)           Summary                         Serial
+---                     ---     ---                                             ---                     ---                             ---
+192.168.5.3             443     VMware                                          ⛔ (root)               [EXPIRED] 577d 21h ago          DE:FD:50:2B:C5:7F:79:F4
+104.154.89.105          443     badssl-fallback-unknown-subdomain-or-no-sni     ⛔ (leaf)               [EXPIRED] 865d 13h ago          CD:BC:5A:4A:EC:97:67:B1
+```
 
 ## License
 
