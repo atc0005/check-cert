@@ -54,6 +54,7 @@ func main() {
 	fmt.Println("Total IPs from all ranges after deduping:", len(ipsList))
 
 	fmt.Println("Beginning scan of ports:", cfg.CertPorts())
+	portScanStart := time.Now()
 
 	var scanWG sync.WaitGroup
 	var collWG sync.WaitGroup
@@ -156,8 +157,11 @@ func main() {
 
 	// TODO: refactor; use concurrency here instead of waiting for the port
 	// scan to complete before beginning cert analysis
-	fmt.Println("Completed port scan")
+	fmt.Printf("Completed port scan in %v\n", time.Since(portScanStart))
+
 	fmt.Println("Beginning certificate analysis")
+	certCheckStart := time.Now()
+
 	for host, checkResults := range resultsIndex {
 
 		// unless user opted to show hosts with *all* closed ports, skip the
@@ -225,7 +229,7 @@ func main() {
 		fmt.Println()
 	}
 
-	fmt.Println("Completed certificate analysis")
+	fmt.Printf("Completed certificate analysis in %v\n", time.Since(certCheckStart))
 
 	switch {
 	case cfg.ShowOverview:
