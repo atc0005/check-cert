@@ -47,8 +47,8 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		flag.IntVar(&c.timeoutPortScan, "scan-timeout", defaultPortScanTimeout, timeoutPortScanFlagHelp)
 		flag.IntVar(&c.timeoutPortScan, "st", defaultPortScanTimeout, timeoutPortScanFlagHelp+" (shorthand)")
 
-		flag.Var(&c.CIDRRange, "cidr-ip-range", cidrRangeFlagHelp)
-		flag.Var(&c.CIDRRange, "cir", cidrRangeFlagHelp+" (shorthand)")
+		flag.Var(&c.ipAddresses, "ip-addresses", ipAddressesFlagHelp)
+		flag.Var(&c.ipAddresses, "ips", ipAddressesFlagHelp+" (shorthand)")
 
 		flag.IntVar(&c.PortScanRateLimit, "scan-rate-limit", defaultPortScanRateLimit, portScanRateLimitFlagHelp)
 		flag.IntVar(&c.PortScanRateLimit, "srl", defaultPortScanRateLimit, portScanRateLimitFlagHelp+" (shorthand)")

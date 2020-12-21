@@ -46,6 +46,10 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
     - [Invalid input](#invalid-input)
     - [Expected input](#expected-input)
   - [`certsum` CLI tool](#certsum-cli-tool)
+    - [CIDR range](#cidr-range)
+    - [Partial range](#partial-range)
+    - [Partial range and a single IP Address](#partial-range-and-a-single-ip-address)
+    - [Partial range, CIDR range and a single IP Address](#partial-range-cidr-range-and-a-single-ip-address)
 - [License](#license)
 - [References](#references)
 
@@ -118,8 +122,13 @@ generate a report for discovered certificates.
 Performance is acceptable for smaller IP ranges, but this tool will require
 further refactoring to be useful for scanning larger IP ranges.
 
-Specifying partial/non-CIDR IP ranges is not supported at this time, though
-this is planned for future releases.
+IP Addresses may be specified as comma-separated values:
+
+- individual IP Addresses
+- CIDR IP ranges
+- partial ranges
+  - using partial implementation of octet range addressing (e.g.,
+    192.168.2.10-15)
 
 Support is present (though limited) for filtering "OK" status hosts and certs
 to either increase or reduce the amount of information provided in the
@@ -135,8 +144,8 @@ of detail in the provided output.
   - `check_cert` Nagios plugin
     - verify certificate used by specified service
   - `certsum` CLI tool
-    - generate summary of discovered certificates from given IP ranges and
-      ports
+    - generate summary of discovered certificates from given IP Addresses
+      (single and ranges) and ports
 
 - Check expiration of all certificates in the *provided* certificate chain for
   cert-enabled services
@@ -353,7 +362,7 @@ change, perhaps even significantly, in future releases.
 | `se`, `sans-entries`                   | No       |         | No     | *comma-separated list of values*                                        | One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP. |
 | `st`, `scan-timeout`                   | No       | 200     | No     | *positive whole number of milliseconds*                                 | The number of milliseconds before a connection attempt during a port scan is abandoned and an error returned. This timeout value is separate from the general `timeout` value used when retrieving certificates. This setting is used specifically to quickly determine port state as part of bulk operations where speed is crucial.                                 |
 | `srl`, `scan-rate-limit`               | No       | 100     | No     | *positive whole number*                                                 | Maximum concurrent port scans. Remaining port scans are queued until an existing scan completes.                                                                                                                                                                                                                                                                      |
-| `cir`, `cidr-ip-range`                 | No       |         | No     | *one or more valid, comma-separated CIDR IP ranges*                     | List of comma-separated CIDR IP ranges to scan for certificates.                                                                                                                                                                                                                                                                                                      |
+| `ips`, `ip-addresses`                  | No       |         | No     | *one or more valid, comma-separated IP Addresses or ranges*             | List of comma-separated individual IP Addresses, CIDR IP ranges or partial (dash-separated) ranges (e.g., 192.168.2.10-15) to scan for certificates.                                                                                                                                                                                                                  |
 | `p`, `ports`                           | No       | 443     | No     | *one or more valid, comma-separated TCP ports*                          | List of comma-separated TCP ports to check for certificates. If not specified, the list defaults to 443 only.                                                                                                                                                                                                                                                         |
 | `spsr`, `show-port-scan-results`       | No       | `false` | No     | `true`, `false`                                                         | Toggles listing host port scan results.                                                                                                                                                                                                                                                                                                                               |
 | `scp`, `show-closed-ports`             | No       | `false` | No     | `true`, `false`                                                         | Toggles listing all host port scan results, even for hosts without any specified ports in an open state.                                                                                                                                                                                                                                                              |
@@ -753,8 +762,12 @@ intentionally brief as the output and options available are subject to change
 Please see the list of available flags/options documented earlier in this
 README for further options.
 
+#### CIDR range
+
+Using a short flag name here.
+
 ```ShellSession
-$ ./certsum --ports 443 --cidr-ip-range 192.168.5.0/24
+$ ./certsum --ports 443 --ips 192.168.5.0/24
 Total IPs from all ranges before deduping: 254
 Total IPs from all ranges after deduping: 254
 Beginning scan of ports: [443]
@@ -774,6 +787,66 @@ IP Address              Port    Subject or SANs                 Status (Type)   
 192.168.5.165           443     192.168.5.165                   ⛔ (leaf; self-signed)          [EXPIRED] 1519d 7h ago          EF:E5:A3:0E:2F:FA:C1:3A
 192.168.5.183           443     192.168.5.183                   ⛔ (leaf; self-signed)          [EXPIRED] 1034d 19h ago         F7:A2:CD:4A:F2:A0:63:10
 ```
+
+#### Partial range
+
+Here we specify a partial range using a syntax intentionally similar to the
+*octet based addressing* syntax accepted by nmap (an amazing tool). Commas
+within an octet (in order to exclude IPs) are not supported at this time.
+
+```ShellSession
+$ ./certsum --ports 443 --ip-addresses 192.168.5.104-110
+Total IPs from all ranges before deduping: 6
+Total IPs from all ranges after deduping: 6
+Beginning scan of ports: [443]
+Completed port scan
+Beginning certificate analysis
+..........................
+Completed certificate analysis
+
+Results:
+
+IP Address              Port    Subject or SANs                 Status (Type)                   Summary                         Serial
+---                     ---     ---                             ---                             ---                             ---
+192.168.5.104           443     HP Jetdirect 7FE7AF22           ⛔ (leaf; self-signed)          [EXPIRED] 3942d 12h ago         02
+192.168.5.109           443     HP LaserJet M506 F2A68A         ⛔ (leaf; self-signed)          [CRITICAL] 1d 7h remaining      -29:25:F5:A8:D5:E2:FC:C3:71:77:F4:48:3A:09:2E:24:0F:0E:37:1A
+```
+
+#### Partial range and a single IP Address
+
+```ShellSession
+$ ./certsum --ports 443 --ip-addresses 192.168.5.3,192.168.5.104-110
+Total IPs from all ranges before deduping: 7
+Total IPs from all ranges after deduping: 7
+Beginning scan of ports: [443]
+Completed port scan
+Beginning certificate analysis
+..........................
+Completed certificate analysis
+
+Results:
+
+IP Address              Port    Subject or SANs                 Status (Type)                   Summary                         Serial
+---                     ---     ---                             ---                             ---                             ---
+192.168.5.3             443     VMware                          ⛔ (root)                       [EXPIRED] 577d 0h ago           DE:FD:50:2B:C5:7F:79:F4
+192.168.5.104           443     HP Jetdirect 7FE7AF22           ⛔ (leaf; self-signed)          [EXPIRED] 3942d 12h ago         02
+192.168.5.109           443     HP LaserJet M506 F2A68A         ⛔ (leaf; self-signed)          [CRITICAL] 1d 7h remaining      -29:25:F5:A8:D5:E2:FC:C3:71:77:F4:48:3A:09:2E:24:0F:0E:37:1A
+```
+
+#### Partial range, CIDR range and a single IP Address
+
+```ShellSession
+$ ./certsum --ports 443 --ip-addresses 192.168.5.3,192.168.5.104-110,192.168.2.0/24
+Total IPs from all ranges before deduping: 260
+Total IPs from all ranges after deduping: 260
+Beginning scan of ports: [443]
+Completed port scan
+Beginning certificate analysis
+...............................................................
+```
+
+Only the lead-in text is included as the output closely matches the other
+examples.
 
 ## License
 
@@ -809,6 +882,9 @@ SOFTWARE.
 - <https://github.com/rs/zerolog>
 - <https://github.com/atc0005/go-nagios>
 - <https://nagios-plugins.org/doc/guidelines.html>
+
+- nmap "octet range addressing"
+  - <https://nmap.org/book/man-target-specification.html>
 
 - badssl.com
   - <https://github.com/chromium/badssl.com>

@@ -67,14 +67,8 @@ func (c Config) validate(appType AppType) error {
 			)
 		}
 
-		// NOTE: It is likely that we'll use a different flag later in order
-		// to accept a mix of single, CIDR range, and a standard
-		// start-finish range of IP Addresses.
-		// if c.CIDRRange == "" {
-		// 	return fmt.Errorf("CIDR IP range not provided")
-		// }
-		if c.CIDRRange == nil {
-			return fmt.Errorf("CIDR IP range(s) not provided")
+		if c.IPAddresses() == nil {
+			return fmt.Errorf("IP Addresses (one or many, single or ranges) not provided")
 		}
 
 		// TODO: Figure out how to (or if we need to) validate mix of boolean
