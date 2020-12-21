@@ -724,6 +724,31 @@ func NextToExpire(certChain []*x509.Certificate, excludeExpired bool) *x509.Cert
 	return nextToExpire
 }
 
+// HasProblems asserts that no evaluated certificates are expired or expiring
+// soon.
+func (dcc DiscoveredCertChains) HasProblems(
+	certsExpireAgeCritical time.Time,
+	certsExpireAgeWarning time.Time) bool {
+
+	for _, chain := range dcc {
+
+		hasExpiredCerts := HasExpiredCert(chain.Certs)
+		hasExpiringCerts := HasExpiringCert(
+			chain.Certs,
+			certsExpireAgeCritical,
+			certsExpireAgeWarning,
+		)
+
+		if hasExpiredCerts || hasExpiringCerts {
+			return true
+		}
+
+	}
+
+	return false
+
+}
+
 // ChainSummary receives a certificate chain, the critical age threshold and
 // the warning age threshold and generates a summary of certificate details.
 func ChainSummary(

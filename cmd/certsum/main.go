@@ -227,8 +227,6 @@ func main() {
 
 	fmt.Println("Completed certificate analysis")
 
-	fmt.Printf("\nResults:\n\n")
-
 	switch {
 	case cfg.ShowOverview:
 		printSummaryHighLevel(

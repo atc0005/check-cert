@@ -18,6 +18,17 @@ func printSummaryHighLevel(
 	ageWarning int,
 ) {
 
+	now := time.Now().UTC()
+	certsExpireAgeWarning := now.AddDate(0, 0, ageWarning)
+	certsExpireAgeCritical := now.AddDate(0, 0, ageCritical)
+
+	if !discoveredChains.HasProblems(certsExpireAgeCritical, certsExpireAgeWarning) {
+		fmt.Printf("\nResults: No certificate issues found!\n")
+		return
+	}
+
+	fmt.Printf("\nResults:\n\n")
+
 	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, '\t', 0)
 
 	// Header row in output
@@ -27,10 +38,6 @@ func printSummaryHighLevel(
 	// Separator row
 	fmt.Fprintln(tw,
 		"---\t---\t---\t---\t---\t---")
-
-	now := time.Now().UTC()
-	certsExpireAgeWarning := now.AddDate(0, 0, ageWarning)
-	certsExpireAgeCritical := now.AddDate(0, 0, ageCritical)
 
 	for _, certChain := range discoveredChains {
 
@@ -93,6 +100,17 @@ func printSummaryDetailedLevel(
 	ageWarning int,
 ) {
 
+	now := time.Now().UTC()
+	certsExpireAgeWarning := now.AddDate(0, 0, ageWarning)
+	certsExpireAgeCritical := now.AddDate(0, 0, ageCritical)
+
+	if !discoveredChains.HasProblems(certsExpireAgeCritical, certsExpireAgeWarning) {
+		fmt.Printf("\nResults: No certificate issues found!\n")
+		return
+	}
+
+	fmt.Printf("\nResults:\n\n")
+
 	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, '\t', 0)
 
 	// Header row in output
@@ -102,10 +120,6 @@ func printSummaryDetailedLevel(
 	// Separator row
 	fmt.Fprintln(tw,
 		"---\t---\t---\t---\t---\t---")
-
-	now := time.Now().UTC()
-	certsExpireAgeWarning := now.AddDate(0, 0, ageWarning)
-	certsExpireAgeCritical := now.AddDate(0, 0, ageCritical)
 
 	for _, certChain := range discoveredChains {
 		for _, cert := range certChain.Certs {
