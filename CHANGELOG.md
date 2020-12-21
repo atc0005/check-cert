@@ -26,6 +26,34 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.3.0] - 2020-12-21
+
+### Overview
+
+- `certsum`: improved support for specifying hosts
+- built using Go 1.15.6
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- `certsum`
+  - Add support for partial IP ranges
+    - inspired by [nmap's `octet range addressing`
+      syntax](https://nmap.org/book/man-target-specification.html)
+  - Add support for hostname and FQDN targets
+
+### Changed
+
+- Rename `internal/net` to `internal/netutils`
+  - help avoid conflicts with `net` standard library package
+- `certsum`: omit results table if no certificate issues found
+
+- Dependencies
+  - `actions/setup-node`
+    - `v2.1.3` to `v2.1.4`
+
 ## [v0.2.0] - 2020-12-16
 
 ### Added
@@ -438,7 +466,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.3.0...HEAD
+[v0.3.0]: https://github.com/atc0005/check-cert/releases/tag/v0.3.0
 [v0.2.0]: https://github.com/atc0005/check-cert/releases/tag/v0.2.0
 [v0.1.14]: https://github.com/atc0005/check-cert/releases/tag/v0.1.14
 [v0.1.13]: https://github.com/atc0005/check-cert/releases/tag/v0.1.13
