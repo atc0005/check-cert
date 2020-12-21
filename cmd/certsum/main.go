@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 
 	"github.com/atc0005/check-certs/internal/certs"
@@ -67,84 +66,19 @@ func main() {
 
 	// Spin off port scan results collector
 	collWG.Add(1)
-	go func(resultsIdx netutils.PortCheckResultsIndex, results <-chan netutils.PortCheckResult, log zerolog.Logger) {
 
-		log.Debug().Msg("starting collector routine")
+	go portScanCollector(resultsIndex, portScanResults, log, &collWG)
 
-		// help ensure that we don't forget to signal that we're done
-		defer collWG.Done()
-
-		// Receive check results, update index
-		for checkResult := range results {
-
-			log.Debug().Msgf(
-				"Adding results for %v to index",
-				checkResult.IPAddress.String(),
-			)
-
-			// grow the index of IP Address to port scan results for later review
-			resultsIdx[checkResult.IPAddress.String()] = append(
-				resultsIdx[checkResult.IPAddress.String()],
-				checkResult,
-			)
-		}
-
-		log.Debug().Msg("exiting collector routine")
-
-	}(resultsIndex, portScanResults, log)
-
-	for _, ip := range ipsList {
-
-		log.Debug().Msgf("Checking IP: %v", ip)
-
-		for _, port := range cfg.CertPorts() {
-
-			log.Debug().Msgf("Checking port %v for IP: %v", port, ip)
-
-			// indicate that we are launching a goroutine that will be tracked and
-			// reserve a spot in the (limited) channel
-			scanWG.Add(1)
-			rateLimiter <- struct{}{}
-
-			go func(
-				ipAddr string,
-				port int,
-				scanTimeout time.Duration,
-				resultsChan <-chan netutils.PortCheckResult,
-				log zerolog.Logger,
-			) {
-
-				portState := netutils.CheckPort(ipAddr, port, scanTimeout)
-				if portState.Err != nil {
-					// TODO: Check specific error type to determine how to
-					// proceed. For now, we'll just emit the error and
-					// continue.
-					log.Error().
-						Str("host", ipAddr).
-						Int("port", port).
-						Err(portState.Err)
-				}
-
-				log.Debug().Msg("Sending result back on channel")
-
-				portScanResults <- portState
-
-				log.Debug().Msg("Sent result on channel, proceeding")
-
-				// if portState.Open {
-				// 	fmt.Printf("%v: port %v open\n", ipAddr, port)
-				// }
-
-				// indicate that we're done with this goroutine
-				scanWG.Done()
-
-				// release spot for next (held back) goroutine to run
-				<-rateLimiter
-
-			}(ip, port, cfg.TimeoutPortScan(), portScanResults, log)
-
-		}
-	}
+	scanWG.Add(1)
+	go portScanner(
+		cfg.IPAddresses(),
+		cfg.CertPorts(),
+		cfg.TimeoutPortScan(),
+		portScanResults,
+		rateLimiter,
+		log,
+		&scanWG,
+	)
 
 	// wait for all port scan attempts to complete
 	scanWG.Wait()
@@ -173,100 +107,19 @@ func main() {
 	// Spin off cert check results collector, pass pointer to allow modifying
 	// collection of discovered cert chains directly.
 	collWG.Add(1)
-	go func(discoveredCertChains *certs.DiscoveredCertChains, results <-chan certs.DiscoveredCertChain) {
+	go certScanCollector(&discoveredCertChains, certCheckResults, &collWG)
 
-		// help ensure that we don't forget to signal that we're done
-		defer collWG.Done()
-
-		for result := range results {
-			*discoveredCertChains = append(*discoveredCertChains, result)
-		}
-	}(&discoveredCertChains, certCheckResults)
-
-	for host, checkResults := range resultsIndex {
-
-		// unless user opted to show hosts with *all* closed ports, skip the
-		// host and continue to the next one
-		if !cfg.ShowHostsWithClosedPorts && !checkResults.HasOpenPort() {
-			continue
-		}
-
-		switch {
-		case cfg.ShowPortScanResults:
-			portSummary := func() string {
-				if checkResults.HasOpenPort() {
-					return checkResults.Summary()
-				}
-				return "None"
-			}()
-
-			// 192.168.1.2: [443: true, 636: false]
-			fmt.Printf("%s: [%s]\n", host, portSummary)
-		default:
-			fmt.Printf(".")
-		}
-
-		for _, result := range checkResults {
-			if result.Open {
-
-				scanWG.Add(1)
-				rateLimiter <- struct{}{}
-
-				go func(
-					ipAddr string,
-					port int,
-					timeout time.Duration,
-					results chan<- certs.DiscoveredCertChain,
-					log zerolog.Logger,
-				) {
-
-					// make sure we give up our spot when finished
-					defer func() {
-						// indicate that we're done with this goroutine
-						scanWG.Done()
-
-						// release spot for next (held back) goroutine to run
-						<-rateLimiter
-					}()
-
-					var certFetchErr error
-					certChain, certFetchErr := netutils.GetCerts(
-						ipAddr,
-						port,
-						timeout,
-						log,
-					)
-					if certFetchErr != nil {
-						if !cfg.ShowPortScanResults {
-							// will need to insert a newline in-between error
-							// output if we're not showing port summary results
-							fmt.Println()
-						}
-						log.Error().
-							Err(certFetchErr).
-							Str("host", result.IPAddress.String()).
-							Int("port", result.Port).
-							Msg("error fetching certificates chain")
-
-						// os.Exit(1)
-						// TODO: Decide whether fetch errors are critical or just warning level
-						scanWG.Done()
-						return
-					}
-
-					results <- certs.DiscoveredCertChain{
-						Host:  result.IPAddress.String(),
-						Port:  result.Port,
-						Certs: certChain,
-					}
-
-				}(result.IPAddress.String(), result.Port, cfg.Timeout(), certCheckResults, log)
-
-			}
-
-		}
-
-	}
+	scanWG.Add(1)
+	go certScanner(
+		resultsIndex,
+		cfg.ShowHostsWithClosedPorts,
+		cfg.ShowPortScanResults,
+		cfg.Timeout(),
+		certCheckResults,
+		rateLimiter,
+		log,
+		&scanWG,
+	)
 
 	log.Debug().Msg("wait for all cert check attempts to complete")
 	scanWG.Wait()
