@@ -27,9 +27,9 @@ const (
 	hostsFlagHelp                    string = "List of comma-separated individual IP Addresses, CIDR IP ranges, partial (dash-separated) ranges (e.g., 192.168.2.10-15), hostnames or FQDNs to scan for certificates."
 	portFlagHelp                     string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
 	portsListFlagHelp                string = "List of comma-separated TCP ports to check for certificates. If not specified, the list defaults to 443 only."
-	timeoutFlagHelp                  string = "Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned."
+	timeoutConnectFlagHelp           string = "Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned."
 	timeoutPortScanFlagHelp          string = "The number of milliseconds before a connection attempt during a port scan is abandoned and an error returned. This timeout value is separate from the general `timeout` value used when retrieving certificates. This setting is used specifically to quickly determine port state as part of bulk operations where speed is crucial."
-	portScanRateLimitFlagHelp        string = "Maximum concurrent port scans. Remaining port scans are queued until an existing scan completes."
+	scanRateLimitFlagHelp            string = "Maximum concurrent port and certificate scans. Remaining scans are queued until an existing scan completes."
 	emitCertTextFlagHelp             string = "Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default."
 	filenameFlagHelp                 string = "Fully-qualified path to a file containing one or more certificates."
 	certExpireAgeWarningFlagHelp     string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state."
@@ -48,7 +48,6 @@ const (
 	defaultServer                string = ""
 	defaultDNSName               string = ""
 	defaultPort                  int    = 443
-	defaultTimeout               int    = 10
 	defaultEmitCertText          bool   = false
 	defaultFilename              string = ""
 	defaultBranding              bool   = false
@@ -60,11 +59,20 @@ const (
 	// Default CRITICAL threshold is 15 days
 	defaultCertExpireAgeCritical int = 15
 
+	// Default timeout (in seconds) used when retreiving a certificate from a
+	// specified TCP port previously discovered to be open.
+	defaultConnectTimeout int = 10
+
 	// Default timeout (in milliseconds) used when testing whether a TCP port
 	// is open or closed.
 	defaultPortScanTimeout = 200
 
-	defaultPortScanRateLimit int = 100
+	// this limit is used by port scanner per-host and per-port goroutines
+	// along with certificate scanner goroutines. In an effort to prevent
+	// deadlocks, per-host goroutines limits are independent of per-port
+	// goroutines with each type of goroutine having their own "queue" that
+	// they work from.
+	defaultScanRateLimit int = 100
 
 	// For the "scanner", this flag value is required.
 	// defaultCIDRRange string = ""

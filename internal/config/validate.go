@@ -60,10 +60,26 @@ func (c Config) validate(appType AppType) error {
 			)
 		}
 
-		if c.PortScanRateLimit < 1 {
+		switch {
+		case c.ScanRateLimit < 1:
+			return fmt.Errorf(
+				"invalid scan rate limit value provided: %d",
+				c.ScanRateLimit,
+			)
+
+		// TODO: confirmed on Windows 10 WSLv1; may need to dynamically
+		// determine the max value based on OS API query
+		case c.ScanRateLimit >= 10000:
+			return fmt.Errorf(
+				"unreliable value provided; too high values result in 'too many open files' OS errors: %d",
+				c.ScanRateLimit,
+			)
+		}
+
+		if c.ScanRateLimit < 1 {
 			return fmt.Errorf(
 				"invalid port scan rate limit value provided: %d",
-				c.TimeoutPortScan(),
+				c.ScanRateLimit,
 			)
 		}
 

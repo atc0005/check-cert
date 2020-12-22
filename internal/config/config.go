@@ -212,8 +212,8 @@ type Config struct {
 	// FQDNs to scan for certs.
 	hosts multiValueHostsFlag
 
-	// ScanLimit is the maximum number of concurrent port scan attempts.
-	PortScanRateLimit int
+	// ScanRateLimit is the maximum number of concurrent port scan attempts.
+	ScanRateLimit int
 
 	// DNSName is the fully-qualified domain name associated with the
 	// certificate. This is usually specified when the FQDN or IP used to make

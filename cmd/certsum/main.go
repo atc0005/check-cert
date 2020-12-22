@@ -8,6 +8,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -47,90 +48,100 @@ func main() {
 		Logger()
 
 	givenIPsList := cfg.IPAddresses()
-	log.Debug().Msgf("IP Addresses: %v", givenIPsList)
-	fmt.Println("Total IPs from all ranges before deduping:", len(givenIPsList))
+	log.Debug().Msgf("IP Addresses before deduping: %v", givenIPsList)
+	log.Debug().Msgf("Total IPs from all ranges before deduping: %d", len(givenIPsList))
 
 	ipsList := textutils.DedupeList(givenIPsList)
-	fmt.Println("Total IPs from all ranges after deduping:", len(ipsList))
+	log.Debug().Msgf("Total IPs from all ranges after deduping: %d", len(ipsList))
+	log.Debug().Msgf("IP Addresses after deduping: %v", ipsList)
 
-	fmt.Println("Beginning scan of ports:", cfg.CertPorts())
-	portScanStart := time.Now()
+	// Create context that can be used to cancel background jobs.
+	baseCtx := context.Background()
 
-	var scanWG sync.WaitGroup
+	// create fallback in case this application locks up for one reason or
+	// another
+	// FIXME: This will need to be tuned using a ratio based on number of IPs
+	// scanned
+	ctx, cancel := context.WithTimeout(baseCtx, time.Duration(2)*time.Minute)
+	defer cancel()
+
+	var portScanWG sync.WaitGroup
+	var certScanWG sync.WaitGroup
 	var collWG sync.WaitGroup
 
-	rateLimiter := make(chan struct{}, cfg.PortScanRateLimit)
-	portScanResults := make(chan netutils.PortCheckResult)
-	certCheckResults := make(chan certs.DiscoveredCertChain)
-	resultsIndex := make(netutils.PortCheckResultsIndex)
+	// limit the total number of concurrent port scans (user-specified with
+	// fallback default)
+	portScanRateLimiter := make(chan struct{}, cfg.ScanRateLimit)
 
-	// Spin off port scan results collector
-	collWG.Add(1)
+	// limit the total number of hosts concurrently processed independently
+	// from port scan limit (in an effort to avoid deadlocks)
+	hostRateLimiter := make(chan struct{}, cfg.ScanRateLimit)
 
-	go portScanCollector(resultsIndex, portScanResults, log, &collWG)
+	// results are collected and passed per host, not per port
+	portScanResultsChan := make(chan netutils.PortCheckResults)
 
-	scanWG.Add(1)
-	go portScanner(
-		cfg.IPAddresses(),
-		cfg.CertPorts(),
-		cfg.TimeoutPortScan(),
-		portScanResults,
-		rateLimiter,
-		log,
-		&scanWG,
-	)
-
-	// wait for all port scan attempts to complete
-	scanWG.Wait()
-
-	log.Debug().Msg("closing port scan results channel")
-	// signal to collector that port scanning is complete
-	close(portScanResults)
-	log.Debug().Msg("closed port scan results channel")
-
-	// wait for port scan results collection goroutine to finish
-	collWG.Wait()
-
-	fmt.Printf("Completed port scan in %v\n", time.Since(portScanStart))
-
-	// **********************************************************************
-	// TODO: refactor to perform cert scanning immediately upon receiving a
-	// successful port scan result instead of waiting for the entire port scan
-	// to complete before beginning cert analysis.
-	// **********************************************************************
+	certScanResultsChan := make(chan certs.DiscoveredCertChain)
 
 	var discoveredCertChains certs.DiscoveredCertChains
 
-	fmt.Println("Beginning certificate analysis")
-	certCheckStart := time.Now()
+	scanStart := time.Now()
 
 	// Spin off cert check results collector, pass pointer to allow modifying
 	// collection of discovered cert chains directly.
 	collWG.Add(1)
-	go certScanCollector(&discoveredCertChains, certCheckResults, &collWG)
+	log.Debug().Msg("Starting certScanCollector")
+	go certScanCollector(
+		ctx,
+		&discoveredCertChains,
+		certScanResultsChan,
+		log,
+		&collWG,
+	)
 
-	scanWG.Add(1)
+	portScanWG.Add(1)
+	log.Debug().Msg("Starting portScanner")
+	go portScanner(
+		ctx,
+		cfg.IPAddresses(),
+		cfg.CertPorts(),
+		cfg.TimeoutPortScan(),
+		portScanResultsChan,
+		portScanRateLimiter,
+		hostRateLimiter,
+		log,
+		&portScanWG,
+	)
+
+	certScanWG.Add(1)
+	log.Debug().Msg("Starting certScanner ...")
 	go certScanner(
-		resultsIndex,
+		ctx,
+		portScanResultsChan,
 		cfg.ShowHostsWithClosedPorts,
 		cfg.ShowPortScanResults,
 		cfg.Timeout(),
-		certCheckResults,
-		rateLimiter,
+		certScanResultsChan,
+		portScanRateLimiter,
 		log,
-		&scanWG,
+		&certScanWG,
 	)
 
-	log.Debug().Msg("wait for all cert check attempts to complete")
-	scanWG.Wait()
+	fmt.Printf(
+		"Beginning cert scan against %d unique hosts using ports: %v\n",
+		len(ipsList),
+		cfg.CertPorts(),
+	)
 
-	log.Debug().Msg("closing cert check results channel")
-	// signal to collector that cert checks are complete
-	close(certCheckResults)
-	log.Debug().Msg("closed cert check results channel")
+	log.Debug().Msg("wait for port scan attempts to complete")
+	portScanWG.Wait()
+
+	log.Debug().Msg("wait for cert scan attempts to complete")
+	certScanWG.Wait()
 
 	log.Debug().Msg("wait for cert check results collection goroutine to finish")
 	collWG.Wait()
+
+	log.Debug().Msgf("Discovered cert chains: %v", discoveredCertChains)
 
 	if !cfg.ShowPortScanResults {
 		// will need to insert a newline before showing cert summary
@@ -139,7 +150,19 @@ func main() {
 		fmt.Println()
 	}
 
-	fmt.Printf("Completed certificate analysis in %v\n", time.Since(certCheckStart))
+	switch {
+
+	case ctx.Err() != nil:
+		fmt.Printf(
+			"Certificates scan aborted after %v due to application timeout\n",
+			time.Since(scanStart),
+		)
+	default:
+		fmt.Printf(
+			"Completed certificates scan in %v\n",
+			time.Since(scanStart),
+		)
+	}
 
 	switch {
 	case cfg.ShowOverview:
