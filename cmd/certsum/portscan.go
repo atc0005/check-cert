@@ -104,12 +104,14 @@ func portScanner(
 				portState := netutils.CheckPort(ipAddr, port, scanTimeout)
 				if portState.Err != nil {
 					// TODO: Check specific error type to determine how to
-					// proceed. For now, we'll just emit the error and
+					// proceed. For now, we'll just assume that we're dealing
+					// with a timeout, emit the error as a debug message and
 					// continue.
-					log.Error().
+					log.Debug().
 						Str("host", ipAddr).
 						Int("port", port).
-						Err(portState.Err)
+						Err(portState.Err).
+						Msg("")
 				}
 
 				log.Debug().Msg("Sending result back on channel")
