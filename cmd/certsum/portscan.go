@@ -15,7 +15,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// certScanCollector is called as a goroutine prior to launching the port
+// portScanCollector is called as a goroutine prior to launching the port
 // scanner function, also as a goroutine. This goroutine continues to
 // run until all results are collected.
 func portScanCollector(
