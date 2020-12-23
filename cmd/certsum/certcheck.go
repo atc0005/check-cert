@@ -120,7 +120,7 @@ func certScanner(
 
 						// os.Exit(1)
 						// TODO: Decide whether fetch errors are critical or just warning level
-						wg.Done()
+
 						return
 					}
 
