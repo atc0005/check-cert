@@ -26,6 +26,29 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.3.1] - 2020-12-23
+
+### Overview
+
+- `certsum`
+  - minor fixes
+  - speed improvements
+- built using Go 1.15.6
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- cert scanning is performed concurrently (estimated 2x speed increase)
+- Add timing info to port scanning, cert scanning steps
+
+### Fixed
+
+- Incomplete logging call for port scan error
+- Doc comment func name incorrect
+- `panic: sync: negative WaitGroup counter`
+
 ## [v0.3.0] - 2020-12-21
 
 ### Overview
@@ -466,7 +489,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.3.1...HEAD
+[v0.3.1]: https://github.com/atc0005/check-cert/releases/tag/v0.3.1
 [v0.3.0]: https://github.com/atc0005/check-cert/releases/tag/v0.3.0
 [v0.2.0]: https://github.com/atc0005/check-cert/releases/tag/v0.2.0
 [v0.1.14]: https://github.com/atc0005/check-cert/releases/tag/v0.1.14
