@@ -749,6 +749,32 @@ func (dcc DiscoveredCertChains) HasProblems(
 
 }
 
+// NumProblems indicates how many evaluated certificates are expired or
+// expiring soon.
+func (dcc DiscoveredCertChains) NumProblems(
+	certsExpireAgeCritical time.Time,
+	certsExpireAgeWarning time.Time) int {
+
+	var problems int
+	for _, chain := range dcc {
+
+		hasExpiredCerts := HasExpiredCert(chain.Certs)
+		hasExpiringCerts := HasExpiringCert(
+			chain.Certs,
+			certsExpireAgeCritical,
+			certsExpireAgeWarning,
+		)
+
+		if hasExpiredCerts || hasExpiringCerts {
+			problems++
+		}
+
+	}
+
+	return problems
+
+}
+
 // ChainSummary receives a certificate chain, the critical age threshold and
 // the warning age threshold and generates a summary of certificate details.
 func ChainSummary(
