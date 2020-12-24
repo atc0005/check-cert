@@ -11,6 +11,31 @@ import (
 	"github.com/atc0005/check-certs/internal/certs"
 )
 
+func printLeadIn(
+	showAll bool,
+	discoveredChains certs.DiscoveredCertChains,
+	ageCritical time.Time,
+	ageWarning time.Time,
+) {
+
+	certIssuesCount := discoveredChains.NumProblems(ageCritical, ageWarning)
+
+	fmt.Printf("%d certificates (%d issues) found.\n", len(discoveredChains), certIssuesCount)
+
+	if certIssuesCount == 0 {
+		fmt.Printf("\nResults: No certificate issues found!\n")
+		return
+	}
+
+	resultsDescription := "all"
+	if !showAll {
+		resultsDescription = "issues only"
+	}
+
+	fmt.Printf("\nResults (%s):\n\n", resultsDescription)
+
+}
+
 func printSummaryHighLevel(
 	showAllHosts bool,
 	discoveredChains certs.DiscoveredCertChains,
@@ -22,12 +47,7 @@ func printSummaryHighLevel(
 	certsExpireAgeWarning := now.AddDate(0, 0, ageWarning)
 	certsExpireAgeCritical := now.AddDate(0, 0, ageCritical)
 
-	if !discoveredChains.HasProblems(certsExpireAgeCritical, certsExpireAgeWarning) {
-		fmt.Printf("\nResults: No certificate issues found!\n")
-		return
-	}
-
-	fmt.Printf("\nResults:\n\n")
+	printLeadIn(showAllHosts, discoveredChains, certsExpireAgeCritical, certsExpireAgeWarning)
 
 	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, '\t', 0)
 
@@ -104,12 +124,7 @@ func printSummaryDetailedLevel(
 	certsExpireAgeWarning := now.AddDate(0, 0, ageWarning)
 	certsExpireAgeCritical := now.AddDate(0, 0, ageCritical)
 
-	if !discoveredChains.HasProblems(certsExpireAgeCritical, certsExpireAgeWarning) {
-		fmt.Printf("\nResults: No certificate issues found!\n")
-		return
-	}
-
-	fmt.Printf("\nResults:\n\n")
+	printLeadIn(showAllCerts, discoveredChains, certsExpireAgeCritical, certsExpireAgeWarning)
 
 	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, '\t', 0)
 
