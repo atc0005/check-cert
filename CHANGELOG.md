@@ -26,6 +26,46 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.4.0] - 2020-12-25
+
+### Overview
+
+Merry Christmas, Happy Holidays and (before long) Happy New Year!
+
+- `all`
+  - new: add timestamp field to logger output
+  - built using Go 1.15.6
+    - Statically linked
+    - Windows (x86, x64)
+    - Linux (x86, x64)
+- `certsum`
+  - bug fixes
+  - speed improvements
+  - new: application timeout
+
+### Added
+
+- `all`
+  - add timestamp field to structured logging output
+- `certsum`
+  - application timeout
+    - default value set to help prevent app from "hanging"
+    - custom values accepted to allow working around "brittle" or
+      non-compliant devices which may take longer than usual to respond to
+      scan attempts
+
+### Changed
+
+- `certsum`
+  - refactor concurrent scanning implementation to increase speed, reduce
+    complexity and help prevent deadlocks between competing tasks
+  - increase summary output details
+
+### Fixed
+
+- `certsum`
+  - Various potential race conditions and deadlocks
+
 ## [v0.3.1] - 2020-12-23
 
 ### Overview
@@ -489,7 +529,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.0...HEAD
+[v0.4.0]: https://github.com/atc0005/check-cert/releases/tag/v0.4.0
 [v0.3.1]: https://github.com/atc0005/check-cert/releases/tag/v0.3.1
 [v0.3.0]: https://github.com/atc0005/check-cert/releases/tag/v0.3.0
 [v0.2.0]: https://github.com/atc0005/check-cert/releases/tag/v0.2.0
