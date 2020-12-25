@@ -53,6 +53,9 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		flag.IntVar(&c.ScanRateLimit, "scan-rate-limit", defaultScanRateLimit, scanRateLimitFlagHelp)
 		flag.IntVar(&c.ScanRateLimit, "srl", defaultScanRateLimit, scanRateLimitFlagHelp+" (shorthand)")
 
+		flag.IntVar(&c.timeoutAppInactivity, "app-timeout", defaultAppTimeout, timeoutAppInactivityFlagHelp)
+		flag.IntVar(&c.timeoutAppInactivity, "at", defaultAppTimeout, timeoutAppInactivityFlagHelp+" (shorthand)")
+
 		flag.Var(&c.portsList, "ports", portsListFlagHelp)
 		flag.Var(&c.portsList, "p", portsListFlagHelp+" (shorthand)")
 

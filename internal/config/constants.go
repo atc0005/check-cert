@@ -29,6 +29,7 @@ const (
 	portsListFlagHelp                string = "List of comma-separated TCP ports to check for certificates. If not specified, the list defaults to 443 only."
 	timeoutConnectFlagHelp           string = "Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned."
 	timeoutPortScanFlagHelp          string = "The number of milliseconds before a connection attempt during a port scan is abandoned and an error returned. This timeout value is separate from the general `timeout` value used when retrieving certificates. This setting is used specifically to quickly determine port state as part of bulk operations where speed is crucial."
+	timeoutAppInactivityFlagHelp     string = "The number of seconds the application is allowed to remain inactive (i.e., \"hung\") before it is automatically terminated."
 	scanRateLimitFlagHelp            string = "Maximum concurrent port and certificate scans. Remaining scans are queued until an existing scan completes."
 	emitCertTextFlagHelp             string = "Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default."
 	filenameFlagHelp                 string = "Fully-qualified path to a file containing one or more certificates."
@@ -66,6 +67,11 @@ const (
 	// Default timeout (in milliseconds) used when testing whether a TCP port
 	// is open or closed.
 	defaultPortScanTimeout = 200
+
+	// defaultAppTimeout indicates the time in seconds that a sysadmin may be
+	// reasonably willing to wait before forcefully terminating the
+	// application after no apparent activity has occurred.
+	defaultAppTimeout = 30
 
 	// this limit is used by port scanner per-host and per-port goroutines
 	// along with certificate scanner goroutines. In an effort to prevent

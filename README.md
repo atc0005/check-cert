@@ -119,7 +119,8 @@ at a future date, unless others find it useful.
 are subject to change significantly in later releases.
 
 This tool is intended for scanning one or more given IP ranges in order to
-generate a report for discovered certificates.
+generate a report for discovered certificates, but may be used to scan as few
+as one target.
 
 Performance is likely to be acceptable as-is for smaller IP ranges, but may be
 adjusted as needed using the rate limit tuning flag (see the [configuration
@@ -127,6 +128,10 @@ options](#configuration-options) section for details). The current default
 value is an attempt to balance scanning speed against OS limitations on the
 number of open file handles. If adjusting this value, start with small
 increments to determine best results for your environment.
+
+A default inactivity timeout is used to terminate the application if scanning
+attempts stall for a specified period of time. See the [configuration
+options](#configuration-options) section for details.
 
 IP Addresses may be specified as comma-separated values:
 
@@ -371,7 +376,8 @@ change, perhaps even significantly, in future releases.
 | `ll`, `log-level`                      | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace`                 | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                             |
 | `t`, `timeout`                         | No       | `10`    | No     | *positive whole number of seconds*                                                      | Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned.                                                                                                                                                                                       |
 | `se`, `sans-entries`                   | No       |         | No     | *comma-separated list of values*                                                        | One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP. |
-| `st`, `scan-timeout`                   | No       | 200     | No     | *positive whole number of milliseconds*                                                 | The number of milliseconds before a connection attempt during a port scan is abandoned and an error returned. This timeout value is separate from the general `timeout` value used when retrieving certificates. This setting is used specifically to quickly determine port state as part of bulk operations where speed is crucial.                                 |
+| `st`, `scan-timeout`                   | No       | 200     | No     | *positive whole number of milliseconds, minimum 1*                                      | The number of milliseconds before a connection attempt during a port scan is abandoned and an error returned. This timeout value is separate from the general `timeout` value used when retrieving certificates. This setting is used specifically to quickly determine port state as part of bulk operations where speed is crucial.                                 |
+| `at`, `app-timeout`                    | No       | 30      | No     | *positive whole number of seconds, minimum 2*                                           | The number of seconds the application is allowed to remain inactive (i.e., "hung") before it is automatically terminated.                                                                                                                                                                                                                                             |
 | `srl`, `scan-rate-limit`               | No       | 100     | No     | *positive whole number*                                                                 | Maximum concurrent port and certificate scans. Remaining scans are queued until an existing scan completes.                                                                                                                                                                                                                                                           |
 | `ips`, `hosts`                         | No       |         | No     | *one or more valid, comma-separated IP Addresses (single or range), hostnames or FQDNs* | List of comma-separated individual IP Addresses, CIDR IP ranges, partial (dash-separated) ranges (e.g., 192.168.2.10-15), hostnames or FQDNs to scan for certificates.                                                                                                                                                                                                |
 | `p`, `ports`                           | No       | 443     | No     | *one or more valid, comma-separated TCP ports*                                          | List of comma-separated TCP ports to check for certificates. If not specified, the list defaults to 443 only.                                                                                                                                                                                                                                                         |

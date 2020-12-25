@@ -10,6 +10,7 @@ package config
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 // validate verifies all Config struct fields have been provided acceptable
@@ -53,10 +54,21 @@ func (c Config) validate(appType AppType) error {
 
 		// Use getter method here in order to validate conversion results.
 		// Require that *at least* 1 ms be given as the timeout.
-		if c.TimeoutPortScan() < 1 {
+		if c.TimeoutPortScan() < (time.Duration(1) * time.Millisecond) {
 			return fmt.Errorf(
-				"invalid port check timeout value provided: %d",
-				c.TimeoutPortScan(),
+				"invalid port check timeout value provided: %v (%v)",
+				c.timeoutPortScan,
+				fmt.Sprintf("%v", c.TimeoutPortScan()),
+			)
+		}
+
+		// Use getter method here in order to validate conversion results.
+		// Require that *at least* 2 seconds be given as the timeout.
+		if c.TimeoutAppInactivity() < (time.Duration(2) * time.Second) {
+			return fmt.Errorf(
+				"invalid application timeout value provided: %v (%v)",
+				c.timeoutAppInactivity,
+				fmt.Sprintf("%v", c.TimeoutAppInactivity()),
 			)
 		}
 
