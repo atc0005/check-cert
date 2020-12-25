@@ -8,6 +8,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -21,16 +22,58 @@ import (
 // scanner function, also as a goroutine. This goroutine continues to run
 // until all results are collected.
 func certScanCollector(
+	ctx context.Context,
 	discoveredCertChains *certs.DiscoveredCertChains,
-	results <-chan certs.DiscoveredCertChain,
-	wg *sync.WaitGroup) {
+	certScanResultsChan <-chan certs.DiscoveredCertChain,
+	log zerolog.Logger,
+	wg *sync.WaitGroup,
+) {
 
 	// help ensure that we don't forget to signal that we're done
-	defer wg.Done()
+	defer func() {
+		wg.Done()
+		log.Debug().
+			Int("certs_found", len(*discoveredCertChains)).
+			Msg("certScanCollector finished")
+	}()
 
-	for result := range results {
-		*discoveredCertChains = append(*discoveredCertChains, result)
+	for {
+		select {
+
+		case <-ctx.Done():
+
+			errMsg := "certScanCollector: context cancelled or expired"
+			log.Debug().
+				Err(ctx.Err()).
+				Msg(errMsg)
+
+			return
+
+		case result, openChan := <-certScanResultsChan:
+
+			if !openChan {
+
+				// TODO: Does openChan go false with result having a valid value?
+				if result.Certs != nil || result.Host != "" || result.Port != 0 {
+					log.Error().Msgf(
+						"unhandled result from certScanResultsChan: %+v",
+						result,
+					)
+				}
+
+				log.Debug().Msg(
+					"certScanCollector: certScanResultsChan is closed; exiting goroutine",
+				)
+
+				return
+			}
+
+			log.Debug().Msgf("result: %v", result)
+			*discoveredCertChains = append(*discoveredCertChains, result)
+
+		}
 	}
+
 }
 
 // certScanner is called as a goroutine after launching the cert scan
@@ -40,102 +83,158 @@ func certScanCollector(
 // goroutine monitors. This goroutine continues to run until all open ports
 // are checked, either successfully or once a specified timeout is reached.
 func certScanner(
-	resultsIndex netutils.PortCheckResultsIndex,
+	ctx context.Context,
+	portScanResultsChan <-chan netutils.PortCheckResults,
 	showHostsWithClosedPorts bool,
 	showPortScanResults bool,
 	timeout time.Duration,
-	results chan<- certs.DiscoveredCertChain,
+	certScanResultsChan chan<- certs.DiscoveredCertChain,
 	rateLimiter chan struct{}, // needs to allow send & receive
 	log zerolog.Logger,
 	wg *sync.WaitGroup,
 ) {
 
+	log.Debug().Msg("Launching parent cert scanner goroutine")
+
 	// caller sets this just before calling this function
-	defer wg.Done()
+	defer func() {
+		log.Debug().Msg("certScanner: decrementing parent waitgroup")
+		wg.Done()
+	}()
 
-	for host, checkResults := range resultsIndex {
+	var certScanWG sync.WaitGroup
 
-		// unless user opted to show hosts with *all* closed ports, skip the
-		// host and continue to the next one
-		if !showHostsWithClosedPorts && !checkResults.HasOpenPort() {
-			continue
-		}
+	for {
+		select {
+		case <-ctx.Done():
 
-		switch {
-		case showPortScanResults:
-			portSummary := func() string {
-				if checkResults.HasOpenPort() {
-					return checkResults.Summary()
-				}
-				return "None"
-			}()
+			errMsg := "certScanner: context cancelled or expired"
+			log.Debug().
+				Err(ctx.Err()).
+				Msg(errMsg)
 
-			// 192.168.1.2: [443: true, 636: false]
-			fmt.Printf("%s: [%s]\n", host, portSummary)
-		default:
-			fmt.Printf(".")
-		}
+			return
 
-		for _, result := range checkResults {
-			if result.Open {
+		case portScanResults, openChan := <-portScanResultsChan:
 
-				wg.Add(1)
-				rateLimiter <- struct{}{}
+			if !openChan {
 
-				go func(
-					ipAddr string,
-					port int,
-					timeout time.Duration,
-					results chan<- certs.DiscoveredCertChain,
-					log zerolog.Logger,
-				) {
+				log.Debug().Msg("portScanResultsChan is no longer open")
+				log.Debug().Msg("portScanResultsChan: waiting on certScan goroutines to complete")
+				certScanWG.Wait()
 
-					// make sure we give up our spot when finished
-					defer func() {
-						// indicate that we're done with this goroutine
-						wg.Done()
+				// close cert scan results channel to indicate that the collector should
+				// shutdown
+				close(certScanResultsChan)
 
-						// release spot for next (held back) goroutine to run
-						<-rateLimiter
-					}()
+				log.Debug().Msg("Finished parent cert scanner goroutine")
 
-					var certFetchErr error
-					certChain, certFetchErr := netutils.GetCerts(
-						ipAddr,
-						port,
-						timeout,
-						log,
-					)
-					if certFetchErr != nil {
-						if !showPortScanResults {
-							// will need to insert a newline in-between error
-							// output if we're not showing port summary results
-							fmt.Println()
-						}
-						log.Error().
-							Err(certFetchErr).
-							Str("host", result.IPAddress.String()).
-							Int("port", result.Port).
-							Msg("error fetching certificates chain")
-
-						// os.Exit(1)
-						// TODO: Decide whether fetch errors are critical or just warning level
-
-						return
-					}
-
-					results <- certs.DiscoveredCertChain{
-						Host:  result.IPAddress.String(),
-						Port:  result.Port,
-						Certs: certChain,
-					}
-
-				}(result.IPAddress.String(), result.Port, timeout, results, log)
-
+				return
 			}
 
+			log.Debug().Msgf("certScanner: Received %v on portScanResultsChan", portScanResults)
+
+			// unless user opted to show hosts with *all* closed ports, skip the
+			// host and continue to the next one
+			if !showHostsWithClosedPorts && !portScanResults.HasOpenPort() {
+				continue
+			}
+
+			switch {
+			case showPortScanResults:
+				portSummary := func() string {
+					if portScanResults.HasOpenPort() {
+						return portScanResults.Summary()
+					}
+					return "None"
+				}()
+
+				// 192.168.1.2: [443: true, 636: false]
+				fmt.Printf("%s: [%s]\n", portScanResults.Host(), portSummary)
+			default:
+				fmt.Printf(".")
+			}
+
+			for _, portScanResult := range portScanResults {
+
+				// abort early if context has been cancelled
+				if ctx.Err() != nil {
+					errMsg := "certScanner: ports: context cancelled or expired"
+					log.Error().
+						Str("host", portScanResult.IPAddress.String()).
+						Int("port", portScanResult.Port).
+						Err(ctx.Err()).
+						Msg(errMsg)
+
+					return
+				}
+
+				if portScanResult.Open {
+
+					log.Debug().Msgf(
+						"Checking port %v for cert on IP %v",
+						portScanResult.Port,
+						portScanResult.IPAddress.String(),
+					)
+
+					log.Debug().Msg("certScanner: incrementing waitgroup")
+					certScanWG.Add(1)
+
+					go func(
+						ctx context.Context,
+						ipAddr string,
+						port int,
+						timeout time.Duration,
+						resultsChan chan<- certs.DiscoveredCertChain,
+						log zerolog.Logger,
+					) {
+
+						// make sure we give up our spot when finished
+						defer func() {
+							// indicate that we're done with this goroutine
+							log.Debug().Msg("certScanner: decrementing waitgroup")
+							certScanWG.Done()
+						}()
+
+						var certFetchErr error
+						certChain, certFetchErr := netutils.GetCerts(
+							ipAddr,
+							port,
+							timeout,
+							log,
+						)
+						if certFetchErr != nil {
+							if !showPortScanResults {
+								// will need to insert a newline in-between error
+								// output if we're not showing port summary results
+								fmt.Println()
+							}
+							log.Error().
+								Err(certFetchErr).
+								Str("host", ipAddr).
+								Int("port", port).
+								Msg("error fetching certificates chain")
+
+							// os.Exit(1)
+							// TODO: Decide whether fetch errors are critical or just warning level
+
+							return
+						}
+
+						log.Debug().Msg("Attempting to send cert chain on resultsChan")
+						resultsChan <- certs.DiscoveredCertChain{
+							Host:  ipAddr,
+							Port:  port,
+							Certs: certChain,
+						}
+
+						log.Debug().Msg("Finished child cert scanner goroutine")
+
+					}(ctx, portScanResult.IPAddress.String(), portScanResult.Port, timeout, certScanResultsChan, log)
+
+				}
+
+			}
 		}
-
 	}
-
 }

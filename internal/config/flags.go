@@ -50,8 +50,8 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		flag.Var(&c.hosts, "hosts", hostsFlagHelp)
 		flag.Var(&c.hosts, "ips", hostsFlagHelp+" (alt name)")
 
-		flag.IntVar(&c.PortScanRateLimit, "scan-rate-limit", defaultPortScanRateLimit, portScanRateLimitFlagHelp)
-		flag.IntVar(&c.PortScanRateLimit, "srl", defaultPortScanRateLimit, portScanRateLimitFlagHelp+" (shorthand)")
+		flag.IntVar(&c.ScanRateLimit, "scan-rate-limit", defaultScanRateLimit, scanRateLimitFlagHelp)
+		flag.IntVar(&c.ScanRateLimit, "srl", defaultScanRateLimit, scanRateLimitFlagHelp+" (shorthand)")
 
 		flag.Var(&c.portsList, "ports", portsListFlagHelp)
 		flag.Var(&c.portsList, "p", portsListFlagHelp+" (shorthand)")
@@ -84,8 +84,8 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 	flag.IntVar(&c.AgeCritical, "c", defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
 	flag.IntVar(&c.AgeCritical, "age-critical", defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
 
-	flag.IntVar(&c.timeout, "t", defaultTimeout, timeoutFlagHelp)
-	flag.IntVar(&c.timeout, "timeout", defaultTimeout, timeoutFlagHelp)
+	flag.IntVar(&c.timeout, "t", defaultConnectTimeout, timeoutConnectFlagHelp)
+	flag.IntVar(&c.timeout, "timeout", defaultConnectTimeout, timeoutConnectFlagHelp)
 
 	flag.StringVar(&c.LoggingLevel, "ll", defaultLogLevel, logLevelFlagHelp)
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)

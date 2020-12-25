@@ -47,6 +47,16 @@ func (rs PortCheckResults) HasOpenPort() bool {
 	return false
 }
 
+// Host returns the (single) host associated with port check results.
+func (rs PortCheckResults) Host() string {
+	if rs == nil {
+		return ""
+	}
+
+	return rs[0].IPAddress.String()
+
+}
+
 // Summary generates a one-line summary of port check results.
 func (rs PortCheckResults) Summary() string {
 
@@ -74,6 +84,7 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 
 	conn, connErr := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), timeout)
 	if connErr != nil {
+		// fmt.Printf("connErr: %v\n", connErr)
 		return PortCheckResult{
 			IPAddress: net.IPAddr{IP: ipAddress},
 			Port:      port,
@@ -82,8 +93,21 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 		}
 	}
 
+	// explicitly disable Keep Alive in an effort to force connections to
+	// stop hanging around after checking remote port
+	disableKeepAliveErr := conn.(*net.TCPConn).SetKeepAlive(false)
+	if disableKeepAliveErr != nil {
+		return PortCheckResult{
+			IPAddress: net.IPAddr{IP: ipAddress},
+			Port:      port,
+			Open:      true,
+			Err:       disableKeepAliveErr,
+		}
+	}
+
 	closeErr := conn.Close()
 	if closeErr != nil {
+		// fmt.Println("connection close error")
 		return PortCheckResult{
 			IPAddress: net.IPAddr{IP: ipAddress},
 			Port:      port,
@@ -92,12 +116,16 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 		}
 	}
 
-	return PortCheckResult{
+	result := PortCheckResult{
 		IPAddress: net.IPAddr{IP: ipAddress},
 		Port:      port,
 		Open:      true,
 		Err:       nil,
 	}
+
+	// fmt.Println("Returning PortCheckResult:", result)
+
+	return result
 
 }
 
