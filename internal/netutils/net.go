@@ -70,6 +70,11 @@ func (rs PortCheckResults) Summary() string {
 
 }
 
+// Summary generates a one-line summary of port check result.
+func (rs PortCheckResult) Summary() string {
+	return fmt.Sprintf("%v: %v", rs.Port, rs.Open)
+}
+
 // CheckPort checks whether a specified TCP port is open. Any errors
 // encountered are returned along with the port status.
 func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
