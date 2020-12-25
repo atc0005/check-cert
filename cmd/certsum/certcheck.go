@@ -84,6 +84,7 @@ func certScanCollector(
 // are checked, either successfully or once a specified timeout is reached.
 func certScanner(
 	ctx context.Context,
+	heartBeatChan chan<- struct{},
 	portScanResultsChan <-chan netutils.PortCheckResult,
 	showHostsWithClosedPorts bool,
 	showPortScanResults bool,
@@ -133,6 +134,9 @@ func certScanner(
 			}
 
 			log.Debug().Msgf("certScanner: Received %v on portScanResultsChan", portScanResult)
+
+			log.Debug().Msg("Send heartbeat to indicate that we are still receiving values")
+			heartBeatChan <- struct{}{}
 
 			// unless user opted to show hosts with *all* closed ports, skip the
 			// host and continue to the next one

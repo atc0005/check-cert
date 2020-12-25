@@ -44,7 +44,8 @@ func main() {
 	// later. This will hopefully help to standardize the log messages to make
 	// them easier to search through later when troubleshooting.
 	log := cfg.Log.With().
-		Int("port_scan_timeout", int(cfg.TimeoutPortScan())).
+		Str("port_scan_timeout", fmt.Sprintf("%v", cfg.TimeoutPortScan())).
+		Str("app_timeout", fmt.Sprintf("%v", cfg.TimeoutAppInactivity())).
 		Logger()
 
 	givenIPsList := cfg.IPAddresses()
@@ -55,15 +56,11 @@ func main() {
 	log.Debug().Msgf("Total IPs from all ranges after deduping: %d", len(ipsList))
 	log.Debug().Msgf("IP Addresses after deduping: %v", ipsList)
 
-	// Create context that can be used to cancel background jobs.
-	baseCtx := context.Background()
-
-	// create fallback in case this application locks up for one reason or
-	// another
-	// FIXME: This will need to be tuned using a ratio based on number of IPs
-	// scanned
-	ctx, cancel := context.WithTimeout(baseCtx, time.Duration(2)*time.Minute)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	heartBeatChan := make(chan struct{})
+	go heartBeatMonitor(ctx, cancel, heartBeatChan, cfg.TimeoutAppInactivity(), log)
 
 	var portScanWG sync.WaitGroup
 	var certScanWG sync.WaitGroup
@@ -116,6 +113,7 @@ func main() {
 	log.Debug().Msg("Starting certScanner ...")
 	go certScanner(
 		ctx,
+		heartBeatChan,
 		portScanResultsChan,
 		cfg.ShowHostsWithClosedPorts,
 		cfg.ShowPortScanResults,
@@ -154,7 +152,7 @@ func main() {
 
 	case ctx.Err() != nil:
 		fmt.Printf(
-			"Certificates scan aborted after %v due to application timeout\n",
+			"Certificates scan aborted after %v due to application timeout.\n",
 			time.Since(scanStart),
 		)
 	default:

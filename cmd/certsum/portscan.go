@@ -74,7 +74,6 @@ func portScanner(
 			ctx context.Context,
 			ipAddr string,
 			ports []int,
-
 			portScanResultsChan chan<- netutils.PortCheckResult,
 		) {
 

@@ -23,6 +23,13 @@ func (c Config) TimeoutPortScan() time.Duration {
 	return time.Duration(c.timeoutPortScan) * time.Millisecond
 }
 
+// TimeoutAppInactivity converts the user-specified application inactivity
+// timeout value in seconds to an appropriate time duration value for use with
+// setting automatic context cancellation.
+func (c Config) TimeoutAppInactivity() time.Duration {
+	return time.Duration(c.timeoutAppInactivity) * time.Second
+}
+
 // CertPorts returns the user-specified list of ports to check for
 // certificates or the default value if not specified.
 func (c Config) CertPorts() []int {
