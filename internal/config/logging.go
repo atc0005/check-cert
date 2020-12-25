@@ -121,7 +121,7 @@ func (c *Config) setupLogging(appType AppType) error {
 	// email account. This approach is intended to help standardize the log
 	// messages to make them easier to search through later when
 	// troubleshooting.
-	c.Log = zerolog.New(output).With().Caller().
+	c.Log = zerolog.New(output).With().Timestamp().Caller().
 		Str("version", Version()).
 		Str("logging_level", c.LoggingLevel).
 		Str("app_type", appDescription).
