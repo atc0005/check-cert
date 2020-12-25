@@ -27,7 +27,7 @@ func portScanner(
 	ips []string,
 	ports []int,
 	timeout time.Duration,
-	portScanResultsChan chan<- netutils.PortCheckResults,
+	portScanResultsChan chan<- netutils.PortCheckResult,
 	portScanRateLimiter chan struct{}, // needs to allow send & receive
 	hostRateLimiter chan struct{}, // needs to allow send & receive
 	log zerolog.Logger,
@@ -75,10 +75,8 @@ func portScanner(
 			ipAddr string,
 			ports []int,
 
-			portScanResultsChan chan<- netutils.PortCheckResults,
+			portScanResultsChan chan<- netutils.PortCheckResult,
 		) {
-
-			// FIXME: What causes this goroutine to exit?
 
 			defer func() {
 
@@ -99,51 +97,6 @@ func portScanner(
 				}
 			}()
 
-			// collect results of port scans for this specific host; it is
-			// easier to work with the results per host than one at a time.
-			hostPortScanResults := make(netutils.PortCheckResults, 0, len(ports))
-
-			childPortScanResultsChan := make(chan netutils.PortCheckResult)
-
-			var collWG sync.WaitGroup
-
-			collWG.Add(1)
-			go func(
-				hostScanResults *netutils.PortCheckResults,
-				resultsChan <-chan netutils.PortCheckResult,
-			) {
-				defer func() {
-					collWG.Done()
-				}()
-
-				for {
-					select {
-					case <-ctx.Done():
-
-						log.Debug().
-							Err(ctx.Err()).
-							Msg("portScanner: portScanResults goroutine: context cancelled or expired")
-
-						return
-
-					case result, openChan := <-resultsChan:
-
-						if !openChan {
-							log.Debug().Msg("childPortScanResultsChan is no longer open")
-
-							return
-						}
-
-						log.Debug().Msgf("received result in goroutine: %v", result)
-						log.Debug().Msgf("hostScanResults length before append: %v", len(*hostScanResults))
-						*hostScanResults = append(*hostScanResults, result)
-						log.Debug().Msgf("hostScanResults length after append: %v", len(*hostScanResults))
-
-					}
-				}
-
-			}(&hostPortScanResults, childPortScanResultsChan)
-
 			var portChecksWG sync.WaitGroup
 			for _, port := range ports {
 
@@ -158,6 +111,10 @@ func portScanner(
 						Err(ctx.Err()).
 						Msg(errMsg)
 
+					// NOTE: We probably don't want to send anything back for
+					// context cancellation as the check result hasn't truly
+					// been determined for this port.
+					//
 					// childPortScanResultsChan <- netutils.PortCheckResult{
 					// 	Err: fmt.Errorf("%s: %w", errMsg, ctx.Err()),
 					// }
@@ -177,7 +134,7 @@ func portScanner(
 					ipAddr string,
 					port int,
 					scanTimeout time.Duration,
-					childPortScanResultsChan chan<- netutils.PortCheckResult,
+					portScanResultsChan chan<- netutils.PortCheckResult,
 					log zerolog.Logger,
 				) {
 
@@ -198,15 +155,13 @@ func portScanner(
 							log.Debug().
 								Int("reserved", len(portScanRateLimiter)).
 								Msg("Releasing spot in port scan rate limiter")
-							// time.Sleep(time.Duration(2) * time.Second)
+
 						default:
 							log.Warn().
 								Int("reserved", len(portScanRateLimiter)).
 								Bool("ctx_cancelled", ctx.Err() != nil).
 								Msg("ERROR: No spot to release in port scan rate limiter")
-							// time.Sleep(time.Duration(10) * time.Second)
 						}
-
 					}()
 
 					log.Debug().Msgf("Checking %v", ipAddr)
@@ -222,43 +177,28 @@ func portScanner(
 							Err(portState.Err).
 							Msg("")
 
-						childPortScanResultsChan <- netutils.PortCheckResult{
+						// indicate that the port was found to be closed
+						portScanResultsChan <- netutils.PortCheckResult{
 							Err: portState.Err,
 						}
 
 						return
 					}
 
-					log.Debug().Msg("Returning portState on childPortScanResultsChan")
-					childPortScanResultsChan <- portState
-					log.Debug().Msg("Finished returning portState on childPortScanResultsChan")
+					log.Debug().Msg("Returning portState on portScanResultsChan")
+					portScanResultsChan <- portState
+					log.Debug().Msg("Finished returning portState on portScanResultsChan")
 
 					log.Debug().Msg("Finished child port scanner goroutine")
 
-				}(ctx, ipAddr, port, timeout, childPortScanResultsChan, log)
+				}(ctx, ipAddr, port, timeout, portScanResultsChan, log)
 
 			}
 
 			portChecksWG.Wait()
 			log.Debug().Msg("portChecksWG.Wait() finished")
-			close(childPortScanResultsChan)
-			log.Debug().Msg("childPortScanResultsChan closed")
 
 			log.Debug().Msgf("Sending port scan results for IP %s on channel", ipAddr)
-
-			// -race flag detects this as a data race
-			// log.Debug().Msgf("hostPortScanResults before waiting: %v\n", hostPortScanResults)
-
-			// Wait on collector to finish accumulating values before sending
-			// back results
-			collWG.Wait()
-			log.Debug().Msg("collWG.Wait() finished")
-			log.Debug().Msgf(
-				"hostPortScanResults after waiting on goroutine to complete: %v",
-				hostPortScanResults,
-			)
-
-			portScanResultsChan <- hostPortScanResults
 
 		}(ctx, ip, ports, portScanResultsChan)
 

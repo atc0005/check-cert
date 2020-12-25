@@ -77,8 +77,8 @@ func main() {
 	// from port scan limit (in an effort to avoid deadlocks)
 	hostRateLimiter := make(chan struct{}, cfg.ScanRateLimit)
 
-	// results are collected and passed per host, not per port
-	portScanResultsChan := make(chan netutils.PortCheckResults)
+	// results are collected and passed per port
+	portScanResultsChan := make(chan netutils.PortCheckResult)
 
 	certScanResultsChan := make(chan certs.DiscoveredCertChain)
 
