@@ -1,4 +1,4 @@
-module github.com/atc0005/check-certs
+module github.com/atc0005/check-cert
 
 go 1.14
 

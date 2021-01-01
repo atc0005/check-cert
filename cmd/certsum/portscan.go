@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/atc0005/check-certs/internal/netutils"
+	"github.com/atc0005/check-cert/internal/netutils"
 	"github.com/rs/zerolog"
 )
 
