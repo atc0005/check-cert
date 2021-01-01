@@ -15,8 +15,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/atc0005/check-certs/internal/netutils"
-	"github.com/atc0005/check-certs/internal/textutils"
+	"github.com/atc0005/check-cert/internal/netutils"
+	"github.com/atc0005/check-cert/internal/textutils"
 	"github.com/rs/zerolog"
 )
 

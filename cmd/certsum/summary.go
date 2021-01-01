@@ -8,7 +8,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/atc0005/check-certs/internal/certs"
+	"github.com/atc0005/check-cert/internal/certs"
 )
 
 func printSummaryHighLevel(

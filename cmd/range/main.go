@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/atc0005/check-certs/internal/netutils"
+	"github.com/atc0005/check-cert/internal/netutils"
 )
 
 // Purpose: Proof of concept for new partial range syntax. Based heavily off

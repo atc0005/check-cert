@@ -22,7 +22,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/atc0005/check-certs/internal/certs"
+	"github.com/atc0005/check-cert/internal/certs"
 )
 
 func main() {

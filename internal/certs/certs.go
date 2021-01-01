@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/atc0005/check-certs/internal/textutils"
+	"github.com/atc0005/check-cert/internal/textutils"
 	"github.com/atc0005/go-nagios"
 )
 

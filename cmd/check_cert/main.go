@@ -15,9 +15,9 @@ import (
 
 	zlog "github.com/rs/zerolog/log"
 
-	"github.com/atc0005/check-certs/internal/certs"
-	"github.com/atc0005/check-certs/internal/config"
-	"github.com/atc0005/check-certs/internal/netutils"
+	"github.com/atc0005/check-cert/internal/certs"
+	"github.com/atc0005/check-cert/internal/config"
+	"github.com/atc0005/check-cert/internal/netutils"
 	"github.com/atc0005/go-nagios"
 )
 
