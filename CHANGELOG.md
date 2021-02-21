@@ -26,6 +26,32 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.4.1] - 2021-02-21
+
+### Overview
+
+- Bugfixes
+- built using Go 1.15.8
+
+### Changed
+
+- Swap out GoDoc badge for pkg.go.dev badge
+
+- dependencies
+  - `go.mod` Go version
+    - updated from `1.14` to `1.15`
+  - built using Go 1.15.8
+    - Statically linked
+    - Windows (x86, x64)
+    - Linux (x86, x64)
+  - `atc0005/go-nagios`
+    - updated from `v0.5.2` to `v0.6.0`
+
+### Fixed
+
+- Fix Go module path
+- Remove Octet Range Addressing test binary
+
 ## [v0.4.0] - 2020-12-25
 
 ### Overview
@@ -529,7 +555,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.1...HEAD
+[v0.4.1]: https://github.com/atc0005/check-cert/releases/tag/v0.4.1
 [v0.4.0]: https://github.com/atc0005/check-cert/releases/tag/v0.4.0
 [v0.3.1]: https://github.com/atc0005/check-cert/releases/tag/v0.3.1
 [v0.3.0]: https://github.com/atc0005/check-cert/releases/tag/v0.3.0
