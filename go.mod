@@ -5,5 +5,5 @@ go 1.15
 require (
 	github.com/atc0005/go-nagios v0.6.0
 	github.com/grantae/certinfo v0.0.0-20170412194111-59d56a35515b
-	github.com/rs/zerolog v1.20.0
+	github.com/rs/zerolog v1.21.0
 )
