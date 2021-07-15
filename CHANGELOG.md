@@ -26,6 +26,35 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.4.2] - 2021-07-15
+
+### Overview
+
+- Dependency updates
+- built using Go 1.16.6
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- Add "canary" Dockerfile to track stable Go releases, serve as a reminder to
+  generate fresh binaries
+
+### Changed
+
+- dependencies
+  - `Go`
+    - `1.15.8` to `1.16.6`
+  - `atc0005/go-nagios`
+    - `v0.6.0` to `v0.6.1`
+  - upgrade `rs/zerolog`
+    - `v1.20.0` to `v1.23.0`
+  - `actions/setup-node`
+    - updated from `v2.1.4` to `v2.2.0`
+    - update `node-version` value to always use latest LTS version instead of
+      hard-coded version
+
 ## [v0.4.1] - 2021-02-21
 
 ### Overview
@@ -555,7 +584,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.2...HEAD
+[v0.4.2]: https://github.com/atc0005/check-cert/releases/tag/v0.4.2
 [v0.4.1]: https://github.com/atc0005/check-cert/releases/tag/v0.4.1
 [v0.4.0]: https://github.com/atc0005/check-cert/releases/tag/v0.4.0
 [v0.3.1]: https://github.com/atc0005/check-cert/releases/tag/v0.3.1
