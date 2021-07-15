@@ -1,5 +1,5 @@
-github.com/atc0005/go-nagios v0.6.0 h1:gVHZQ2Rx4fRb3DBD46qHbdEVuoazztjOs2ONcWWuY7w=
-github.com/atc0005/go-nagios v0.6.0/go.mod h1:VhzDr2I9+vn/6aDrZ5f7OyfNOFU8MdT7gLzmSSy8be0=
+github.com/atc0005/go-nagios v0.6.1 h1:3bo7Jj0N69hik2D8GykrFlbHg0wC716v2Pw7M1tykZ0=
+github.com/atc0005/go-nagios v0.6.1/go.mod h1:VhzDr2I9+vn/6aDrZ5f7OyfNOFU8MdT7gLzmSSy8be0=
 github.com/coreos/go-systemd/v22 v22.3.2/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/grantae/certinfo v0.0.0-20170412194111-59d56a35515b h1:NGgE5ELokSf2tZ/bydyDUKrvd/jP8lrAoPNeBuMOTOk=
