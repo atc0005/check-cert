@@ -46,6 +46,7 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
     - [Invalid input](#invalid-input)
     - [Expected input](#expected-input)
   - [`certsum` CLI tool](#certsum-cli-tool)
+    - [Certificates Overview](#certificates-overview)
     - [CIDR range](#cidr-range)
     - [Partial range](#partial-range)
     - [Partial range and a single IP Address](#partial-range-and-a-single-ip-address)
@@ -778,6 +779,45 @@ This tool is in early development and options available are subject to change
 Please see the list of available flags/options documented earlier in this
 README for further options.
 
+#### Certificates Overview
+
+The following options generate a one-liner, high-level overview for each host
+with a certificate. Hosts without a certificate are omitted from the results.
+
+```ShellSession
+$ ./certsum --hosts 192.168.5.0/24 --show-hosts-with-valid-certs --show-overview
+Beginning cert scan against 254 unique hosts using ports: [443]
+...................
+Completed certificates scan in 2.3670248s
+19 certificates (8 issues) found.
+
+Results (all):
+
+IP Address            Port    Subject or SANs                       Status          Chain Summary                           Serial
+---                   ---     ---                                   ---             ---                                     ---
+192.168.5.22          443     VMware                                ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        92:4A:AD:38:3C:DC:C1:B6
+192.168.5.3           443     VMware                                ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        DE:FD:50:2B:C5:7F:79:F4
+192.168.5.24          443     VMware                                ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        9A:DF:A1:A6:60:16:4E:C0
+192.168.5.11          443     VMware                                ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        8D:2C:61:CF:AE:57:58:98
+192.168.5.83          443     HP Jetdirect 4639304E                 ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        47:F0:56:50
+192.168.5.109         443     HP LaserJet M506 F2A68A               ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        -29:25:F5:A8:D5:E2:FC:C3:71:77:F4:48:3A:09:2E:24:0F:0E:37:1A
+192.168.5.93          443     NPI25BC25                             ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        -61:CE:BD:13
+192.168.5.113         443     NPI253CDE                             ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        38:BC:BD:21
+192.168.5.136         443     HP Jetdirect BAC74492                 ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        20:46:94:C0
+192.168.5.104         443     HP Jetdirect 7FE7AF22                 ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        02
+192.168.5.165         443     192.168.5.165                         ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        EF:E5:A3:0E:2F:FA:C1:3A
+192.168.5.183         443     192.168.5.183                         ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        F7:A2:CD:4A:F2:A0:63:10
+192.168.5.182         443     192.168.5.182                         ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        AC:53:68:BB:38:5E:5A:6C
+192.168.5.105         443     192.168.5.105                         ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        64:36:33:33:32:36:37:38:30:31:64:66:37:31:31:62:32:62:37:63
+```
+
+Of note:
+
+- implicitly use the default port of `443/tcp`
+- scan the entire `192.168.5.0/24` range
+- generate output in the *overview* or summary format
+- show "OK" hosts alongside problem hosts (usually omitted for brevity)
+
 #### CIDR range
 
 ```ShellSession
@@ -802,11 +842,18 @@ IP Address              Port    Subject or SANs                 Status (Type)   
 192.168.5.183           443     192.168.5.183                   ⛔ (leaf; self-signed)          [EXPIRED] 1034d 19h ago         F7:A2:CD:4A:F2:A0:63:10
 ```
 
+Of note:
+
+- explicitly specify port `443/tcp` (the default)
+- scan the entire `192.168.5.0/24` range
+- only emit "problem" entries
+
 #### Partial range
 
 Here we specify a partial range using a syntax intentionally similar to the
-*octet based addressing* syntax accepted by nmap (an amazing tool). Commas
-within an octet (in order to exclude IPs) are not supported at this time.
+*octet based addressing* syntax accepted by [nmap](https://nmap.org/) (an
+amazing tool). Commas within an octet (in order to exclude IPs) are not
+supported at this time.
 
 ```ShellSession
 $ ./certsum --ports 443 --hosts 192.168.5.104-110
