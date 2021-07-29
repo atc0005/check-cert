@@ -26,6 +26,32 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.4.3] - 2021-07-29
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- built using Go 1.16.6
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- dependencies
+  - `actions/setup-node`
+    - updated from `v2.2.0` to `v2.3.0`
+
+- documentation
+  - Add Overview example
+  - Refresh `check_cert` examples
+
+### Fixed
+
+- (GH-188, GH-189) Certificates crossing the CRITICAL threshold are not
+  flagged as CRITICAL state
+
 ## [v0.4.2] - 2021-07-15
 
 ### Overview
@@ -584,7 +610,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.3...HEAD
+[v0.4.3]: https://github.com/atc0005/check-cert/releases/tag/v0.4.3
 [v0.4.2]: https://github.com/atc0005/check-cert/releases/tag/v0.4.2
 [v0.4.1]: https://github.com/atc0005/check-cert/releases/tag/v0.4.1
 [v0.4.0]: https://github.com/atc0005/check-cert/releases/tag/v0.4.0
