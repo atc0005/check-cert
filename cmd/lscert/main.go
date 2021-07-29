@@ -183,7 +183,7 @@ func main() {
 
 				fmt.Printf(
 					"- %s: %v \n", err,
-					certsSummary.ServiceCheckStatus,
+					certsSummary.ServiceState().Label,
 				)
 			}
 
@@ -192,19 +192,13 @@ func main() {
 
 	nextToExpire := fmt.Sprintf(
 		"- %s",
-		certs.OneLineCheckSummary(
-			certsSummary.ServiceCheckStatus,
-			certChain,
-			// Leave off summary/overview as we'll emit it separately
-			// certsSummary.Summary,
-			"",
-		),
+		certs.OneLineCheckSummary(certsSummary, false),
 	)
 	fmt.Println(nextToExpire)
 
 	statusOverview := fmt.Sprintf(
 		"- %s: %s",
-		certsSummary.ServiceCheckStatus,
+		certsSummary.ServiceState().Label,
 		certsSummary.Summary,
 	)
 	fmt.Println(statusOverview)
@@ -212,9 +206,7 @@ func main() {
 	textutils.PrintHeader("CERTIFICATES | CHAIN DETAILS")
 
 	fmt.Println(certs.GenerateCertsReport(
-		certChain,
-		certsExpireAgeCritical,
-		certsExpireAgeWarning,
+		certsSummary,
 	))
 
 	if cfg.EmitCertText {

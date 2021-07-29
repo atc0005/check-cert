@@ -92,13 +92,34 @@ type ChainStatus struct {
 	// TotalCertsCount is the total number of certificates in a chain
 	TotalCertsCount int
 
-	// ServiceCheckStatus is the overall status of the service check backed on
-	// the presence of (or lack thereof) expired or expiring certificates.
-	ServiceCheckStatus string
-
 	// Summary is a high-level overview of the number of expired, expiring and
 	// certificates not yet crossing over a WARNING or CRITICAL age threshold.
+	// This is commonly used as the lead-out text for a one-line summary.
 	Summary string
+
+	// AgeWarningThreshold is the specified age threshold for when
+	// certificates in the chain with an expiration less than this value are
+	// considered to be in a WARNING state.
+	AgeWarningThreshold time.Time
+
+	// AgeCriticalThreshold is the specified age threshold for when
+	// certificates in the chain with an expiration less than this value are
+	// considered to be in a CRITICAL state.
+	AgeCriticalThreshold time.Time
+
+	// CertChain is the collection of certificates under evaluation.
+	CertChain []*x509.Certificate
+}
+
+// ServiceState represents the status label and exit code for a service check.
+type ServiceState struct {
+
+	// Label maps directly to one of the supported Nagios state labels.
+	Label string
+
+	// ExitCode is the exit or exit status code associated with a Nagios
+	// service check.
+	ExitCode int
 }
 
 // GetCertsFromFile is a helper function for retrieving a certificates
@@ -557,24 +578,23 @@ func ChainPosition(cert *x509.Certificate, certChain []*x509.Certificate) string
 
 }
 
-// GenerateCertsReport receives a slice of x509 certificates, CRITICAL age
-// threshold and WARNING age threshold values generates a formatted report
-// suitable for display on the console or (potentially) via Microsoft Teams
-// provided suitable conversion is performed on the output.
-func GenerateCertsReport(certChain []*x509.Certificate, ageCritical time.Time, ageWarning time.Time) string {
+// GenerateCertsReport receives the current certificate chain status generates
+// a formatted report suitable for display on the console or (potentially) via
+// Microsoft Teams provided suitable conversion is performed on the output.
+func GenerateCertsReport(chainStatus ChainStatus) string {
 
 	var certsReport string
 
-	certsTotal := len(certChain)
+	certsTotal := len(chainStatus.CertChain)
 
-	for idx, certificate := range certChain {
+	for idx, certificate := range chainStatus.CertChain {
 
-		certPosition := ChainPosition(certificate, certChain)
+		certPosition := ChainPosition(certificate, chainStatus.CertChain)
 
 		expiresText := ExpirationStatus(
 			certificate,
-			ageCritical,
-			ageWarning,
+			chainStatus.AgeCriticalThreshold,
+			chainStatus.AgeWarningThreshold,
 		)
 
 		// FWIW: Nagios seems to display `\n` literally, but interpret `\r\n`
@@ -807,40 +827,31 @@ func ChainSummary(
 		validCertsCount,
 	)
 
-	var serviceCheckStatus string
-	switch {
-	case hasExpiredCerts:
-		serviceCheckStatus = nagios.StateCRITICALLabel
-	case hasExpiringCerts:
-		serviceCheckStatus = nagios.StateWARNINGLabel
-	case !hasExpiringCerts && !hasExpiredCerts:
-		serviceCheckStatus = nagios.StateOKLabel
-	default:
-		serviceCheckStatus = nagios.StateUNKNOWNLabel
-	}
-
 	chainStatus := ChainStatus{
-		HasExpiredCerts:    hasExpiredCerts,
-		HasExpiringCerts:   hasExpiringCerts,
-		ExpiredCertsCount:  expiredCertsCount,
-		ExpiringCertsCount: expiringCertsCount,
-		TotalCertsCount:    totalCerts,
-		ServiceCheckStatus: serviceCheckStatus,
-		Summary:            certsSummary,
+		CertChain:            certChain,
+		AgeWarningThreshold:  certsExpireAgeWarning,
+		AgeCriticalThreshold: certsExpireAgeCritical,
+		HasExpiredCerts:      hasExpiredCerts,
+		HasExpiringCerts:     hasExpiringCerts,
+		ExpiredCertsCount:    expiredCertsCount,
+		ExpiringCertsCount:   expiringCertsCount,
+		TotalCertsCount:      totalCerts,
+		Summary:              certsSummary,
 	}
 
 	return chainStatus
 
 }
 
-// OneLineCheckSummary receives the desired service check state as a prefix, a
-// certificate chain, a cert summary as a suffix and then generates a one-line
+// OneLineCheckSummary receives the current certificate chain status and a
+// flag indicating whether a summary of the certs which have expired, are
+// expiring or will soon expire should be included, then generates a one-line
 // summary of the check results for display and notification purposes.
-func OneLineCheckSummary(serviceState string, certChain []*x509.Certificate, certsSummary string) string {
+func OneLineCheckSummary(certsStatus ChainStatus, includeSummary bool) string {
 
 	// Give the all clear: no issues found. Do go ahead and mention the next
 	// expiration date in the chain for quick reference however.
-	nextCertToExpire := NextToExpire(certChain, false)
+	nextCertToExpire := NextToExpire(certsStatus.CertChain, false)
 
 	// Start by assuming that the CommonName is *not* blank
 	nextCertToExpireServerName := nextCertToExpire.Subject.CommonName
@@ -853,20 +864,100 @@ func OneLineCheckSummary(serviceState string, certChain []*x509.Certificate, cer
 	}
 
 	summaryTemplate := CertCheckOneLineSummaryTmpl
-	if hasExpiredCert := HasExpiredCert(certChain); hasExpiredCert {
+	if hasExpiredCert := HasExpiredCert(certsStatus.CertChain); hasExpiredCert {
 		summaryTemplate = CertCheckOneLineSummaryExpiredTmpl
 	}
 
-	summary := fmt.Sprintf(
-		summaryTemplate,
-		serviceState,
-		ChainPosition(nextCertToExpire, certChain),
-		nextCertToExpireServerName,
-		FormattedExpiration(nextCertToExpire.NotAfter),
-		nextCertToExpire.NotAfter.Format(CertValidityDateLayout),
-		certsSummary,
-	)
+	var summary string
+	switch {
+	case includeSummary:
+		summary = fmt.Sprintf(
+			summaryTemplate,
+			certsStatus.ServiceState().Label,
+			ChainPosition(nextCertToExpire, certsStatus.CertChain),
+			nextCertToExpireServerName,
+			FormattedExpiration(nextCertToExpire.NotAfter),
+			nextCertToExpire.NotAfter.Format(CertValidityDateLayout),
+			certsStatus.Summary,
+		)
+	default:
+		summary = fmt.Sprintf(
+			summaryTemplate,
+			certsStatus.ServiceState().Label,
+			ChainPosition(nextCertToExpire, certsStatus.CertChain),
+			nextCertToExpireServerName,
+			FormattedExpiration(nextCertToExpire.NotAfter),
+			nextCertToExpire.NotAfter.Format(CertValidityDateLayout),
+			"",
+		)
+	}
 
 	return summary
+
+}
+
+// ServiceState returns the appropriate Service Check Status label and exit
+// code for the evaluated certificate chain.
+func (cs ChainStatus) ServiceState() ServiceState {
+
+	var stateLabel string
+	var stateExitCode int
+
+	switch {
+	case cs.IsCriticalState():
+		stateLabel = nagios.StateCRITICALLabel
+		stateExitCode = nagios.StateCRITICALExitCode
+	case cs.IsWarningState():
+		stateLabel = nagios.StateWARNINGLabel
+		stateExitCode = nagios.StateWARNINGExitCode
+	case cs.IsOKState():
+		stateLabel = nagios.StateOKLabel
+		stateExitCode = nagios.StateOKExitCode
+	default:
+		stateLabel = nagios.StateUNKNOWNLabel
+		stateExitCode = nagios.StateUNKNOWNExitCode
+	}
+
+	return ServiceState{
+		Label:    stateLabel,
+		ExitCode: stateExitCode,
+	}
+
+}
+
+// IsWarningState indicates whether a ChainStatus has been determined to be in
+// a WARNING state. This returns false if the ChainStatus is in an OK or
+// CRITICAL state, true otherwise.
+func (cs ChainStatus) IsWarningState() bool {
+	for idx := range cs.CertChain {
+		if !IsExpiredCert(cs.CertChain[idx]) &&
+			cs.CertChain[idx].NotAfter.Before(cs.AgeWarningThreshold) &&
+			!cs.CertChain[idx].NotAfter.Before(cs.AgeCriticalThreshold) {
+			return true
+		}
+	}
+
+	return false
+
+}
+
+// IsCriticalState indicates whether a ChainStatus has been determined to be in
+// a CRITICAL state. This returns false if the ChainStatus is in an OK or
+// WARNING state, true otherwise.
+func (cs ChainStatus) IsCriticalState() bool {
+	for idx := range cs.CertChain {
+		if IsExpiredCert(cs.CertChain[idx]) || cs.CertChain[idx].NotAfter.Before(cs.AgeCriticalThreshold) {
+			return true
+		}
+	}
+
+	return false
+
+}
+
+// IsOKState indicates whether a ChainStatus has been determined to be in
+// an OK state, without expired or expiring certificates.
+func (cs ChainStatus) IsOKState() bool {
+	return !cs.IsWarningState() && !cs.IsCriticalState()
 
 }
