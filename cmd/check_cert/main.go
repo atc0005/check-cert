@@ -194,9 +194,7 @@ func main() {
 				nagiosExitState.LastError = err
 
 				nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
-					certChain,
-					certsExpireAgeCritical,
-					certsExpireAgeWarning,
+					certsSummary,
 				)
 
 				nagiosExitState.ServiceOutput = fmt.Sprintf(
@@ -219,68 +217,43 @@ func main() {
 		}
 	}
 
-	if certsSummary.HasExpiredCerts || certsSummary.HasExpiringCerts {
+	switch {
+	case certsSummary.IsCriticalState() || certsSummary.IsWarningState():
 
 		nagiosExitState.LastError = fmt.Errorf(
 			"%d certificates expired or expiring",
 			certsSummary.ExpiredCertsCount+certsSummary.ExpiringCertsCount,
 		)
 		nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
-			certChain,
-			certsExpireAgeCritical,
-			certsExpireAgeWarning,
+			certsSummary,
 		)
 
-		if certsSummary.HasExpiringCerts {
+		nagiosExitState.ServiceOutput = certs.OneLineCheckSummary(
+			certsSummary,
+			true,
+		)
+		nagiosExitState.ExitStatusCode = certsSummary.ServiceState().ExitCode
 
-			nagiosExitState.ServiceOutput = certs.OneLineCheckSummary(
-				nagios.StateWARNINGLabel,
-				certChain,
-				certsSummary.Summary,
-			)
+		log.Error().
+			Err(nagiosExitState.LastError).
+			Int("expired_certs", certsSummary.ExpiredCertsCount).
+			Int("expiring_certs", certsSummary.ExpiringCertsCount).
+			Msg("expired or expiring certs present in chain")
 
-			nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
-			log.Warn().
-				Err(nagiosExitState.LastError).
-				Int("expiring_certs", certsSummary.ExpiringCertsCount).
-				Msg("expiring certs present in chain")
-		}
+	default:
+		nagiosExitState.LastError = nil
 
-		// intentionally overwrite/override "warning" status from the last
-		// check; expired certs are more of a concern than expiring certs
-		if certsSummary.HasExpiredCerts {
-			nagiosExitState.ServiceOutput = certs.OneLineCheckSummary(
-				nagios.StateCRITICALLabel,
-				certChain,
-				certsSummary.Summary,
-			)
-			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-			log.Error().
-				Err(nagiosExitState.LastError).
-				Int("expired_certs", certsSummary.ExpiredCertsCount).
-				Msg("expired certs present in chain")
-		}
+		nagiosExitState.ServiceOutput = certs.OneLineCheckSummary(
+			certsSummary,
+			true,
+		)
 
-		return
+		nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
+			certsSummary,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
+		log.Debug().Msg("No problems with certificate chain detected")
 
 	}
-
-	nagiosExitState.LastError = nil
-
-	nagiosExitState.ServiceOutput = certs.OneLineCheckSummary(
-		nagios.StateOKLabel,
-		certChain,
-		certsSummary.Summary,
-	)
-
-	nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
-		certChain,
-		certsExpireAgeCritical,
-		certsExpireAgeWarning,
-	)
-	nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
-	log.Debug().Msg("No problems with certificate chain detected")
-
-	// defer is still needed here to allow other deferred function calls to run
 
 }
