@@ -207,6 +207,7 @@ func main() {
 
 	fmt.Println(certs.GenerateCertsReport(
 		certsSummary,
+		cfg.VerboseOutput,
 	))
 
 	if cfg.EmitCertText {
