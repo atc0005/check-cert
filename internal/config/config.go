@@ -263,6 +263,10 @@ type Config struct {
 	// their own branding output.
 	EmitBranding bool
 
+	// VerboseOutput controls whether detailed certificate metadata is emitted
+	// along with standard certificate details.
+	VerboseOutput bool
+
 	// EmitCertText controls whether x509 TLS certificates are printed to
 	// stdout using an OpenSSL-inspired text format. There is a good bit of
 	// output text, so this setting defaults to false.

@@ -195,6 +195,7 @@ func main() {
 
 				nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
 					certsSummary,
+					cfg.VerboseOutput,
 				)
 
 				nagiosExitState.ServiceOutput = fmt.Sprintf(
@@ -226,6 +227,7 @@ func main() {
 		)
 		nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
 			certsSummary,
+			cfg.VerboseOutput,
 		)
 
 		nagiosExitState.ServiceOutput = certs.OneLineCheckSummary(
@@ -250,6 +252,7 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
 			certsSummary,
+			cfg.VerboseOutput,
 		)
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 		log.Debug().Msg("No problems with certificate chain detected")

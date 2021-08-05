@@ -21,6 +21,9 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 	case appType.Plugin:
 		flag.BoolVar(&c.EmitBranding, "branding", defaultBranding, brandingFlagHelp)
 
+		flag.BoolVar(&c.VerboseOutput, "v", defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.VerboseOutput, "verbose", defaultVerboseOutput, verboseOutputFlagHelp)
+
 		flag.StringVar(&c.Server, "s", defaultServer, serverFlagHelp+" (shorthand)")
 		flag.StringVar(&c.Server, "server", defaultServer, serverFlagHelp)
 
@@ -31,6 +34,9 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		flag.IntVar(&c.Port, "port", defaultPort, portFlagHelp)
 
 	case appType.Inspecter:
+		flag.BoolVar(&c.VerboseOutput, "v", defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.VerboseOutput, "verbose", defaultVerboseOutput, verboseOutputFlagHelp)
+
 		flag.StringVar(&c.Filename, "filename", defaultFilename, filenameFlagHelp)
 		flag.BoolVar(&c.EmitCertText, "text", defaultEmitCertText, emitCertTextFlagHelp)
 
@@ -78,22 +84,21 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 
 	// Shared flags for all application type
 
-	flag.Var(&c.SANsEntries, "se", sansEntriesFlagHelp)
+	flag.Var(&c.SANsEntries, "se", sansEntriesFlagHelp+" (shorthand)")
 	flag.Var(&c.SANsEntries, "sans-entries", sansEntriesFlagHelp)
 
-	flag.IntVar(&c.AgeWarning, "w", defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
+	flag.IntVar(&c.AgeWarning, "w", defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp+" (shorthand)")
 	flag.IntVar(&c.AgeWarning, "age-warning", defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
 
-	flag.IntVar(&c.AgeCritical, "c", defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
+	flag.IntVar(&c.AgeCritical, "c", defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp+" (shorthand)")
 	flag.IntVar(&c.AgeCritical, "age-critical", defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
 
-	flag.IntVar(&c.timeout, "t", defaultConnectTimeout, timeoutConnectFlagHelp)
+	flag.IntVar(&c.timeout, "t", defaultConnectTimeout, timeoutConnectFlagHelp+" (shorthand)")
 	flag.IntVar(&c.timeout, "timeout", defaultConnectTimeout, timeoutConnectFlagHelp)
 
-	flag.StringVar(&c.LoggingLevel, "ll", defaultLogLevel, logLevelFlagHelp)
+	flag.StringVar(&c.LoggingLevel, "ll", defaultLogLevel, logLevelFlagHelp+" (shorthand)")
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
 
-	flag.BoolVar(&c.ShowVersion, "v", defaultDisplayVersionAndExit, versionFlagHelp)
 	flag.BoolVar(&c.ShowVersion, "version", defaultDisplayVersionAndExit, versionFlagHelp)
 
 	// Allow our function to override the default Help output

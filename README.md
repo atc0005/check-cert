@@ -329,7 +329,8 @@ See GH-32 for additional info.
 | -------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `branding`           | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `h`, `help`          | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `v`, `version`       | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `v`, `verbose`       | No       | `false` | No     | `v`, `verbose`                                                          | Toggles emission of detailed certificate metadata. This level of output is disabled by default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `version`            | No       | `false` | No     | `version`                                                               | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `c`, `age-critical`  | No       | 15      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `w`, `age-warning`   | No       | 30      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `WARNING` state. If the certificate expires before this number of days, but not before the `age-critical` value, then the service check will be considered in a `WARNING` state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `ll`, `log-level`    | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -346,7 +347,8 @@ See GH-32 for additional info.
 | `f`, `filename`      | No       | `false` | No     | *valid file name characters*                                            | Fully-qualified path to a file containing one or more certificates.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `text`               | No       | `false` | No     | `true`, `false`                                                         | Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `h`, `help`          | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `v`, `version`       | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `v`, `verbose`       | No       | `false` | No     | `v`, `verbose`                                                          | Toggles emission of detailed certificate metadata. This level of output is disabled by default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `version`            | No       | `false` | No     | `version`                                                               | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `c`, `age-critical`  | No       | 15      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `w`, `age-warning`   | No       | 30      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `WARNING` state. If the certificate expires before this number of days, but not before the `age-critical` value, then the service check will be considered in a `WARNING` state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `ll`, `log-level`    | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -373,7 +375,7 @@ change, perhaps even significantly, in future releases.
 | Flag                                   | Required | Default | Repeat | Possible                                                                                | Description                                                                                                                                                                                                                                                                                                                                                           |
 | -------------------------------------- | -------- | ------- | ------ | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `h`, `help`                            | No       | `false` | No     | `h`, `help`                                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                |
-| `v`, `version`                         | No       | `false` | No     | `v`, `version`                                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                         |
+| `version`                              | No       | `false` | No     | `version`                                                                               | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                         |
 | `c`, `age-critical`                    | No       | 15      | No     | *positive whole number of days*                                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                                    |
 | `w`, `age-warning`                     | No       | 30      | No     | *positive whole number of days*                                                         | The threshold for the certificate check's `WARNING` state. If the certificate expires before this number of days, but not before the `age-critical` value, then the service check will be considered in a `WARNING` state.                                                                                                                                            |
 | `ll`, `log-level`                      | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace`                 | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                             |
@@ -405,6 +407,8 @@ This example shows using the Nagios plugin to manually check a remote
 certificate-enabled port on www.google.com. We override the default `WARNING`
 and `CRITICAL` age threshold values with somewhat arbitrary numbers.
 
+NOTE: Use the `--verbose` flag to expose further details.
+
 ```ShellSession
 $ ./check_cert --server www.google.com --port 443 --age-critical 30 --age-warning 50
 OK: leaf cert "www.google.com" expires next with 52d 16h remaining (until 2021-09-20 04:12:57 +0000 UTC) [EXPIRED: 0, EXPIRING: 0, OK: 3]
@@ -423,9 +427,7 @@ OK: leaf cert "www.google.com" expires next with 52d 16h remaining (until 2021-0
 Certificate 1 of 3 (leaf):
         Name: CN=www.google.com
         SANs entries: [www.google.com]
-        KeyID: 69:C1:E8:D:70:84:80:3E:6F:E3:78:D7:A3:52:C5:81:A:51:CE:89
         Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
-        IssuerKeyID: 8A:74:7F:AF:85:CD:EE:95:CD:3D:9C:D0:E2:46:14:F3:71:35:1D:27
         Serial: 12:D4:D6:BA:D3:7B:1D:D1:0A:00:00:00:00:EB:61:08
         Issued On: 2021-06-28 04:12:58 +0000 UTC
         Expiration: 2021-09-20 04:12:57 +0000 UTC
@@ -434,9 +436,7 @@ Certificate 1 of 3 (leaf):
 Certificate 2 of 3 (intermediate):
         Name: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
         SANs entries: []
-        KeyID: 8A:74:7F:AF:85:CD:EE:95:CD:3D:9C:D0:E2:46:14:F3:71:35:1D:27
         Issuer: CN=GTS Root R1,O=Google Trust Services LLC,C=US
-        IssuerKeyID: E4:AF:2B:26:71:1A:2B:48:27:85:2F:52:66:2C:EF:F0:89:13:71:3E
         Serial: 02:03:BC:53:59:6B:34:C7:18:F5:01:50:66
         Issued On: 2020-08-13 00:00:42 +0000 UTC
         Expiration: 2027-09-30 00:00:42 +0000 UTC
@@ -445,9 +445,7 @@ Certificate 2 of 3 (intermediate):
 Certificate 3 of 3 (intermediate):
         Name: CN=GTS Root R1,O=Google Trust Services LLC,C=US
         SANs entries: []
-        KeyID: E4:AF:2B:26:71:1A:2B:48:27:85:2F:52:66:2C:EF:F0:89:13:71:3E
         Issuer: CN=GlobalSign Root CA,OU=Root CA,O=GlobalSign nv-sa,C=BE
-        IssuerKeyID: 60:7B:66:1A:45:D:97:CA:89:50:2F:7D:4:CD:34:A8:FF:FC:FD:4B
         Serial: 77:BD:0D:6C:DB:36:F9:1A:EA:21:0F:C4:F0:58:D3:0D
         Issued On: 2020-06-19 00:00:42 +0000 UTC
         Expiration: 2028-01-28 00:00:42 +0000 UTC
@@ -463,6 +461,8 @@ earlier as a starting point, we intentionally move the threshold values in
 order to trigger a `WARNING` state for the leaf certificate: if the leaf
 certificate is good for 52 days and 16 hours more, we indicate that warnings
 that should trigger once the cert has fewer than 53 days left.
+
+NOTE: Use the `--verbose` flag to expose further details.
 
 ```ShellSession
 $ ./check_c./check_cert --server www.google.com --port 443 --age-critical 30 --age-warning 53
@@ -483,9 +483,7 @@ WARNING: leaf cert "www.google.com" expires next with 52d 16h remaining (until 2
 Certificate 1 of 3 (leaf):
         Name: CN=www.google.com
         SANs entries: [www.google.com]
-        KeyID: 69:C1:E8:D:70:84:80:3E:6F:E3:78:D7:A3:52:C5:81:A:51:CE:89
         Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
-        IssuerKeyID: 8A:74:7F:AF:85:CD:EE:95:CD:3D:9C:D0:E2:46:14:F3:71:35:1D:27
         Serial: 12:D4:D6:BA:D3:7B:1D:D1:0A:00:00:00:00:EB:61:08
         Issued On: 2021-06-28 04:12:58 +0000 UTC
         Expiration: 2021-09-20 04:12:57 +0000 UTC
@@ -494,9 +492,7 @@ Certificate 1 of 3 (leaf):
 Certificate 2 of 3 (intermediate):
         Name: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
         SANs entries: []
-        KeyID: 8A:74:7F:AF:85:CD:EE:95:CD:3D:9C:D0:E2:46:14:F3:71:35:1D:27
         Issuer: CN=GTS Root R1,O=Google Trust Services LLC,C=US
-        IssuerKeyID: E4:AF:2B:26:71:1A:2B:48:27:85:2F:52:66:2C:EF:F0:89:13:71:3E
         Serial: 02:03:BC:53:59:6B:34:C7:18:F5:01:50:66
         Issued On: 2020-08-13 00:00:42 +0000 UTC
         Expiration: 2027-09-30 00:00:42 +0000 UTC
@@ -505,9 +501,7 @@ Certificate 2 of 3 (intermediate):
 Certificate 3 of 3 (intermediate):
         Name: CN=GTS Root R1,O=Google Trust Services LLC,C=US
         SANs entries: []
-        KeyID: E4:AF:2B:26:71:1A:2B:48:27:85:2F:52:66:2C:EF:F0:89:13:71:3E
         Issuer: CN=GlobalSign Root CA,OU=Root CA,O=GlobalSign nv-sa,C=BE
-        IssuerKeyID: 60:7B:66:1A:45:D:97:CA:89:50:2F:7D:4:CD:34:A8:FF:FC:FD:4B
         Serial: 77:BD:0D:6C:DB:36:F9:1A:EA:21:0F:C4:F0:58:D3:0D
         Issued On: 2020-06-19 00:00:42 +0000 UTC
         Expiration: 2028-01-28 00:00:42 +0000 UTC
@@ -548,6 +542,8 @@ leaf certificate is good for 52 days and 16 hours more, we specify 90 days for
 the `WARNING` threshold and 60 days for the `CRITICAL` threshold. This
 triggers a `CRITICAL` state.
 
+NOTE: Use the `--verbose` flag to expose further details.
+
 ```ShellSession
 $ ./check_c./check_cert --server www.google.com --port 443 --age-critical 60 --age-warning 90
 {"level":"error","version":"check-cert v0.4.2-6-g934c303 (https://github.com/atc0005/check-cert)","logging_level":"info","app_type":"plugin","cert_check_timeout":"10s","age_warning":90,"age_critical":60,"expected_sans_entries":"","server":"www.google.com","port":443,"error":"1 certificates expired or expiring","expired_certs":0,"expiring_certs":1,"time":"2021-07-29T06:58:35-05:00","caller":"github.com/atc0005/check-cert/cmd/check_cert/main.go:241","message":"expired or expiring certs present in chain"}
@@ -567,9 +563,7 @@ CRITICAL: leaf cert "www.google.com" expires next with 52d 16h remaining (until 
 Certificate 1 of 3 (leaf):
         Name: CN=www.google.com
         SANs entries: [www.google.com]
-        KeyID: 69:C1:E8:D:70:84:80:3E:6F:E3:78:D7:A3:52:C5:81:A:51:CE:89
         Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
-        IssuerKeyID: 8A:74:7F:AF:85:CD:EE:95:CD:3D:9C:D0:E2:46:14:F3:71:35:1D:27
         Serial: 12:D4:D6:BA:D3:7B:1D:D1:0A:00:00:00:00:EB:61:08
         Issued On: 2021-06-28 04:12:58 +0000 UTC
         Expiration: 2021-09-20 04:12:57 +0000 UTC
@@ -578,9 +572,7 @@ Certificate 1 of 3 (leaf):
 Certificate 2 of 3 (intermediate):
         Name: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
         SANs entries: []
-        KeyID: 8A:74:7F:AF:85:CD:EE:95:CD:3D:9C:D0:E2:46:14:F3:71:35:1D:27
         Issuer: CN=GTS Root R1,O=Google Trust Services LLC,C=US
-        IssuerKeyID: E4:AF:2B:26:71:1A:2B:48:27:85:2F:52:66:2C:EF:F0:89:13:71:3E
         Serial: 02:03:BC:53:59:6B:34:C7:18:F5:01:50:66
         Issued On: 2020-08-13 00:00:42 +0000 UTC
         Expiration: 2027-09-30 00:00:42 +0000 UTC
@@ -589,9 +581,7 @@ Certificate 2 of 3 (intermediate):
 Certificate 3 of 3 (intermediate):
         Name: CN=GTS Root R1,O=Google Trust Services LLC,C=US
         SANs entries: []
-        KeyID: E4:AF:2B:26:71:1A:2B:48:27:85:2F:52:66:2C:EF:F0:89:13:71:3E
         Issuer: CN=GlobalSign Root CA,OU=Root CA,O=GlobalSign nv-sa,C=BE
-        IssuerKeyID: 60:7B:66:1A:45:D:97:CA:89:50:2F:7D:4:CD:34:A8:FF:FC:FD:4B
         Serial: 77:BD:0D:6C:DB:36:F9:1A:EA:21:0F:C4:F0:58:D3:0D
         Issued On: 2020-06-19 00:00:42 +0000 UTC
         Expiration: 2028-01-28 00:00:42 +0000 UTC
@@ -603,6 +593,8 @@ Certificate 3 of 3 (intermediate):
 Here we use the expired.badssl.com subdomain to demo the results of
 encountering one or more (in this case more) expired certificates in a chain.
 Aside from the FQDN, all default options (including the port) are used.
+
+NOTE: Use the `--verbose` flag to expose further details.
 
 ```ShellSession
 $ ./check_cert --server expired.badssl.com
@@ -623,9 +615,7 @@ CRITICAL: leaf cert "*.badssl.com" expired 2299d 12h ago (on 2015-04-12 23:59:59
 Certificate 1 of 3 (leaf):
         Name: CN=*.badssl.com,OU=Domain Control Validated+OU=PositiveSSL Wildcard
         SANs entries: [*.badssl.com badssl.com]
-        KeyID: 9D:EE:C1:7B:81:B:3A:47:69:71:18:7D:11:37:93:BC:A5:1B:3F:FB
         Issuer: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
-        IssuerKeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
         Serial: 4A:E7:95:49:FA:9A:BE:3F:10:0F:17:A4:78:E1:69:09
         Issued On: 2015-04-09 00:00:00 +0000 UTC
         Expiration: 2015-04-12 23:59:59 +0000 UTC
@@ -634,9 +624,7 @@ Certificate 1 of 3 (leaf):
 Certificate 2 of 3 (intermediate):
         Name: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         SANs entries: []
-        KeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
         Issuer: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
-        IssuerKeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
         Serial: 2B:2E:6E:EA:D9:75:36:6C:14:8A:6E:DB:A3:7C:8C:07
         Issued On: 2014-02-12 00:00:00 +0000 UTC
         Expiration: 2029-02-11 23:59:59 +0000 UTC
@@ -645,9 +633,7 @@ Certificate 2 of 3 (intermediate):
 Certificate 3 of 3 (intermediate):
         Name: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         SANs entries: []
-        KeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
         Issuer: CN=AddTrust External CA Root,OU=AddTrust External TTP Network,O=AddTrust AB,C=SE
-        IssuerKeyID: AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:3:BD:E0:24:CB:54:1A
         Serial: 27:66:EE:56:EB:49:F3:8E:AB:D7:70:A2:FC:84:DE:22
         Issued On: 2000-05-30 10:48:38 +0000 UTC
         Expiration: 2020-05-30 10:48:38 +0000 UTC
@@ -660,6 +646,8 @@ Certificate 3 of 3 (intermediate):
 
 This example shows using the CLI app to perform the same initial check that we
 performed earlier using the Nagios plugin.
+
+NOTE: Use the `--verbose` flag to expose further details.
 
 ```ShellSession
 $ ./lscert --server www.google.com --port 443 --age-critical 50 --age-warning 55
@@ -692,9 +680,7 @@ CERTIFICATES | CHAIN DETAILS
 Certificate 1 of 2 (leaf):
         Name: CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US
         SANs entries: [www.google.com]
-        KeyID: 8E:A3:6C:47:12:A7:A:7:5B:94:51:D6:2A:3F:72:F9:35:6:45:2C
         Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
-        IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
         Serial: FD:6F:3E:24:98:C2:5B:1D:08:00:00:00:00:47:F0:33
         Expiration: 2020-09-09 14:31:22 +0000 UTC
         Status: [OK] 65d 3h remaining
@@ -702,15 +688,15 @@ Certificate 1 of 2 (leaf):
 Certificate 2 of 2 (intermediate):
         Name: CN=GTS CA 1O1,O=Google Trust Services,C=US
         SANs entries: []
-        KeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
         Issuer: CN=GlobalSign,OU=GlobalSign Root CA - R2,O=GlobalSign
-        IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
         Serial: 01:E3:B4:9A:A1:8D:8A:A9:81:25:69:50:B8
         Expiration: 2021-12-15 00:00:42 +0000 UTC
         Status: [OK] 526d 12h remaining
 ```
 
 #### WARNING results
+
+NOTE: Use the `--verbose` flag to expose further details.
 
 ```ShellSession
 $ ./lscert --server www.google.com --port 443 --age-critical 50 --age-warning 66
@@ -743,9 +729,7 @@ CERTIFICATES | CHAIN DETAILS
 Certificate 1 of 2 (leaf):
         Name: CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US
         SANs entries: [www.google.com]
-        KeyID: 8E:A3:6C:47:12:A7:A:7:5B:94:51:D6:2A:3F:72:F9:35:6:45:2C
         Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
-        IssuerKeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
         Serial: FD:6F:3E:24:98:C2:5B:1D:08:00:00:00:00:47:F0:33
         Expiration: 2020-09-09 14:31:22 +0000 UTC
         Status: [WARNING] 65d 3h remaining
@@ -753,9 +737,7 @@ Certificate 1 of 2 (leaf):
 Certificate 2 of 2 (intermediate):
         Name: CN=GTS CA 1O1,O=Google Trust Services,C=US
         SANs entries: []
-        KeyID: 98:D1:F8:6E:10:EB:CF:9B:EC:60:9F:18:90:1B:A0:EB:7D:9:FD:2B
         Issuer: CN=GlobalSign,OU=GlobalSign Root CA - R2,O=GlobalSign
-        IssuerKeyID: 9B:E2:7:57:67:1C:1E:C0:6A:6:DE:59:B4:9A:2D:DF:DC:19:86:2E
         Serial: 01:E3:B4:9A:A1:8D:8A:A9:81:25:69:50:B8
         Expiration: 2021-12-15 00:00:42 +0000 UTC
         Status: [OK] 526d 12h remaining
@@ -774,6 +756,8 @@ determine the state of the checks applied to the certificate chain.
 Here we use the expired.badssl.com subdomain to demo the results of
 encountering one or more (in this case more) expired certificates in a chain.
 Aside from the FQDN, all default options (including the port) are used.
+
+NOTE: Use the `--verbose` flag to expose further details.
 
 ```ShellSession
 $ ./lscert --server expired.badssl.com
@@ -806,9 +790,7 @@ CERTIFICATES | CHAIN DETAILS
 Certificate 1 of 3 (leaf):
         Name: CN=*.badssl.com,OU=Domain Control Validated+OU=PositiveSSL Wildcard
         SANs entries: [*.badssl.com badssl.com]
-        KeyID: 9D:EE:C1:7B:81:B:3A:47:69:71:18:7D:11:37:93:BC:A5:1B:3F:FB
         Issuer: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
-        IssuerKeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
         Serial: 4A:E7:95:49:FA:9A:BE:3F:10:0F:17:A4:78:E1:69:09
         Expiration: 2015-04-12 23:59:59 +0000 UTC
         Status: [EXPIRED] 1911d 11h ago
@@ -816,9 +798,7 @@ Certificate 1 of 3 (leaf):
 Certificate 2 of 3 (intermediate):
         Name: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         SANs entries: []
-        KeyID: 90:AF:6A:3A:94:5A:B:D8:90:EA:12:56:73:DF:43:B4:3A:28:DA:E7
         Issuer: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
-        IssuerKeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
         Serial: 2B:2E:6E:EA:D9:75:36:6C:14:8A:6E:DB:A3:7C:8C:07
         Expiration: 2029-02-11 23:59:59 +0000 UTC
         Status: [OK] 3142d 12h remaining
@@ -826,9 +806,7 @@ Certificate 2 of 3 (intermediate):
 Certificate 3 of 3 (intermediate):
         Name: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         SANs entries: []
-        KeyID: BB:AF:7E:2:3D:FA:A6:F1:3C:84:8E:AD:EE:38:98:EC:D9:32:32:D4
         Issuer: CN=AddTrust External CA Root,OU=AddTrust External TTP Network,O=AddTrust AB,C=SE
-        IssuerKeyID: AD:BD:98:7A:34:B4:26:F7:FA:C4:26:54:EF:3:BD:E0:24:CB:54:1A
         Serial: 27:66:EE:56:EB:49:F3:8E:AB:D7:70:A2:FC:84:DE:22
         Expiration: 2020-05-30 10:48:38 +0000 UTC
         Status: [EXPIRED] 37d 0h ago

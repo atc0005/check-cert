@@ -13,6 +13,12 @@ import (
 	// We use this to verify MD5WithRSA signatures.
 	// nolint:gosec
 	"crypto/md5"
+	"crypto/sha256"
+
+	// We use this to generate SHA1 fingerprints
+	// nolint:gosec
+	"crypto/sha1"
+	"crypto/sha512"
 
 	"crypto/rsa"
 	"crypto/x509"
@@ -580,8 +586,10 @@ func ChainPosition(cert *x509.Certificate, certChain []*x509.Certificate) string
 
 // GenerateCertsReport receives the current certificate chain status generates
 // a formatted report suitable for display on the console or (potentially) via
-// Microsoft Teams provided suitable conversion is performed on the output.
-func GenerateCertsReport(chainStatus ChainStatus) string {
+// Microsoft Teams provided suitable conversion is performed on the output. If
+// specified, additional details are provided such as certificate fingerprint
+// and key IDs.
+func GenerateCertsReport(chainStatus ChainStatus, verboseDetails bool) string {
 
 	var certsReport string
 
@@ -597,47 +605,124 @@ func GenerateCertsReport(chainStatus ChainStatus) string {
 			chainStatus.AgeWarningThreshold,
 		)
 
-		// FWIW: Nagios seems to display `\n` literally, but interpret `\r\n`
-		// as the intended newline. Using `\r\n` seems to work normally when
-		// testing with Ubuntu console output, so presumably this is fine
-		// elsewhere too? The `\r\n` escape sequence "set" is provided by the
-		// `nagios` package as `nagios.CheckOutputEOL`.
-		certsReport += fmt.Sprintf(
-			"Certificate %d of %d (%s):"+
-				"%s\tName: %s"+
-				"%s\tSANs entries: %s"+
-				"%s\tKeyID: %v"+
-				"%s\tIssuer: %s"+
-				"%s\tIssuerKeyID: %v"+
-				"%s\tSerial: %v"+
-				"%s\tIssued On: %s"+
-				"%s\tExpiration: %s"+
-				"%s\tStatus: %s%s%s",
-			idx+1,
-			certsTotal,
-			certPosition,
-			nagios.CheckOutputEOL,
-			certificate.Subject,
-			nagios.CheckOutputEOL,
-			certificate.DNSNames,
-			nagios.CheckOutputEOL,
-			textutils.BytesToDelimitedHexStr(certificate.SubjectKeyId, ":"),
-			nagios.CheckOutputEOL,
-			certificate.Issuer,
-			nagios.CheckOutputEOL,
-			textutils.BytesToDelimitedHexStr(certificate.AuthorityKeyId, ":"),
-			nagios.CheckOutputEOL,
-			FormatCertSerialNumber(certificate.SerialNumber),
-			nagios.CheckOutputEOL,
-			certificate.NotBefore.Format(CertValidityDateLayout),
-			nagios.CheckOutputEOL,
-			certificate.NotAfter.Format(CertValidityDateLayout),
-			nagios.CheckOutputEOL,
-			expiresText,
-			nagios.CheckOutputEOL,
-			nagios.CheckOutputEOL,
-		)
+		fingerprints := struct {
+			SHA1   string
+			SHA256 string
+			SHA512 string
+		}{
+			SHA1:   fmt.Sprintf("%s", sha1.Sum(certificate.Raw)), // nolint:gosec
+			SHA256: fmt.Sprintf("%s", sha256.Sum256(certificate.Raw)),
+			SHA512: fmt.Sprintf("%s", sha512.Sum512(certificate.Raw)),
+		}
 
+		// fingerprints := struct {
+		// 	SHA1   []byte
+		// 	SHA256 []byte
+		// 	SHA512 []byte
+		// }{
+		// 	SHA1: func() []byte {
+		// 		sha1 := sha1.Sum(certificate.Raw) //nolint:gosec
+		// 		bx := make([]byte, len(sha1))
+		// 		for i := range sha1 {
+		// 			bx[i] = sha1[i]
+		// 		}
+		// 		return bx
+		// 	}(),
+		// 	SHA256: func() []byte {
+		// 		sum := sha256.Sum256(certificate.Raw)
+		// 		bx := make([]byte, len(sum))
+		// 		for i := range sum {
+		// 			bx[i] = sum[i]
+		// 		}
+		// 		return bx
+		// 	}(),
+		// 	SHA512: func() []byte {
+		// 		sum := sha512.Sum512(certificate.Raw)
+		// 		bx := make([]byte, len(sum))
+		// 		for i := range sum {
+		// 			bx[i] = sum[i]
+		// 		}
+		// 		return bx
+		// 	}(),
+		// }
+
+		switch {
+		case verboseDetails:
+			certsReport += fmt.Sprintf(
+				"Certificate %d of %d (%s):"+
+					"%s\tName: %s"+
+					"%s\tSANs entries: %s"+
+					"%s\tKeyID: %v"+
+					"%s\tIssuer: %s"+
+					"%s\tIssuerKeyID: %v"+
+					"%s\tFingerprint (SHA-1): %v"+
+					"%s\tFingerprint (SHA-256): %v"+
+					"%s\tFingerprint (SHA-512): %v"+
+					"%s\tSerial: %v"+
+					"%s\tIssued On: %s"+
+					"%s\tExpiration: %s"+
+					"%s\tStatus: %s%s%s",
+				idx+1,
+				certsTotal,
+				certPosition,
+				nagios.CheckOutputEOL,
+				certificate.Subject,
+				nagios.CheckOutputEOL,
+				certificate.DNSNames,
+				nagios.CheckOutputEOL,
+				textutils.BytesToDelimitedHexStr(certificate.SubjectKeyId, ":"),
+				nagios.CheckOutputEOL,
+				certificate.Issuer,
+				nagios.CheckOutputEOL,
+				textutils.BytesToDelimitedHexStr(certificate.AuthorityKeyId, ":"),
+				nagios.CheckOutputEOL,
+				textutils.BytesToDelimitedHexStr([]byte(fingerprints.SHA1), ":"),
+				nagios.CheckOutputEOL,
+				textutils.BytesToDelimitedHexStr([]byte(fingerprints.SHA256), ":"),
+				nagios.CheckOutputEOL,
+				textutils.BytesToDelimitedHexStr([]byte(fingerprints.SHA512), ":"),
+				nagios.CheckOutputEOL,
+				FormatCertSerialNumber(certificate.SerialNumber),
+				nagios.CheckOutputEOL,
+				certificate.NotBefore.Format(CertValidityDateLayout),
+				nagios.CheckOutputEOL,
+				certificate.NotAfter.Format(CertValidityDateLayout),
+				nagios.CheckOutputEOL,
+				expiresText,
+				nagios.CheckOutputEOL,
+				nagios.CheckOutputEOL,
+			)
+		default:
+			certsReport += fmt.Sprintf(
+				"Certificate %d of %d (%s):"+
+					"%s\tName: %s"+
+					"%s\tSANs entries: %s"+
+					"%s\tIssuer: %s"+
+					"%s\tSerial: %v"+
+					"%s\tIssued On: %s"+
+					"%s\tExpiration: %s"+
+					"%s\tStatus: %s%s%s",
+				idx+1,
+				certsTotal,
+				certPosition,
+				nagios.CheckOutputEOL,
+				certificate.Subject,
+				nagios.CheckOutputEOL,
+				certificate.DNSNames,
+				nagios.CheckOutputEOL,
+				certificate.Issuer,
+				nagios.CheckOutputEOL,
+				FormatCertSerialNumber(certificate.SerialNumber),
+				nagios.CheckOutputEOL,
+				certificate.NotBefore.Format(CertValidityDateLayout),
+				nagios.CheckOutputEOL,
+				certificate.NotAfter.Format(CertValidityDateLayout),
+				nagios.CheckOutputEOL,
+				expiresText,
+				nagios.CheckOutputEOL,
+				nagios.CheckOutputEOL,
+			)
+		}
 	}
 
 	return certsReport

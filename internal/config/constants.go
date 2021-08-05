@@ -36,6 +36,7 @@ const (
 	certExpireAgeWarningFlagHelp     string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state."
 	certExpireAgeCriticalFlagHelp    string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a CRITICAL state."
 	brandingFlagHelp                 string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
+	verboseOutputFlagHelp            string = "Toggles emission of detailed certificate metadata. This level of output is disabled by default."
 	showHostsWithClosedPortsFlagHelp string = "Toggles listing all host port scan results, even for hosts without any specified ports in an open state."
 	showHostsWithValidCertsFlagHelp  string = "Toggles listing all cert check results in overview output, even for hosts with valid certificates."
 	showValidCertsFlagHelp           string = "Toggles listing all certificates in output summary, even certificates which have passed all validity checks."
@@ -52,6 +53,7 @@ const (
 	defaultEmitCertText          bool   = false
 	defaultFilename              string = ""
 	defaultBranding              bool   = false
+	defaultVerboseOutput         bool   = false
 	defaultDisplayVersionAndExit bool   = false
 
 	// Default WARNING threshold is 30 days
