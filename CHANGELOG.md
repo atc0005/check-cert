@@ -26,6 +26,38 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.4.4] - 2021-08-05
+
+### Overview
+
+- Add new flag
+- Change existing flag
+- Dependency update
+- built using Go 1.16.6
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- Implement `verbose` flag
+  - expose certificate fingerprints
+  - expose `KeyID` and `IssuerKeyID` values
+    - previously shown by default
+
+### Changed
+
+- Flags
+  - reassign `v` short flag from `version` to `verbose` flag
+
+- Output
+  - `KeyID` and `IssuerKeyID` values are now shown only when the `v` short
+    flag or `verbose` long flags are specified
+
+- Dependencies
+  - `actions/setup-node`
+    - updated from `v2.3.0` to `v2.3.2`
+
 ## [v0.4.3] - 2021-07-29
 
 ### Overview
@@ -610,7 +642,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.4...HEAD
+[v0.4.4]: https://github.com/atc0005/check-cert/releases/tag/v0.4.4
 [v0.4.3]: https://github.com/atc0005/check-cert/releases/tag/v0.4.3
 [v0.4.2]: https://github.com/atc0005/check-cert/releases/tag/v0.4.2
 [v0.4.1]: https://github.com/atc0005/check-cert/releases/tag/v0.4.1
