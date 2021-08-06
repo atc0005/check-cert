@@ -26,6 +26,23 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.4.5] - 2021-08-06
+
+### Overview
+
+- Dependency updates
+- built using Go 1.16.7
+  - Statically linked
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.16.6` to `1.16.7`
+  - `actions/setup-node`
+    - updated from `v2.3.2` to `v2.4.0`
+
 ## [v0.4.4] - 2021-08-05
 
 ### Overview
@@ -642,7 +659,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.5...HEAD
+[v0.4.5]: https://github.com/atc0005/check-cert/releases/tag/v0.4.5
 [v0.4.4]: https://github.com/atc0005/check-cert/releases/tag/v0.4.4
 [v0.4.3]: https://github.com/atc0005/check-cert/releases/tag/v0.4.3
 [v0.4.2]: https://github.com/atc0005/check-cert/releases/tag/v0.4.2
