@@ -24,6 +24,8 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		flag.BoolVar(&c.VerboseOutput, "v", defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
 		flag.BoolVar(&c.VerboseOutput, "verbose", defaultVerboseOutput, verboseOutputFlagHelp)
 
+		flag.StringVar(&c.Filename, "filename", defaultFilename, filenameFlagHelp)
+
 		flag.StringVar(&c.Server, "s", defaultServer, serverFlagHelp+" (shorthand)")
 		flag.StringVar(&c.Server, "server", defaultServer, serverFlagHelp)
 

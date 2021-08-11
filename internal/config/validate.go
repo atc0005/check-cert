@@ -37,10 +37,21 @@ func (c Config) validate(appType AppType) error {
 		}
 
 	case appType.Plugin:
-		// Always required, even if using the DNSName value for hostname
-		// verification
-		if c.Server == "" {
-			return fmt.Errorf("server FQDN or IP Address not provided")
+		// User can specify one of filename or server, but not both (mostly in
+		// order to keep the logic simpler)
+		switch {
+		case c.Filename == "" && c.Server == "":
+			return fmt.Errorf(
+				"one of %q or %q flags must be specified",
+				"server",
+				"filename",
+			)
+		case c.Filename != "" && c.Server != "":
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"server",
+				"filename",
+			)
 		}
 
 	case appType.Scanner:

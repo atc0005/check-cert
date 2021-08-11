@@ -8,6 +8,7 @@
 package main
 
 import (
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"strings"
@@ -78,28 +79,92 @@ func main() {
 
 	log := cfg.Log.With().
 		Str("expected_sans_entries", cfg.SANsEntries.String()).
-		Str("server", cfg.Server).
-		Int("port", cfg.Port).
 		Logger()
 
-	certChain, certFetchErr := netutils.GetCerts(cfg.Server, cfg.Port, cfg.Timeout(), log)
-	if certFetchErr != nil {
-		log.Error().Err(certFetchErr).Msg(
-			"error fetching certificates chain")
+	var certChain []*x509.Certificate
 
-		nagiosExitState.LastError = certFetchErr
-		nagiosExitState.ServiceOutput = fmt.Sprintf(
-			"%s: Error fetching certificates from port %d on %s",
-			nagios.StateCRITICALLabel,
-			cfg.Port,
-			cfg.Server,
-		)
-		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+	// Honor request to parse filename first
+	switch {
+	case cfg.Filename != "":
 
-		// no need to go any further, we *want* to exit right away; we don't
-		// have a connection to the remote server and there isn't anything
-		// further we can do
-		return
+		log.Debug().Msg("attempting to parse certificate file")
+
+		// Anything from the specified file that couldn't be converted to a
+		// certificate chain. While likely not of high value by itself,
+		// failure to parse a certificate file indicates a likely source of
+		// trouble. We consider this scenario to be a CRITICAL state.
+		var parseAttemptLeftovers []byte
+
+		var err error
+		certChain, parseAttemptLeftovers, err = certs.GetCertsFromFile(cfg.Filename)
+		if err != nil {
+			log.Error().Err(err).Msg(
+				"error parsing certificates file")
+
+			nagiosExitState.LastError = err
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				"%s: Error parsing certificates file %q",
+				nagios.StateCRITICALLabel,
+				cfg.Filename,
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+			return
+		}
+
+		log.Debug().Msg("certificate file parsed")
+
+		if len(parseAttemptLeftovers) > 0 {
+			log.Error().Err(err).Msg(
+				"unknown data encountered while parsing certificates file")
+
+			nagiosExitState.LastError = fmt.Errorf(
+				"%d unknown/unparsed bytes remaining at end of cert file %q",
+				len(parseAttemptLeftovers),
+				cfg.Filename,
+			)
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				"%s: Unknown data encountered while parsing certificates file %q",
+				nagios.StateCRITICALLabel,
+				cfg.Filename,
+			)
+
+			nagiosExitState.LongServiceOutput = fmt.Sprintf(
+				"The following text from the %q certificate file failed to parse"+
+					" and is provided here for troubleshooting purposes:%s%s%s",
+				cfg.Filename,
+				nagios.CheckOutputEOL,
+				nagios.CheckOutputEOL,
+				string(parseAttemptLeftovers),
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+			return
+		}
+
+	case cfg.Server != "":
+
+		var certFetchErr error
+		certChain, certFetchErr = netutils.GetCerts(cfg.Server, cfg.Port, cfg.Timeout(), log)
+		if certFetchErr != nil {
+			log.Error().Err(certFetchErr).Msg(
+				"error fetching certificates chain")
+
+			nagiosExitState.LastError = certFetchErr
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				"%s: Error fetching certificates from port %d on %s",
+				nagios.StateCRITICALLabel,
+				cfg.Port,
+				cfg.Server,
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+			// no need to go any further, we *want* to exit right away; we don't
+			// have a connection to the remote server and there isn't anything
+			// further we can do
+			return
+
+		}
 
 	}
 

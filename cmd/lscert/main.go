@@ -44,14 +44,7 @@ func main() {
 		return
 	}
 
-	// Set common fields here so that we don't have to repeat them explicitly
-	// later. This will hopefully help to standardize the log messages to make
-	// them easier to search through later when troubleshooting.
-	log := cfg.Log.With().
-		Str("filename", cfg.Filename).
-		Str("server", cfg.Server).
-		Int("port", cfg.Port).
-		Logger()
+	log := cfg.Log.With().Logger()
 
 	var certChain []*x509.Certificate
 
@@ -233,9 +226,9 @@ func main() {
 	}
 
 	if len(parseAttemptLeftovers) > 0 {
-		textutils.PrintHeader("CERTIFICATES | UNKNOWN text in cert file")
+		textutils.PrintHeader("CERTIFICATES | UNKNOWN data in cert file")
 
-		fmt.Printf("The following text was found in the %q file"+
+		fmt.Printf("The following data (converted to text) was found in the %q file"+
 			" and is provided here in case it is useful for"+
 			" troubleshooting purposes.\n\n",
 			cfg.Filename,
