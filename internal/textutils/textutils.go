@@ -68,12 +68,12 @@ func LowerCaseStringSlice(xs []string) []string {
 	return lxs
 }
 
-// PrintHeader printers a section header to help separate otherwise
-// potentially dense blocks of text.
+// PrintHeader prints a section header with liberal leading and trailing
+// newlines to help separate otherwise potentially dense blocks of text.
 func PrintHeader(headerText string) {
 	headerBorderStr := strings.Repeat("=", len(headerText))
 	fmt.Printf(
-		"\n\n%s\n%s\n%s\n",
+		"\n\n%s\n%s\n%s\n\n",
 		headerBorderStr,
 		headerText,
 		headerBorderStr,

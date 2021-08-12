@@ -108,7 +108,7 @@ func main() {
 
 	textutils.PrintHeader("CERTIFICATES | AGE THRESHOLDS")
 	fmt.Printf(
-		"\n- %s:\tExpires before %v (%d days)\n",
+		"- %s:\tExpires before %v (%d days)\n",
 		nagios.StateWARNINGLabel,
 		certsExpireAgeWarning.Format(certs.CertValidityDateLayout),
 		cfg.AgeWarning,
@@ -134,7 +134,7 @@ func main() {
 	}
 
 	fmt.Printf(
-		"\n- %s: %d certs found for %s\n",
+		"- %s: %d certs found for %s\n",
 		nagios.StateOKLabel,
 		certsSummary.TotalCertsCount,
 		certChainSource,
