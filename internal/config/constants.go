@@ -32,7 +32,7 @@ const (
 	timeoutAppInactivityFlagHelp     string = "The number of seconds the application is allowed to remain inactive (i.e., \"hung\") before it is automatically terminated."
 	scanRateLimitFlagHelp            string = "Maximum concurrent port and certificate scans. Remaining scans are queued until an existing scan completes."
 	emitCertTextFlagHelp             string = "Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default."
-	filenameFlagHelp                 string = "Fully-qualified path to a file containing one or more certificates."
+	filenameFlagHelp                 string = "Fully-qualified path to a PEM formatted certificate file containing one or more certificates."
 	certExpireAgeWarningFlagHelp     string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state."
 	certExpireAgeCriticalFlagHelp    string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a CRITICAL state."
 	brandingFlagHelp                 string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
