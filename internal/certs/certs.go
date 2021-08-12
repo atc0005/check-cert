@@ -128,8 +128,12 @@ type ServiceState struct {
 	ExitCode int
 }
 
-// GetCertsFromFile is a helper function for retrieving a certificates
-// chain from a specified filename.
+// GetCertsFromFile is a helper function for retrieving a certificate chain
+// from a specified PEM formatted certificate file. An error is returned if
+// the file cannot be decoded and parsed (e.g., empty file, not PEM
+// formatted). Any leading non-PEM formatted data is skipped while any
+// trailing non-PEM formatted data is returned for potential further
+// evaluation.
 func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 	var certChain []*x509.Certificate
@@ -143,6 +147,14 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 	// Grab the first PEM formatted block in our PEM cert file data.
 	block, rest := pem.Decode(pemData)
+
+	// we should get something on the first attempt
+	if block == nil {
+		return nil, nil, fmt.Errorf(
+			"failed to decode %s as PEM formatted certificate file",
+			filename,
+		)
+	}
 
 	// If there is only one certificate (e.g., "server" or "leaf" certificate)
 	// we'll only get one block from the last pem.Decode() call. However, if
@@ -158,7 +170,7 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 			cert, err := x509.ParseCertificate(block.Bytes)
 			if err != nil {
-				return certChain, rest, err
+				return nil, nil, err
 			}
 
 			// we got a cert. Let's add it to our list
@@ -166,9 +178,20 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 			if len(rest) > 0 {
 				block, rest = pem.Decode(rest)
-				continue
+
+				// if we were able to decode the "rest" of the data, then
+				// iterate again so we can parse it
+				if block != nil {
+					continue
+				}
 			}
 
+			break
+		}
+
+		// we're done attempting to decode the cert file; we have found data
+		// that fails to decode properly
+		if block == nil && len(rest) > 0 {
 			break
 		}
 	}
