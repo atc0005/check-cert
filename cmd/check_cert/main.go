@@ -243,7 +243,7 @@ func main() {
 		log.Debug().
 			Str("hostname", hostnameValue).
 			Str("cert_cn", certChain[0].Subject.CommonName).
-			Msg("provided hostname %q matches server certificate")
+			Msg("provided hostname matches server certificate")
 
 	}
 
