@@ -162,6 +162,7 @@ of detail in the provided output.
     - verify local certificate "bundle" or standalone leaf certificate file
   - `check_cert` Nagios plugin
     - verify certificate used by specified service
+    - verify local certificate "bundle" or standalone leaf certificate file
   - `certsum` CLI tool
     - generate summary of discovered certificates from given hosts (single or
       IP Address ranges, hostnames or FQDNs) and ports
