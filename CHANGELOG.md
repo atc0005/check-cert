@@ -26,6 +26,30 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.5.0] - 2021-08-13
+
+### Overview
+
+- Add new flag to `check_cert` plugin
+- Bug fixes
+- built using Go 1.16.7
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- `check_cert` plugin
+  - (GH-193) Add support for monitoring certificate file
+
+### Fixed
+
+- `lscert`
+  - (GH-203) Inconsistent spacing after "headers" in results output
+  - (GH-202) certs.GetCertsFromFile() function "hangs" when evaluating
+    certificate file with trailing non-PEM data
+- `check_cert` plugin
+  - (GH-207) Invalid formatting interpolation for debug logging message
+
 ## [v0.4.5] - 2021-08-06
 
 ### Overview
@@ -659,7 +683,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.4.5...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.5.0...HEAD
+[v0.5.0]: https://github.com/atc0005/check-cert/releases/tag/v0.5.0
 [v0.4.5]: https://github.com/atc0005/check-cert/releases/tag/v0.4.5
 [v0.4.4]: https://github.com/atc0005/check-cert/releases/tag/v0.4.4
 [v0.4.3]: https://github.com/atc0005/check-cert/releases/tag/v0.4.3
