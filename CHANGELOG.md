@@ -26,6 +26,30 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.5.1] - 2021-09-13
+
+### Overview
+
+- Dependency updates
+- built using Go 1.16.8
+  - Statically linked
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.16.7` to `1.16.8`
+  - `atc0005/go-nagios`
+    - `v0.6.1` to `v0.7.0`
+  - `rs/zerolog`
+    - `v1.24.0` to `v1.25.0`
+
+- Replace bundled `ServiceState` type
+
+- README
+  - Add missing cert file eval support to feature list
+
 ## [v0.5.0] - 2021-08-13
 
 ### Overview
@@ -683,7 +707,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.5.1...HEAD
+[v0.5.1]: https://github.com/atc0005/check-cert/releases/tag/v0.5.1
 [v0.5.0]: https://github.com/atc0005/check-cert/releases/tag/v0.5.0
 [v0.4.5]: https://github.com/atc0005/check-cert/releases/tag/v0.4.5
 [v0.4.4]: https://github.com/atc0005/check-cert/releases/tag/v0.4.4
