@@ -117,17 +117,6 @@ type ChainStatus struct {
 	CertChain []*x509.Certificate
 }
 
-// ServiceState represents the status label and exit code for a service check.
-type ServiceState struct {
-
-	// Label maps directly to one of the supported Nagios state labels.
-	Label string
-
-	// ExitCode is the exit or exit status code associated with a Nagios
-	// service check.
-	ExitCode int
-}
-
 // GetCertsFromFile is a helper function for retrieving a certificate chain
 // from a specified PEM formatted certificate file. An error is returned if
 // the file cannot be decoded and parsed (e.g., empty file, not PEM
@@ -1006,7 +995,7 @@ func OneLineCheckSummary(certsStatus ChainStatus, includeSummary bool) string {
 
 // ServiceState returns the appropriate Service Check Status label and exit
 // code for the evaluated certificate chain.
-func (cs ChainStatus) ServiceState() ServiceState {
+func (cs ChainStatus) ServiceState() nagios.ServiceState {
 
 	var stateLabel string
 	var stateExitCode int
@@ -1026,7 +1015,7 @@ func (cs ChainStatus) ServiceState() ServiceState {
 		stateExitCode = nagios.StateUNKNOWNExitCode
 	}
 
-	return ServiceState{
+	return nagios.ServiceState{
 		Label:    stateLabel,
 		ExitCode: stateExitCode,
 	}
