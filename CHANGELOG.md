@@ -43,7 +43,7 @@ The following types of changes will be recorded in this file:
   - `atc0005/go-nagios`
     - `v0.6.1` to `v0.7.0`
   - `rs/zerolog`
-    - `v1.24.0` to `v1.25.0`
+    - `v1.23.0` to `v1.25.0`
 
 - Replace bundled `ServiceState` type
 
