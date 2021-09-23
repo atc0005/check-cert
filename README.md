@@ -25,6 +25,8 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
   - [Building source code](#building-source-code)
   - [Running](#running)
 - [Installation](#installation)
+  - [From source](#from-source)
+  - [Using release binaries](#using-release-binaries)
 - [Configuration options](#configuration-options)
   - [Threshold calculations](#threshold-calculations)
   - [Command-line arguments](#command-line-arguments)
@@ -235,6 +237,8 @@ been tested.
 
 ## Installation
 
+### From source
+
 1. [Download][go-docs-download] Go
 1. [Install][go-docs-install] Go
    - NOTE: Pay special attention to the remarks about `$HOME/.profile`
@@ -287,6 +291,16 @@ been tested.
      - look in `/tmp/check-cert/release_assets/certsum/`
    - if using `go build`
      - look in `/tmp/check-cert/`
+
+### Using release binaries
+
+1. Download the [latest
+   release](https://github.com/atc0005/check-cert/releases/latest) binaries
+1. Deploy
+   - Place `check_cert` alongside your other Nagios plugins
+     - e.g., `/usr/lib/nagios/plugins/` or `/usr/lib64/nagios/plugins/`
+   - Place `lscert`, `certsum`, `fixsn` in a location of your choice
+     - e.g., `/usr/local/bin/`
 
 ## Configuration options
 
