@@ -50,6 +50,36 @@ The following types of changes will be recorded in this file:
 - README
   - Add missing cert file eval support to feature list
 
+## [v0.5.2] - 2021-11-08
+
+### Overview
+
+- Dependency updates
+- built using Go 1.16.10
+  - Statically linked
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.16.8` to `1.16.10`
+  - `atc0005/go-nagios`
+    - `v0.7.0` to `v0.8.1`
+  - `rs/zerolog`
+    - `v1.25.0` to `v1.26.0`
+  - `actions/checkout`
+    - `v2.3.4` to `v2.4.0`
+  - `actions/setup-node`
+    - `v2.4.0` to `v2.4.1`
+
+- (GH-229) Update README to list downloading binaries as alternative to
+  building from source
+
+### Fixed
+
+- (GH-228) Fix CHANGELOG deps update details
+
 ## [v0.5.0] - 2021-08-13
 
 ### Overview
@@ -707,7 +737,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.5.2...HEAD
+[v0.5.2]: https://github.com/atc0005/check-cert/releases/tag/v0.5.2
 [v0.5.1]: https://github.com/atc0005/check-cert/releases/tag/v0.5.1
 [v0.5.0]: https://github.com/atc0005/check-cert/releases/tag/v0.5.0
 [v0.4.5]: https://github.com/atc0005/check-cert/releases/tag/v0.4.5
