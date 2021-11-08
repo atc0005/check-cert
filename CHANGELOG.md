@@ -26,30 +26,6 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
-## [v0.5.1] - 2021-09-13
-
-### Overview
-
-- Dependency updates
-- built using Go 1.16.8
-  - Statically linked
-  - Linux (x86, x64)
-
-### Changed
-
-- Dependencies
-  - `Go`
-    - `1.16.7` to `1.16.8`
-  - `atc0005/go-nagios`
-    - `v0.6.1` to `v0.7.0`
-  - `rs/zerolog`
-    - `v1.23.0` to `v1.25.0`
-
-- Replace bundled `ServiceState` type
-
-- README
-  - Add missing cert file eval support to feature list
-
 ## [v0.5.2] - 2021-11-08
 
 ### Overview
@@ -79,6 +55,30 @@ The following types of changes will be recorded in this file:
 ### Fixed
 
 - (GH-228) Fix CHANGELOG deps update details
+
+## [v0.5.1] - 2021-09-13
+
+### Overview
+
+- Dependency updates
+- built using Go 1.16.8
+  - Statically linked
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.16.7` to `1.16.8`
+  - `atc0005/go-nagios`
+    - `v0.6.1` to `v0.7.0`
+  - `rs/zerolog`
+    - `v1.23.0` to `v1.25.0`
+
+- Replace bundled `ServiceState` type
+
+- README
+  - Add missing cert file eval support to feature list
 
 ## [v0.5.0] - 2021-08-13
 
