@@ -23,7 +23,7 @@
 SHELL = /bin/bash
 
 # Space-separated list of cmd/BINARY_NAME directories to build
-WHAT 					= check_cert lscert certsum fixsn
+WHAT 					= check_cert lscert certsum
 
 
 # What package holds the "version" variable used in branding/version output?
