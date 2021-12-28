@@ -17,7 +17,6 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
 - [Overview](#overview)
   - [`check_certs`](#check_certs)
   - [`lscert`](#lscert)
-  - [`fixsn`](#fixsn)
   - [`certsum`](#certsum)
 - [Features](#features)
 - [Changelog](#changelog)
@@ -32,7 +31,6 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
   - [Command-line arguments](#command-line-arguments)
     - [`check_cert`](#check_cert)
     - [`lscert`](#lscert-1)
-    - [`fixsn`](#fixsn-1)
     - [`certsum`](#certsum-1)
   - [Configuration file](#configuration-file)
 - [Examples](#examples)
@@ -46,9 +44,6 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
     - [OK results](#ok-results-1)
     - [WARNING results](#warning-results-1)
     - [CRITICAL results](#critical-results-1)
-  - [`fixsn` CLI tool](#fixsn-cli-tool)
-    - [Invalid input](#invalid-input)
-    - [Expected input](#expected-input)
   - [`certsum` CLI tool](#certsum-cli-tool)
     - [Certificates Overview](#certificates-overview)
     - [CIDR range](#cidr-range)
@@ -70,12 +65,11 @@ into the project.
 
 This repo contains various tools used to monitor/validate certificates.
 
-| Tool Name     | Status | Description                                                                                                |
-| ------------- | ------ | ---------------------------------------------------------------------------------------------------------- |
-| `check_certs` | Beta   | Nagios plugin used to monitor certificate chains.                                                          |
-| `lscert`      | Beta   | Small CLI app used to generate a summary of certificate metadata and expiration status.                    |
-| `fixsn`       | Alpha  | Small CLI app used to convert a given base 10 serial number to base 16, colon-delimited hex string format. |
-| `certsum`     | Alpha  | CLI app used to scan one or more given CIDR IP ranges for certs and provide a summary report.              |
+| Tool Name     | Status | Description                                                                                   |
+| ------------- | ------ | --------------------------------------------------------------------------------------------- |
+| `check_certs` | Beta   | Nagios plugin used to monitor certificate chains.                                             |
+| `lscert`      | Beta   | Small CLI app used to generate a summary of certificate metadata and expiration status.       |
+| `certsum`     | Alpha  | CLI app used to scan one or more given CIDR IP ranges for certs and provide a summary report. |
 
 ### `check_certs`
 
@@ -104,18 +98,6 @@ If specifying a host via IP Address, a warning will be emitted unless the IP
 Address is in the SANs list for the certificate. This warning can be ignored
 for the purposes of reviewing the cert details, Provide a valid FQDN as the
 server name or the "dns name" if you wish to apply hostname validation.
-
-### `fixsn`
-
-A small CLI app used to convert a given (assumed) base 10 number into a base
-16, colon delimited hex string representing a certificate serial number. Prior
-releases of this project improperly displayed serial numbers as base 10 values
-instead of base 16, colon delimited hex strings. Using this tool can be useful
-for one-off conversion of older values to the proper format (e.g., a certs
-list maintained in documentation).
-
-It is likely that this tool will be either removed or folded into another tool
-at a future date, unless others find it useful.
 
 ### `certsum`
 
@@ -273,7 +255,6 @@ been tested.
          in top-level `vendor` folder
      - `go build -mod=vendor ./cmd/check_cert/`
      - `go build -mod=vendor ./cmd/lscert/`
-     - `go build -mod=vendor ./cmd/fixsn/`
      - `go build -mod=vendor ./cmd/certsum/`
    - for all supported platforms (where `make` is installed)
       - `make all`
@@ -287,7 +268,6 @@ been tested.
    - if using `Makefile`
      - look in `/tmp/check-cert/release_assets/check_cert/`
      - look in `/tmp/check-cert/release_assets/lscert/`
-     - look in `/tmp/check-cert/release_assets/fixsn/`
      - look in `/tmp/check-cert/release_assets/certsum/`
    - if using `go build`
      - look in `/tmp/check-cert/`
@@ -299,7 +279,7 @@ been tested.
 1. Deploy
    - Place `check_cert` alongside your other Nagios plugins
      - e.g., `/usr/lib/nagios/plugins/` or `/usr/lib64/nagios/plugins/`
-   - Place `lscert`, `certsum`, `fixsn` in a location of your choice
+   - Place `lscert`, `certsum` in a location of your choice
      - e.g., `/usr/local/bin/`
 
 ## Configuration options
@@ -373,15 +353,6 @@ See GH-32 for additional info.
 | `se`, `sans-entries` | No       |         | No     | *comma-separated list of values*                                        | One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `s`, `server`        | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. This value is used to make the connection to the server in order to retrieve the certificate chain. For hosts with only a single certificate, this value is often the FQDN of the host itself, but for multi-certificate servers the user-specified value will be crucial in order to allow the remote host to select the appropriate certificate ([Server Name Indication support (SNI)](https://en.wikipedia.org/wiki/Subject_Alternative_Name)). For websites hosted on those servers, it is necessary to instead provide the FQDN of the site instead of the server hostname. For example, specify `www.example.org` instead of `host7.example.com`. Specify the site FQDN if in doubt. The user-specified value will also be validated against the Common Name and Subject Alternate Names fields *unless* the `dns-name` flag is also specified, in which case *this* value is only used for making the initial connection. |
 | `dn`, `dns-name`     | No       |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name of the remote system to be used for hostname verification. This option can be used for cases where the initial connection is made using a name or IP Address not associated with the certificate. See the `server` flag description for more information.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-
-#### `fixsn`
-
-This tool does not accept any flags. Instead, it expects to receive just one
-argument: a base 10 formatted certificate serial number, handled internally as
-a `*big.Int` value. This value is converted to a base 16, colon-delimited hex
-string. This format is common to tooling used to examine certificates.
-
-See the [Examples](#examples) section for usage.
 
 #### `certsum`
 
@@ -839,23 +810,6 @@ Some items to note in the `CERTIFICATES | SUMMARY` section:
   was that listing the first one to expire and then listing out the chain
   details in the following section (with explicit notes re expiration
   status) was sufficient coverage
-
-### `fixsn` CLI tool
-
-#### Invalid input
-
-```ShellSession
-$ ./fixsn badinput
-Error: Invalid serial number (in base 10 format)
-Example expected input: 336872288293767042001244177974291853363
-```
-
-#### Expected input
-
-```ShellSession
-$ ./fixsn 336872288293767042001244177974291853363
-FD:6F:3E:24:98:C2:5B:1D:08:00:00:00:00:47:F0:33
-```
 
 ### `certsum` CLI tool
 
