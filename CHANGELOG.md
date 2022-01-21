@@ -26,6 +26,31 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.5.4] - 2022-01-21
+
+### Overview
+
+- Dependency updates
+- built using Go 1.17.6
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.16.12` to `1.17.6`
+    - (GH-255) Update go.mod file, canary Dockerfile to reflect current
+      dependencies
+  - `atc0005/go-nagios`
+    - `v0.8.1` to `v0.8.2`
+
+### Fixed
+
+- (GH-256) Tweak doc comments for `FormattedExpiration()` func
+- Restore explicit Windows support for releases `>= v0.4.5`
+
 ## [v0.5.3] - 2021-12-28
 
 ### Overview
@@ -33,6 +58,7 @@ The following types of changes will be recorded in this file:
 - Dependency updates
 - built using Go 1.16.12
   - Statically linked
+  - Windows (x86, x64)
   - Linux (x86, x64)
 
 ### Changed
@@ -60,6 +86,7 @@ The following types of changes will be recorded in this file:
 - Dependency updates
 - built using Go 1.16.10
   - Statically linked
+  - Windows (x86, x64)
   - Linux (x86, x64)
 
 ### Changed
@@ -90,6 +117,7 @@ The following types of changes will be recorded in this file:
 - Dependency updates
 - built using Go 1.16.8
   - Statically linked
+  - Windows (x86, x64)
   - Linux (x86, x64)
 
 ### Changed
@@ -115,6 +143,7 @@ The following types of changes will be recorded in this file:
 - Bug fixes
 - built using Go 1.16.7
   - Statically linked
+  - Windows (x86, x64)
   - Linux (x86, x64)
 
 ### Added
@@ -138,6 +167,7 @@ The following types of changes will be recorded in this file:
 - Dependency updates
 - built using Go 1.16.7
   - Statically linked
+  - Windows (x86, x64)
   - Linux (x86, x64)
 
 ### Changed
@@ -764,7 +794,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.5.4...HEAD
+[v0.5.4]: https://github.com/atc0005/check-cert/releases/tag/v0.5.4
 [v0.5.3]: https://github.com/atc0005/check-cert/releases/tag/v0.5.3
 [v0.5.2]: https://github.com/atc0005/check-cert/releases/tag/v0.5.2
 [v0.5.1]: https://github.com/atc0005/check-cert/releases/tag/v0.5.1
