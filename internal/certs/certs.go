@@ -283,9 +283,12 @@ func NumExpiringCerts(certChain []*x509.Certificate, ageCritical time.Time, ageW
 
 // FormattedExpiration receives a Time value and converts it to a string
 // representing the largest useful whole units of time in days and hours. For
-// example, if a certificate has 1 year, 2 days and 3 hours remaining, this
-// function will return the string 367d 3h, but if only 3 hours remain then 3h
-// will be returned.
+// example, if a certificate has 1 year, 2 days and 3 hours remaining until
+// expiration, this function will return the string '367d 3h remaining', but
+// if only 3 hours remain then '3h remaining' will be returned. If a
+// certificate has expired, the 'ago' suffix will be used instead. For
+// example, if a certificate has expired 3 hours ago, '3h ago' will be
+// returned.
 func FormattedExpiration(expireTime time.Time) string {
 
 	// hoursRemaining := time.Until(certificate.NotAfter)/time.Hour)/24,
@@ -311,9 +314,7 @@ func FormattedExpiration(expireTime time.Time) string {
 
 	// Multiply the whole number of days by 24 to get the hours value, then
 	// subtract from the original number of hours until cert expiration to get
-	// the number of hours leftover from the days calculation
-	// FIXME: math is not my strong suit, so this logic can likely be greatly
-	// simplified
+	// the number of hours leftover from the days calculation.
 	hoursRemaining := math.Trunc(timeRemaining - (daysRemaining * 24))
 
 	hoursRemainingStr = fmt.Sprintf("%dh", int64(hoursRemaining))
