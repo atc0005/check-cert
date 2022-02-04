@@ -23,7 +23,7 @@ import (
 // ErrUnrecognizedHostOrIPValue indicates that a given string value is
 // unrecognized as a valid FQDN, single IP Address or range (partial or CIDR).
 // This is usually not a temporary error condition.
-var ErrUnrecognizedHostOrIPValue error = errors.New("unrecognized FQDN, single IP Address or range")
+var ErrUnrecognizedHostOrIPValue = errors.New("unrecognized FQDN, single IP Address or range")
 
 // IndexSize returns the number of entries in the index.
 func (idx IPv4AddressOctetsIndex) IndexSize() int {
