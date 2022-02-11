@@ -26,6 +26,32 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.5.5] - 2022-02-11
+
+### Overview
+
+- Bugfixes
+- Dependency updates
+- built using Go 1.17.7
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.6` to `1.17.7`
+
+- (GH-261) Switch Docker image source from Docker Hub to GitHub Container
+  Registry (GHCR)
+- (GH-262) Expand linting GitHub Actions Workflow to include `oldstable`,
+  `unstable` container images
+
+### Fixed
+
+- (GH-264) var-declaration: should omit type error from declaration (revive)
+
 ## [v0.5.4] - 2022-01-21
 
 ### Overview
@@ -794,7 +820,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.5.4...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.5.5...HEAD
+[v0.5.5]: https://github.com/atc0005/check-cert/releases/tag/v0.5.5
 [v0.5.4]: https://github.com/atc0005/check-cert/releases/tag/v0.5.4
 [v0.5.3]: https://github.com/atc0005/check-cert/releases/tag/v0.5.3
 [v0.5.2]: https://github.com/atc0005/check-cert/releases/tag/v0.5.2
