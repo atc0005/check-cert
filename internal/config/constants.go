@@ -19,29 +19,30 @@ const myAppURL string = "https://github.com/atc0005/check-cert"
 const SkipSANSCheckKeyword string = "SKIPSANSCHECKS"
 
 const (
-	versionFlagHelp                  string = "Whether to display application version and then immediately exit application."
-	sansEntriesFlagHelp              string = "One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP."
-	dnsNameFlagHelp                  string = "The fully-qualified domain name of the remote system to be used for hostname verification. This option can be used for cases where make the initial connection using a name or IP not associated with the certificate."
-	logLevelFlagHelp                 string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
-	serverFlagHelp                   string = "The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. The value provided will be validated against the Common Name and Subject Alternate Names fields."
-	hostsFlagHelp                    string = "List of comma-separated individual IP Addresses, CIDR IP ranges, partial (dash-separated) ranges (e.g., 192.168.2.10-15), hostnames or FQDNs to scan for certificates."
-	portFlagHelp                     string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
-	portsListFlagHelp                string = "List of comma-separated TCP ports to check for certificates. If not specified, the list defaults to 443 only."
-	timeoutConnectFlagHelp           string = "Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned."
-	timeoutPortScanFlagHelp          string = "The number of milliseconds before a connection attempt during a port scan is abandoned and an error returned. This timeout value is separate from the general `timeout` value used when retrieving certificates. This setting is used specifically to quickly determine port state as part of bulk operations where speed is crucial."
-	timeoutAppInactivityFlagHelp     string = "The number of seconds the application is allowed to remain inactive (i.e., \"hung\") before it is automatically terminated."
-	scanRateLimitFlagHelp            string = "Maximum concurrent port and certificate scans. Remaining scans are queued until an existing scan completes."
-	emitCertTextFlagHelp             string = "Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default."
-	filenameFlagHelp                 string = "Fully-qualified path to a PEM formatted certificate file containing one or more certificates."
-	certExpireAgeWarningFlagHelp     string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state."
-	certExpireAgeCriticalFlagHelp    string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a CRITICAL state."
-	brandingFlagHelp                 string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
-	verboseOutputFlagHelp            string = "Toggles emission of detailed certificate metadata. This level of output is disabled by default."
-	showHostsWithClosedPortsFlagHelp string = "Toggles listing all host port scan results, even for hosts without any specified ports in an open state."
-	showHostsWithValidCertsFlagHelp  string = "Toggles listing all cert check results in overview output, even for hosts with valid certificates."
-	showValidCertsFlagHelp           string = "Toggles listing all certificates in output summary, even certificates which have passed all validity checks."
-	showOverviewFlagHelp             string = "Toggles summary output view from detailed to overview."
-	showPortScanResultsFlagHelp      string = "Toggles listing host port scan results."
+	versionFlagHelp                                    string = "Whether to display application version and then immediately exit application."
+	sansEntriesFlagHelp                                string = "One or many Subject Alternate Names (SANs) expected for the certificate used by the remote service. If provided, this list of comma-separated (optional) values is required for the certificate to pass validation. If the case-insensitive SKIPSANSCHECKS keyword is provided this validation will be skipped, effectively turning the use of this flag into a NOOP."
+	dnsNameFlagHelp                                    string = "The fully-qualified domain name of the remote system to be used for hostname verification. This option can be used for cases where make the initial connection using a name or IP not associated with the certificate."
+	logLevelFlagHelp                                   string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
+	serverFlagHelp                                     string = "The fully-qualified domain name or IP Address of the remote system whose cert(s) will be monitored. The value provided will be validated against the Common Name and Subject Alternate Names fields."
+	hostsFlagHelp                                      string = "List of comma-separated individual IP Addresses, CIDR IP ranges, partial (dash-separated) ranges (e.g., 192.168.2.10-15), hostnames or FQDNs to scan for certificates."
+	portFlagHelp                                       string = "TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS)."
+	portsListFlagHelp                                  string = "List of comma-separated TCP ports to check for certificates. If not specified, the list defaults to 443 only."
+	timeoutConnectFlagHelp                             string = "Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned."
+	timeoutPortScanFlagHelp                            string = "The number of milliseconds before a connection attempt during a port scan is abandoned and an error returned. This timeout value is separate from the general `timeout` value used when retrieving certificates. This setting is used specifically to quickly determine port state as part of bulk operations where speed is crucial."
+	timeoutAppInactivityFlagHelp                       string = "The number of seconds the application is allowed to remain inactive (i.e., \"hung\") before it is automatically terminated."
+	scanRateLimitFlagHelp                              string = "Maximum concurrent port and certificate scans. Remaining scans are queued until an existing scan completes."
+	emitCertTextFlagHelp                               string = "Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default."
+	filenameFlagHelp                                   string = "Fully-qualified path to a PEM formatted certificate file containing one or more certificates."
+	certExpireAgeWarningFlagHelp                       string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state."
+	certExpireAgeCriticalFlagHelp                      string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a CRITICAL state."
+	brandingFlagHelp                                   string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
+	verboseOutputFlagHelp                              string = "Toggles emission of detailed certificate metadata. This level of output is disabled by default."
+	showHostsWithClosedPortsFlagHelp                   string = "Toggles listing all host port scan results, even for hosts without any specified ports in an open state."
+	showHostsWithValidCertsFlagHelp                    string = "Toggles listing all cert check results in overview output, even for hosts with valid certificates."
+	showValidCertsFlagHelp                             string = "Toggles listing all certificates in output summary, even certificates which have passed all validity checks."
+	showOverviewFlagHelp                               string = "Toggles summary output view from detailed to overview."
+	showPortScanResultsFlagHelp                        string = "Toggles listing host port scan results."
+	disableHostnameVerificationIfEmptySANsListFlagHelp string = "Whether hostname verification errors should be ignored if Subject Alternate Names (SANs) list is empty."
 )
 
 // Default flag settings if not overridden by user input
@@ -105,6 +106,10 @@ const (
 
 	// show overview instead of detailed view (false == show detailed view)
 	defaultShowOverview bool = false
+
+	// retain Go 1.17+ behavior of failing hostname verification if SANs list
+	// is empty
+	defaultDisableHostnameVerificationIfEmptySANsList bool = false
 )
 
 const (

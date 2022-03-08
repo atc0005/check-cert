@@ -201,49 +201,124 @@ func main() {
 			hostnameValue = cfg.DNSName
 		}
 
-		// Verify leaf certificate is valid for the provided server FQDN; we
-		// make the assumption that the leaf certificate is ALWAYS in position
-		// 0 of the chain. Not having the cert in that position is treated as
-		// an error condition.
+		// Go 1.17 removed support for the legacy behavior of treating the
+		// CommonName field on X.509 certificates as a host name when no
+		// Subject Alternative Names are present. Go 1.17 also removed support
+		// for re-enabling the behavior by way of adding the value
+		// x509ignoreCN=0 to the GODEBUG environment variable.
 		//
-		// Server Name Indication (SNI) support is used to provide the value
-		// specified by the `server` flag to the remote server. This is less
-		// important for remote hosts with only one certificate, but for a
-		// host with multiple certificates it becomes very important to
-		// provide the sitename as the value to the `server` flag so that the
-		// correct certificate for the connection can be provided.
-		if err := certChain[0].VerifyHostname(hostnameValue); err != nil {
-			nagiosExitState.LastError = err
-			nagiosExitState.ServiceOutput = fmt.Sprintf(
-				"hostname %q does not match first cert in chain %q",
-				hostnameValue,
-				certChain[0].Subject.CommonName,
-			)
-			nagiosExitState.LongServiceOutput =
-				"Consider updating the service check or command " +
-					"definition to specify the website FQDN instead of " +
-					"the host FQDN as the 'server' flag value. " +
-					"E.g., use 'www.example.org' instead of " +
-					"'host7.example.com' in order to allow the remote " +
-					"server to select the correct certificate instead " +
-					"of the certificate for the first website in its list."
+		// If the SANs list is empty and if requested, we skip hostname
+		// verification and log the event.
+		switch {
+		case len(certChain[0].DNSNames) == 0 &&
+			cfg.DisableHostnameVerificationIfEmptySANsList:
 
-			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-			log.Error().
-				Err(err).
+			log.Warn().
 				Str("hostname", hostnameValue).
 				Str("cert_cn", certChain[0].Subject.CommonName).
 				Str("sans_entries", fmt.Sprintf("%s", certChain[0].DNSNames)).
-				Msg("hostname does not match first cert in chain")
+				Msg("disabling hostname verification as requested for empty SANs list")
 
-			return
+		default:
 
+			// Verify leaf certificate is valid for the provided server FQDN; we
+			// make the assumption that the leaf certificate is ALWAYS in position
+			// 0 of the chain. Not having the cert in that position is treated as
+			// an error condition.
+			//
+			// Server Name Indication (SNI) support is used to provide the value
+			// specified by the `server` flag to the remote server. This is less
+			// important for remote hosts with only one certificate, but for a
+			// host with multiple certificates it becomes very important to
+			// provide the sitename as the value to the `server` flag so that the
+			// correct certificate for the connection can be provided.
+			verifyErr := certChain[0].VerifyHostname(hostnameValue)
+
+			switch {
+
+			// Go 1.17 removed support for the legacy behavior of treating the
+			// CommonName field on X.509 certificates as a host name when no
+			// Subject Alternative Names are present. Go 1.17 also removed
+			// support for re-enabling the behavior by way of adding the value
+			// x509ignoreCN=0 to the GODEBUG environment variable.
+			//
+			// We attempt to detect this situation in order to supply
+			// additional troubleshooting information and guidance to resolve
+			// the issue.
+			case verifyErr != nil &&
+				// TODO: Is there value in matching the specific error string?
+				(verifyErr.Error() == certs.X509CertReliesOnCommonName ||
+					len(certChain[0].DNSNames) == 0):
+
+				nagiosExitState.LastError = verifyErr
+				nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+				nagiosExitState.ServiceOutput = fmt.Sprintf(
+					"%s: Verification of hostname %q failed for first cert in chain",
+					nagios.StateCRITICALLabel,
+					hostnameValue,
+				)
+				nagiosExitState.LongServiceOutput =
+					"This certificate is missing Subject Alternate Names (SANs)" +
+						" and should be replaced." +
+						nagios.CheckOutputEOL +
+						nagios.CheckOutputEOL +
+						"As a temporary workaround, you can" +
+						" use v0.5.3 of this plugin, rebuild this plugin" +
+						" using Go 1.16 or specify the flag to ignore hostname" +
+						" verification errors if the SANs list is found to be empty." +
+						nagios.CheckOutputEOL +
+						nagios.CheckOutputEOL +
+						"See these resources for additional information: " +
+						nagios.CheckOutputEOL +
+						nagios.CheckOutputEOL +
+						" - https://github.com/atc0005/check-cert/issues/276" +
+						nagios.CheckOutputEOL +
+						" - https://chromestatus.com/feature/4981025180483584" +
+						nagios.CheckOutputEOL +
+						" - https://bugzilla.mozilla.org/show_bug.cgi?id=1245280"
+
+				return
+
+			// Hostname verification failed for another reason aside from an
+			// empty SANs list.
+			case verifyErr != nil:
+				log.Error().
+					Err(verifyErr).
+					Str("hostname", hostnameValue).
+					Str("cert_cn", certChain[0].Subject.CommonName).
+					Str("sans_entries", fmt.Sprintf("%s", certChain[0].DNSNames)).
+					Msg("verification of hostname failed for first cert in chain")
+
+				nagiosExitState.LastError = verifyErr
+				nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+				nagiosExitState.ServiceOutput = fmt.Sprintf(
+					"%s: Verification of hostname %q failed for first cert in chain",
+					nagios.StateCRITICALLabel,
+					hostnameValue,
+				)
+				nagiosExitState.LongServiceOutput =
+					"Consider updating the service check or command " +
+						"definition to specify the website FQDN instead of " +
+						"the host FQDN as the 'server' flag value. " +
+						"E.g., use 'www.example.org' instead of " +
+						"'host7.example.com' in order to allow the remote " +
+						"server to select the correct certificate instead " +
+						"of the certificate for the first website in its list."
+
+				return
+
+			// Hostname verification succeeded.
+			default:
+
+				log.Debug().
+					Str("hostname", hostnameValue).
+					Str("cert_cn", certChain[0].Subject.CommonName).
+					Msg("verification of hostname succeeded for first cert in chain")
+
+			}
 		}
-
-		log.Debug().
-			Str("hostname", hostnameValue).
-			Str("cert_cn", certChain[0].Subject.CommonName).
-			Msg("provided hostname matches server certificate")
 
 	}
 
@@ -322,6 +397,24 @@ func main() {
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 		log.Debug().Msg("No problems with certificate chain detected")
 
+	}
+
+	// While we provide a flag to skip hostname verification for certs missing
+	// SANs list entries, it isn't advisable for long-term use. We note this
+	// in the LongServiceOutput as a reminder to sysadmins who may review the
+	// output.
+	if certsSummary.TotalCertsCount > 0 &&
+		len(certChain[0].DNSNames) == 0 &&
+		cfg.DisableHostnameVerificationIfEmptySANsList {
+		nagiosExitState.LongServiceOutput +=
+			nagios.CheckOutputEOL +
+				"NOTE: The option to skip hostname verification when" +
+				" certificate SANs list is empty has been specified." +
+				nagios.CheckOutputEOL +
+				nagios.CheckOutputEOL +
+				"While viable as a short-term workaround for certificates" +
+				" missing SANs list entries, this is not recommended as a" +
+				" long-term fix."
 	}
 
 }

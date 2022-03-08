@@ -300,6 +300,21 @@ type Config struct {
 	// shown.
 	ShowPortScanResults bool
 
+	// IgnoreHostnameVerificationFailureIfEmptySANsList indicates whether
+	// hostname verification should be skipped if a certificate has an empty
+	// SANs list.
+	//
+	// Go 1.17 removed support for the legacy behavior of treating the
+	// CommonName field on X.509 certificates as a host name when no Subject
+	// Alternative Names are present. Go 1.17 also removed support for
+	// re-enabling the behavior by way of adding the value x509ignoreCN=0 to
+	// the GODEBUG environment variable.
+	//
+	// We offer the option to conditionally skip hostname verification when
+	// the SANs list is empty in order to still allow validating a
+	// certificate's expiration date for older certificates.
+	DisableHostnameVerificationIfEmptySANsList bool
+
 	// Log is an embedded zerolog Logger initialized via config.New().
 	Log zerolog.Logger
 }
