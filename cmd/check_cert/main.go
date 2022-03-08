@@ -265,8 +265,8 @@ func main() {
 						nagios.CheckOutputEOL +
 						"As a temporary workaround, you can" +
 						" use v0.5.3 of this plugin, rebuild this plugin" +
-						" using Go 1.16 or specify the flag to ignore hostname" +
-						" verification errors if the SANs list is found to be empty." +
+						" using Go 1.16 or specify the flag to skip hostname" +
+						" verification if the SANs list is found to be empty." +
 						nagios.CheckOutputEOL +
 						nagios.CheckOutputEOL +
 						"See these resources for additional information: " +
