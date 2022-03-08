@@ -87,7 +87,8 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 
 	ipAddress := net.ParseIP(host)
 
-	conn, connErr := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), timeout)
+	serverConnStr := net.JoinHostPort(host, strconv.Itoa(port))
+	conn, connErr := net.DialTimeout("tcp", serverConnStr, timeout)
 	if connErr != nil {
 		// fmt.Printf("connErr: %v\n", connErr)
 		return PortCheckResult{
@@ -212,7 +213,7 @@ func GetCerts(server string, port int, timeout time.Duration, logger zerolog.Log
 		Timeout: timeout,
 	}
 
-	serverConnStr := fmt.Sprintf("%s:%d", server, port)
+	serverConnStr := net.JoinHostPort(server, strconv.Itoa(port))
 	conn, connErr := tls.DialWithDialer(dialer, "tcp", serverConnStr, &tlsConfig)
 	if connErr != nil {
 		// logger.Error().Err(connErr).Msgf("error connecting to server")
