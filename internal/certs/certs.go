@@ -71,6 +71,14 @@ const CertCheckOneLineSummaryTmpl string = "%s: %s cert %q expires next with %s 
 // expired certificates.
 const CertCheckOneLineSummaryExpiredTmpl string = "%s: %s cert %q expired %s (on %s) %s"
 
+// X509CertReliesOnCommonName mirrors the unexported error string emitted by
+// the HostnameError.Error() method from the x509 package.
+//
+// This error string is emitted when a certificate is missing Subject
+// Alternate Names (SANs) AND a specified hostname matches the Common Name
+// field.
+const X509CertReliesOnCommonName string = "x509: certificate relies on legacy Common Name field, use SANs instead"
+
 // ChainStatus provides a quick status overview of the certificates in a
 // provided certificate chain.
 type ChainStatus struct {

@@ -20,6 +20,12 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 	switch {
 	case appType.Plugin:
 		flag.BoolVar(&c.EmitBranding, "branding", defaultBranding, brandingFlagHelp)
+		flag.BoolVar(
+			&c.DisableHostnameVerificationIfEmptySANsList,
+			"disable-hostname-verification-if-empty-sans",
+			defaultDisableHostnameVerificationIfEmptySANsList,
+			disableHostnameVerificationIfEmptySANsListFlagHelp,
+		)
 
 		flag.BoolVar(&c.VerboseOutput, "v", defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
 		flag.BoolVar(&c.VerboseOutput, "verbose", defaultVerboseOutput, verboseOutputFlagHelp)
