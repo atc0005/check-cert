@@ -26,6 +26,37 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.6.0] - 2022-03-08
+
+### Overview
+
+- Bugfixes
+- Dependency updates
+- built using Go 1.17.8
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- (GH-277) Allow skipping hostname verify for empty SANs list
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.7` to `1.17.8`
+  - `actions/checkout`
+    - `v2.5.1` to `v3`
+  - `actions/setup-node`
+    - `v2.5.1` to `v3`
+
+### Fixed
+
+- (GH-275) Server connection string is constructed using `%s:%d` format string
+- (GH-276) x509: certificate relies on legacy Common Name field, use SANs
+  instead
+
 ## [v0.5.5] - 2022-02-11
 
 ### Overview
@@ -820,7 +851,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.5.5...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.6.0...HEAD
+[v0.6.0]: https://github.com/atc0005/check-cert/releases/tag/v0.6.0
 [v0.5.5]: https://github.com/atc0005/check-cert/releases/tag/v0.5.5
 [v0.5.4]: https://github.com/atc0005/check-cert/releases/tag/v0.5.4
 [v0.5.3]: https://github.com/atc0005/check-cert/releases/tag/v0.5.3
