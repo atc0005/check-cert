@@ -95,43 +95,60 @@ func setLoggingLevel(logLevel string) error {
 // application
 func (c *Config) setupLogging(appType AppType) error {
 
-	var output *os.File
-	var appDescription string
-
+	// We set some common fields here so that we don't have to repeat them
+	// explicitly later. This approach is intended to help standardize the log
+	// messages to make them easier to search through later when
+	// troubleshooting. We can extend the logged fields as needed by each CLI
+	// application or Nagios plugin to cover unique details.
 	switch {
 	case appType.Inspecter:
 		// CLI app logging goes to stdout
-		output = os.Stdout
-		appDescription = appTypeInspecter
+		c.Log = zerolog.New(os.Stdout).With().Timestamp().Caller().
+			Str("version", Version()).
+			Str("logging_level", c.LoggingLevel).
+			Str("app_type", appTypeInspecter).
+			Str("filename", c.Filename).
+			Str("server", c.Server).
+			Int("port", c.Port).
+			Str("cert_check_timeout", c.Timeout().String()).
+			Int("age_warning", c.AgeWarning).
+			Int("age_critical", c.AgeCritical).
+			Logger()
 
 	case appType.Plugin:
 		// plugin logging goes to stderr to prevent mixing in with stdout output
 		// intended for the Nagios console
-		output = os.Stderr
-		appDescription = appTypePlugin
+		c.Log = zerolog.New(os.Stderr).With().Timestamp().Caller().
+			Str("version", Version()).
+			Str("logging_level", c.LoggingLevel).
+			Str("app_type", appTypePlugin).
+			Str("filename", c.Filename).
+			Str("server", c.Server).
+			Int("port", c.Port).
+			Str("cert_check_timeout", c.Timeout().String()).
+			Int("age_warning", c.AgeWarning).
+			Int("age_critical", c.AgeCritical).
+			Logger()
 
 	case appType.Scanner:
 		// CLI app logging goes to stdout
-		output = os.Stdout
-		appDescription = appTypeScanner
-	}
 
-	// We set some common fields here so that we don't have to repeat them
-	// explicitly later. This approach is intended to help standardize the log
-	// messages to make them easier to search through later when
-	// troubleshooting. We can extend the logged fields as needed by each
-	// CLI application or Nagios plugin to cover unique details.
-	c.Log = zerolog.New(output).With().Timestamp().Caller().
-		Str("version", Version()).
-		Str("logging_level", c.LoggingLevel).
-		Str("app_type", appDescription).
-		Str("filename", c.Filename).
-		Str("server", c.Server).
-		Int("port", c.Port).
-		Str("cert_check_timeout", c.Timeout().String()).
-		Int("age_warning", c.AgeWarning).
-		Int("age_critical", c.AgeCritical).
-		Logger()
+		ports := zerolog.Arr()
+		for _, port := range c.portsList {
+			ports.Int(port)
+		}
+
+		c.Log = zerolog.New(os.Stdout).With().Timestamp().Caller().
+			Str("version", Version()).
+			Str("logging_level", c.LoggingLevel).
+			Str("app_type", appTypeScanner).
+			Str("filename", c.Filename).
+			Array("ports", ports).
+			Str("cert_check_timeout", c.Timeout().String()).
+			Int("age_warning", c.AgeWarning).
+			Int("age_critical", c.AgeCritical).
+			Logger()
+	}
 
 	if err := setLoggingLevel(c.LoggingLevel); err != nil {
 		return err
