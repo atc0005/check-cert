@@ -21,9 +21,27 @@ import (
 )
 
 // ErrUnrecognizedHostOrIPValue indicates that a given string value is
-// unrecognized as a valid FQDN, single IP Address or range (partial or CIDR).
-// This is usually not a temporary error condition.
-var ErrUnrecognizedHostOrIPValue = errors.New("unrecognized FQDN, single IP Address or range")
+// unrecognized as a valid hostname or IP Address.
+var ErrUnrecognizedHostOrIPValue = errors.New("unrecognized hostname or IP Address")
+
+// ErrUnrecognizedIPRange indicates that a given string value is unrecognized
+// as a valid IP Address range (partial or CIDR).
+var ErrUnrecognizedIPRange = errors.New("unrecognized IP Address range")
+
+// ErrUnrecognizedIPAddress indicates that a given string value is
+// unrecognized as a valid IP Address.
+var ErrUnrecognizedIPAddress = errors.New("unrecognized IP Address")
+
+// ErrHostnameFailsNameResolution indicates that a given string value fails
+// name to IP Address resolution.
+var ErrHostnameFailsNameResolution = errors.New("failed to resolve name to IP Address")
+
+// ErrIPAddrOctectIdxValidityFailure indicates that the internal state of an
+// IP Address octet map failed a validity check.
+var ErrIPAddrOctectIdxValidityFailure = errors.New("invalid index of IP Address to octets")
+
+// ErrMissingValue indicates that an expected value was missing.
+var ErrMissingValue = errors.New("missing expected value")
 
 // IndexSize returns the number of entries in the index.
 func (idx IPv4AddressOctetsIndex) IndexSize() int {
@@ -75,9 +93,20 @@ func (rs PortCheckResult) Summary() string {
 	return fmt.Sprintf("%v: %v", rs.Port, rs.Open)
 }
 
-// CheckPort checks whether a specified TCP port is open. Any errors
-// encountered are returned along with the port status.
+// CheckPort checks whether a specified TCP port for a given host is open. The
+// given host must be either a valid, resolvable hostname or a valid IP
+// Address. Any errors encountered are returned along with the port status.
 func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
+
+	if strings.TrimSpace(host) == "" {
+		return PortCheckResult{
+			Host:      host,
+			IPAddress: net.IPAddr{IP: nil},
+			Port:      port,
+			Open:      false,
+			Err:       ErrUnrecognizedHostOrIPValue,
+		}
+	}
 
 	// TODO: Make sure to set PortCheckResult.Err to an error which indicates
 	// the severity of the issue. For example, failing to close the port is
@@ -92,6 +121,7 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 	if connErr != nil {
 		// fmt.Printf("connErr: %v\n", connErr)
 		return PortCheckResult{
+			Host:      host,
 			IPAddress: net.IPAddr{IP: ipAddress},
 			Port:      port,
 			Open:      false,
@@ -104,6 +134,7 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 	disableKeepAliveErr := conn.(*net.TCPConn).SetKeepAlive(false)
 	if disableKeepAliveErr != nil {
 		return PortCheckResult{
+			Host:      host,
 			IPAddress: net.IPAddr{IP: ipAddress},
 			Port:      port,
 			Open:      true,
@@ -115,6 +146,7 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 	if closeErr != nil {
 		// fmt.Println("connection close error")
 		return PortCheckResult{
+			Host:      host,
 			IPAddress: net.IPAddr{IP: ipAddress},
 			Port:      port,
 			Open:      true,
@@ -123,6 +155,7 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 	}
 
 	result := PortCheckResult{
+		Host:      host,
 		IPAddress: net.IPAddr{IP: ipAddress},
 		Port:      port,
 		Open:      true,
@@ -183,6 +216,13 @@ func inc(ip net.IP) {
 // intentionally disabled in order to successfully retrieve and examine all
 // certificates in the certificate chain.
 func GetCerts(server string, port int, timeout time.Duration, logger zerolog.Logger) ([]*x509.Certificate, error) {
+
+	if strings.TrimSpace(server) == "" {
+		return nil, fmt.Errorf(
+			"server not specified: %w",
+			ErrMissingValue,
+		)
+	}
 
 	var certChain []*x509.Certificate
 
@@ -266,48 +306,54 @@ func isIPv4AddrCandidate(s string) bool {
 
 // ExpandIPAddress accepts a string value representing either an individual IP
 // Address, a CIDR IP range or a partial (dash-separated) range (e.g.,
-// 192.168.2.10-15). IP Address ranges  and expands to scan for certificates.
-func ExpandIPAddress(s string) ([]string, error) {
+// 192.168.2.10-15).
+//
+// If a hostname is provided an attempt is made to resolve it. If it is
+// successfully resolved, the hostname is added to the results collection
+// as-is and returned. If it cannot be resolved, an error is returned
+// indicating this.
+func ExpandIPAddress(hostPattern string) ([]string, error) {
 
-	givenIPsList := make([]string, 0, 1024)
+	expandedIPandHostValues := make([]string, 0, 1024)
 
 	switch {
 
 	// assume that user specified a CIDR mask
-	case strings.Contains(s, "/"):
+	case strings.Contains(hostPattern, "/"):
 
-		if IsCIDR(s) {
-			ipAddrs, _, err := CIDRHosts(s)
+		if IsCIDR(hostPattern) {
+			ipAddrs, _, err := CIDRHosts(hostPattern)
 			if err != nil {
 				return nil, fmt.Errorf("error parsing CIDR range: %s", err)
 			}
 			// fmt.Printf("%q is a CIDR rangeof %d IPs\n", s, count)
-			givenIPsList = append(givenIPsList, ipAddrs...)
+			expandedIPandHostValues = append(expandedIPandHostValues, ipAddrs...)
 
-			return givenIPsList, nil
+			return expandedIPandHostValues, nil
 		}
 
-		return nil, fmt.Errorf("%q contains slash, but fails CIDR parsing", s)
+		return nil, fmt.Errorf("%q contains slash, but fails CIDR parsing", hostPattern)
 
 	// valid (presumably single) IPv4 or IPv6 address
-	case net.ParseIP(s) != nil:
+	case net.ParseIP(hostPattern) != nil:
 
 		// fmt.Printf("%q is an IP Address\n", s)
-		givenIPsList = append(givenIPsList, s)
+		expandedIPandHostValues = append(expandedIPandHostValues, hostPattern)
 
-		return givenIPsList, nil
+		return expandedIPandHostValues, nil
 
 	// no CIDR mask, not a single IP Address (earlier check would have
 	// triggered), and so potentially a partial range of IPv4 Addresses
-	case isIPv4AddrCandidate(s) && strings.Contains(s, "."):
+	case isIPv4AddrCandidate(hostPattern) && strings.Contains(hostPattern, "."):
 
-		octets := strings.Split(s, ".")
+		octets := strings.Split(hostPattern, ".")
 
 		if len(octets) != 4 {
 			return nil, fmt.Errorf(
-				"%q (%d octets) not IPv4 Address; does not contain 4 octets",
-				s,
+				"%q (%d octets) not IPv4 Address; does not contain 4 octets: %w",
+				hostPattern,
 				len(octets),
+				ErrUnrecognizedIPAddress,
 			)
 		}
 
@@ -318,15 +364,17 @@ func ExpandIPAddress(s string) ([]string, error) {
 		// value.
 
 		// check for dash character used to specify partial IP range
-		if !strings.Contains(s, "-") {
+		if !strings.Contains(hostPattern, "-") {
 			return nil, fmt.Errorf(
-				"%q not IP Address range; does not contain dash character",
-				s,
+				"%q not IP Address range; does not contain dash character: %w",
+				hostPattern,
+				ErrUnrecognizedIPRange,
 			)
 		}
 
 		ipAddrOctIdx := make(IPv4AddressOctetsIndex)
 
+		// Validate each octet of IP Address pattern.
 		for octIdx := range octets {
 
 			// split on dashes, loop over that
@@ -343,17 +391,19 @@ func ExpandIPAddress(s string) ([]string, error) {
 				if err != nil {
 					return nil, fmt.Errorf(
 						"octet %q of IP pattern %q invalid; "+
-							"non-numeric values present",
+							"non-numeric values present: %w",
 						octets[octIdx],
-						s,
+						hostPattern,
+						ErrUnrecognizedIPRange,
 					)
 				}
 
 				if !octetWithinBounds(num) {
 					return nil, fmt.Errorf(
-						"octet %q of IP pattern %q outside lower (0), upper (255) bounds",
+						"octet %q of IP pattern %q outside lower (0), upper (255) bounds: %w",
 						octets[octIdx],
-						s,
+						hostPattern,
+						ErrUnrecognizedIPRange,
 					)
 				}
 
@@ -369,9 +419,10 @@ func ExpandIPAddress(s string) ([]string, error) {
 				if err != nil {
 					return nil, fmt.Errorf(
 						"octet %q of IP pattern %q invalid; "+
-							"non-numeric values present",
+							"non-numeric values present: %w",
 						octets[octIdx],
-						s,
+						hostPattern,
+						ErrUnrecognizedIPRange,
 					)
 				}
 
@@ -379,9 +430,10 @@ func ExpandIPAddress(s string) ([]string, error) {
 				if err != nil {
 					return nil, fmt.Errorf(
 						"octet %q of IP pattern %q invalid; "+
-							"non-numeric values present",
+							"non-numeric values present: %w",
 						octets[octIdx],
-						s,
+						hostPattern,
+						ErrUnrecognizedIPRange,
 					)
 				}
 
@@ -389,28 +441,31 @@ func ExpandIPAddress(s string) ([]string, error) {
 				case rangeStart > rangeEnd:
 					return nil, fmt.Errorf(
 						"%q is invalid octet range; "+
-							"given start value %d greater than end value %d",
+							"given start value %d greater than end value %d: %w",
 						octets[octIdx],
 						rangeStart,
 						rangeEnd,
+						ErrUnrecognizedIPRange,
 					)
 
 				case rangeStart == rangeEnd:
 					return nil, fmt.Errorf(
 						"%q is invalid octet range; "+
-							"given start value %d equal to end value %d",
+							"given start value %d equal to end value %d: %w",
 						octets[octIdx],
 						rangeStart,
 						rangeEnd,
+						ErrUnrecognizedIPRange,
 					)
 				}
 
 				for i := rangeStart; i <= rangeEnd; i++ {
 					if !octetWithinBounds(i) {
 						return nil, fmt.Errorf(
-							"octet %q of IP pattern %q outside lower (0), upper (255) bounds",
+							"octet %q of IP pattern %q outside lower (0), upper (255) bounds: %w",
 							octets[octIdx],
-							s,
+							hostPattern,
+							ErrUnrecognizedIPRange,
 						)
 					}
 
@@ -424,11 +479,12 @@ func ExpandIPAddress(s string) ([]string, error) {
 
 				numDashes := strings.Count(octets[octIdx], "-")
 				return nil, fmt.Errorf(
-					"%d dash separators in octet %q (%d of %d); expected one",
+					"%d dash separators in octet %q (%d of %d); expected one: %w",
 					numDashes,
 					octIdx,
 					octIdx+1,
 					len(octets),
+					ErrUnrecognizedIPRange,
 				)
 			}
 
@@ -437,9 +493,10 @@ func ExpandIPAddress(s string) ([]string, error) {
 		// internal state validity check
 		if len(ipAddrOctIdx) != len(octets) {
 			return nil, fmt.Errorf(
-				"ipAddress octet map size incorrect; got %d, wanted %d",
+				"ipAddress octet map size incorrect; got %d, wanted %d: %w",
 				len(ipAddrOctIdx),
 				len(octets),
+				ErrIPAddrOctectIdxValidityFailure,
 			)
 		}
 
@@ -466,37 +523,43 @@ func ExpandIPAddress(s string) ([]string, error) {
 						// match on to determine severity.
 						if net.ParseIP(ipAddrString) == nil {
 							return nil, fmt.Errorf(
-								"%q (from parsed range) is an invalid IP Address",
+								"%q (from parsed range) invalid: %w",
 								ipAddrString,
+
+								// TODO: Do we need a more specific error?
+								ErrUnrecognizedIPAddress,
 							)
 						}
 
-						givenIPsList = append(givenIPsList, ipAddrString)
+						expandedIPandHostValues = append(expandedIPandHostValues, ipAddrString)
 					}
 				}
 			}
 		}
 
-		return givenIPsList, nil
+		return expandedIPandHostValues, nil
 
 	// not a CIDR range, IP Address or partial IP Address range, so
 	// potentially a hostname or FQDN (or completely invalid)
 	default:
 
-		// attempt to parse the value as a hostname or FQDN
-		results, lookupErr := net.LookupHost(s)
+		// Attempt resolution of host pattern/string to IP Address. If
+		// successful, return the host name pattern as-is so that it can be
+		// used to provide SNI support for valid cert retrieval (instead of
+		// just the default cert on a port).
+		_, lookupErr := net.LookupHost(hostPattern)
 		if lookupErr != nil {
 			return nil, fmt.Errorf(
 				"%q invalid; %w: %s",
-				s,
-				ErrUnrecognizedHostOrIPValue,
+				hostPattern,
+				ErrHostnameFailsNameResolution,
 				lookupErr.Error(),
 			)
 		}
 
-		givenIPsList = append(givenIPsList, results...)
+		expandedIPandHostValues = append(expandedIPandHostValues, hostPattern)
 
-		return givenIPsList, nil
+		return expandedIPandHostValues, nil
 
 	}
 }

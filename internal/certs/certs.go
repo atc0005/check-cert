@@ -38,7 +38,7 @@ import (
 )
 
 // DiscoveredCertChain is a poorly named type that represents the certificate
-// chain found on a specific host along with that hosts IP/Name and port.
+// chain found on a specific host along with that host's IP/Name and port.
 type DiscoveredCertChain struct {
 	Host  string
 	Port  int

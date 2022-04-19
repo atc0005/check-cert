@@ -144,6 +144,14 @@ func certScanner(
 				continue
 			}
 
+			var hostValue string
+			switch {
+			case portScanResult.Host != "":
+				hostValue = portScanResult.Host
+			default:
+				hostValue = portScanResult.IPAddress.String()
+			}
+
 			switch {
 			case showPortScanResults:
 				portSummary := func() string {
@@ -153,8 +161,11 @@ func certScanner(
 					return "None"
 				}()
 
-				// 192.168.1.2: [443: true, 636: false]
-				fmt.Printf("%s: [%s]\n", portScanResult.IPAddress.String(), portSummary)
+				// Output format is one of:
+				//
+				// 74.125.136.105: [443: true]
+				// www.google.com: [443: true]
+				fmt.Printf("%s: [%s]\n", hostValue, portSummary)
 			default:
 				fmt.Printf(".")
 			}
@@ -163,7 +174,7 @@ func certScanner(
 			if ctx.Err() != nil {
 				errMsg := "certScanner: ports: context cancelled or expired"
 				log.Error().
-					Str("host", portScanResult.IPAddress.String()).
+					Str("host", hostValue).
 					Int("port", portScanResult.Port).
 					Err(ctx.Err()).
 					Msg(errMsg)
@@ -174,9 +185,9 @@ func certScanner(
 			if portScanResult.Open {
 
 				log.Debug().Msgf(
-					"Checking port %v for cert on IP %v",
+					"Checking port %v for cert on host %q",
 					portScanResult.Port,
-					portScanResult.IPAddress.String(),
+					hostValue,
 				)
 
 				log.Debug().Msg("certScanner: incrementing waitgroup")
@@ -184,7 +195,7 @@ func certScanner(
 
 				go func(
 					ctx context.Context,
-					ipAddr string,
+					target string,
 					port int,
 					timeout time.Duration,
 					resultsChan chan<- certs.DiscoveredCertChain,
@@ -199,8 +210,12 @@ func certScanner(
 					}()
 
 					var certFetchErr error
+					log.Debug().
+						Str("target", target).
+						Int("port", port).
+						Msg("Calling netutils.GetCerts")
 					certChain, certFetchErr := netutils.GetCerts(
-						ipAddr,
+						target,
 						port,
 						timeout,
 						log,
@@ -213,7 +228,7 @@ func certScanner(
 						}
 						log.Error().
 							Err(certFetchErr).
-							Str("host", ipAddr).
+							Str("host", target).
 							Int("port", port).
 							Msg("error fetching certificates chain")
 
@@ -225,14 +240,14 @@ func certScanner(
 
 					log.Debug().Msg("Attempting to send cert chain on resultsChan")
 					resultsChan <- certs.DiscoveredCertChain{
-						Host:  ipAddr,
+						Host:  target,
 						Port:  port,
 						Certs: certChain,
 					}
 
 					log.Debug().Msg("Finished child cert scanner goroutine")
 
-				}(ctx, portScanResult.IPAddress.String(), portScanResult.Port, timeout, certScanResultsChan, log)
+				}(ctx, hostValue, portScanResult.Port, timeout, certScanResultsChan, log)
 
 			}
 

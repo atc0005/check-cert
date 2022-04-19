@@ -42,7 +42,7 @@ func printSummaryHighLevel(
 
 	// Header row in output
 	fmt.Fprintf(tw,
-		"IP Address\tPort\tSubject or SANs\tStatus\tChain Summary\tSerial\n")
+		"Host\tPort\tSubject or SANs\tStatus\tChain Summary\tSerial\n")
 
 	// Separator row
 	fmt.Fprintln(tw,
@@ -133,7 +133,7 @@ func printSummaryDetailedLevel(
 
 	// Header row in output
 	fmt.Fprintf(tw,
-		"IP Address\tPort\tSubject or SANs\tStatus (Type)\tSummary\tSerial\n")
+		"Host\tPort\tSubject or SANs\tStatus (Type)\tSummary\tSerial\n")
 
 	// Separator row
 	fmt.Fprintln(tw,

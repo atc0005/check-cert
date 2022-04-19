@@ -24,7 +24,7 @@ import (
 // timeout is reached.
 func portScanner(
 	ctx context.Context,
-	ips []string,
+	hosts []string,
 	ports []int,
 	timeout time.Duration,
 	portScanResultsChan chan<- netutils.PortCheckResult,
@@ -44,19 +44,19 @@ func portScanner(
 
 	var hostsWG sync.WaitGroup
 
-	for _, ip := range ips {
+	for _, host := range hosts {
 
 		// track this specific host
 		hostsWG.Add(1)
 
-		log.Debug().Msgf("Checking IP: %v", ip)
+		log.Debug().Msgf("Checking host: %v", host)
 
 		select {
 		// abort early if context has been cancelled
 		case <-ctx.Done():
-			errMsg := "portScanner: ips: context cancelled or expired"
+			errMsg := "portScanner: hosts: context cancelled or expired"
 			log.Error().
-				Str("host", ip).
+				Str("host", host).
 				Err(ctx.Err()).
 				Msg(errMsg)
 
@@ -72,7 +72,7 @@ func portScanner(
 		// process all specified ports for the current host
 		go func(
 			ctx context.Context,
-			ipAddr string,
+			target string,
 			ports []int,
 			portScanResultsChan chan<- netutils.PortCheckResult,
 		) {
@@ -99,13 +99,13 @@ func portScanner(
 			var portChecksWG sync.WaitGroup
 			for _, port := range ports {
 
-				log.Debug().Msgf("Checking port %v for IP: %v", port, ipAddr)
+				log.Debug().Msgf("Checking port %v for host: %v", port, target)
 
 				// abort early if context has been cancelled
 				if ctx.Err() != nil {
 					errMsg := "portScanner: ports: context cancelled or expired"
 					log.Error().
-						Str("host", ipAddr).
+						Str("host", target).
 						Int("port", port).
 						Err(ctx.Err()).
 						Msg(errMsg)
@@ -130,7 +130,7 @@ func portScanner(
 
 				go func(
 					ctx context.Context,
-					ipAddr string,
+					target string,
 					port int,
 					scanTimeout time.Duration,
 					portScanResultsChan chan<- netutils.PortCheckResult,
@@ -163,15 +163,15 @@ func portScanner(
 						}
 					}()
 
-					log.Debug().Msgf("Checking %v", ipAddr)
-					portState := netutils.CheckPort(ipAddr, port, scanTimeout)
+					log.Debug().Msgf("Checking %v", target)
+					portState := netutils.CheckPort(target, port, scanTimeout)
 					if portState.Err != nil {
 						// TODO: Check specific error type to determine how to
 						// proceed. For now, we'll just assume that we're dealing
 						// with a timeout, emit the error as a debug message and
 						// continue.
 						log.Debug().
-							Str("host", ipAddr).
+							Str("host", target).
 							Int("port", port).
 							Err(portState.Err).
 							Msg("")
@@ -184,22 +184,30 @@ func portScanner(
 						return
 					}
 
+					log.Debug().
+						Str("hostname", portState.Host).
+						Str("ip_address", portState.IPAddress.String()).
+						Int("port", portState.Port).
+						Bool("port", portState.Open).
+						Err(portState.Err).
+						Msg("portState value")
+
 					log.Debug().Msg("Returning portState on portScanResultsChan")
 					portScanResultsChan <- portState
 					log.Debug().Msg("Finished returning portState on portScanResultsChan")
 
 					log.Debug().Msg("Finished child port scanner goroutine")
 
-				}(ctx, ipAddr, port, timeout, portScanResultsChan, log)
+				}(ctx, target, port, timeout, portScanResultsChan, log)
 
 			}
 
 			portChecksWG.Wait()
 			log.Debug().Msg("portChecksWG.Wait() finished")
 
-			log.Debug().Msgf("Sending port scan results for IP %s on channel", ipAddr)
+			log.Debug().Msgf("Sending port scan results for host %s on channel", target)
 
-		}(ctx, ip, ports, portScanResultsChan)
+		}(ctx, host, ports, portScanResultsChan)
 
 	}
 
