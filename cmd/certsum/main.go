@@ -48,13 +48,13 @@ func main() {
 		Str("app_timeout", fmt.Sprintf("%v", cfg.TimeoutAppInactivity())).
 		Logger()
 
-	givenIPsList := cfg.IPAddresses()
-	log.Debug().Msgf("IP Addresses before deduping: %v", givenIPsList)
-	log.Debug().Msgf("Total IPs from all ranges before deduping: %d", len(givenIPsList))
+	expandedHostsList := cfg.Hosts()
+	log.Debug().Msgf("Host values before deduping: %v", expandedHostsList)
+	log.Debug().Msgf("Total host values before deduping: %d", len(expandedHostsList))
 
-	ipsList := textutils.DedupeList(givenIPsList)
-	log.Debug().Msgf("Total IPs from all ranges after deduping: %d", len(ipsList))
-	log.Debug().Msgf("IP Addresses after deduping: %v", ipsList)
+	expandedHostsList = textutils.DedupeList(expandedHostsList)
+	log.Debug().Msgf("Total host values after deduping: %d", len(expandedHostsList))
+	log.Debug().Msgf("Host values after deduping: %v", expandedHostsList)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -99,7 +99,7 @@ func main() {
 	log.Debug().Msg("Starting portScanner")
 	go portScanner(
 		ctx,
-		cfg.IPAddresses(),
+		cfg.Hosts(),
 		cfg.CertPorts(),
 		cfg.TimeoutPortScan(),
 		portScanResultsChan,
@@ -126,7 +126,7 @@ func main() {
 
 	fmt.Printf(
 		"Beginning cert scan against %d unique hosts using ports: %v\n",
-		len(ipsList),
+		len(expandedHostsList),
 		cfg.CertPorts(),
 	)
 

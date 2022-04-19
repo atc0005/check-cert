@@ -106,8 +106,8 @@ func (c Config) validate(appType AppType) error {
 			)
 		}
 
-		if c.IPAddresses() == nil {
-			return fmt.Errorf("IP Addresses (one or many, single or ranges) not provided")
+		if c.Hosts() == nil {
+			return fmt.Errorf("host values (one or many, single or IP Address ranges) not provided")
 		}
 
 		// TODO: Figure out how to (or if we need to) validate mix of boolean
