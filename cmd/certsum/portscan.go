@@ -165,24 +165,14 @@ func portScanner(
 
 					log.Debug().Msgf("Checking %v", target)
 					portState := netutils.CheckPort(target, port, scanTimeout)
-					if portState.Err != nil {
-						// TODO: Check specific error type to determine how to
-						// proceed. For now, we'll just assume that we're dealing
-						// with a timeout, emit the error as a debug message and
-						// continue.
-						log.Debug().
-							Str("host", target).
-							Int("port", port).
-							Err(portState.Err).
-							Msg("")
 
-						// indicate that the port was found to be closed
-						portScanResultsChan <- netutils.PortCheckResult{
-							Err: portState.Err,
-						}
-
-						return
-					}
+					// if portState.Err != nil {
+					//
+					//
+					// TODO: Check specific error type to determine whether a
+					// port scan attempt should be retried.
+					//
+					// }
 
 					log.Debug().
 						Str("hostname", portState.Host).

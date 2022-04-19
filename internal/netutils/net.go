@@ -96,6 +96,9 @@ func (rs PortCheckResult) Summary() string {
 // CheckPort checks whether a specified TCP port for a given host is open. The
 // given host must be either a valid, resolvable hostname or a valid IP
 // Address. Any errors encountered are returned along with the port status.
+//
+// NOTE: This function explicitly returns real values for host & port instead
+// of zero values so that they may be used in summary output by callers.
 func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 
 	if strings.TrimSpace(host) == "" {

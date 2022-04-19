@@ -144,6 +144,9 @@ func certScanner(
 				continue
 			}
 
+			// The host value is set even if there was an issue encountered
+			// checking a port's status so that we can provide a brief summary
+			// of the port check results.
 			var hostValue string
 			switch {
 			case portScanResult.Host != "":
