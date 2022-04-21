@@ -38,15 +38,33 @@ func printSummaryHighLevel(
 
 	fmt.Printf("\nResults (%s):\n\n", resultsDescription)
 
-	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, '\t', 0)
+	tw := tabwriter.NewWriter(os.Stdout, 4, 8, 2, '\t', 0)
 
-	// Header row in output
-	fmt.Fprintf(tw,
-		"Host\tPort\tSubject or SANs\tStatus\tChain Summary\tSerial\n")
+	var hasHostNameVal bool
+	for _, certChain := range discoveredChains {
+		if certChain.Name != "" {
+			hasHostNameVal = true
+		}
+	}
+	switch {
+	case hasHostNameVal:
+		// Header row in output
+		fmt.Fprintf(tw,
+			"Host (Name/FQDN)\tIP Addr\tPort\tSubject or SANs\tStatus\tChain Summary\tSerial\n")
 
-	// Separator row
-	fmt.Fprintln(tw,
-		"---\t---\t---\t---\t---\t---")
+		// Separator row
+		fmt.Fprintln(tw,
+			"---\t---\t---\t---\t---\t---\t---")
+
+	default:
+		// Header row in output
+		fmt.Fprintf(tw,
+			"Host\tPort\tSubject or SANs\tStatus\tChain Summary\tSerial\n")
+
+		// Separator row
+		fmt.Fprintln(tw,
+			"---\t---\t---\t---\t---\t---")
+	}
 
 	for _, certChain := range discoveredChains {
 
@@ -76,20 +94,39 @@ func printSummaryHighLevel(
 			name = strings.Join(certChain.Certs[0].DNSNames, ", ")
 		}
 
-		fmt.Fprintf(
-			tw,
-			"%v\t%v\t%v\t%s\t%v\t%v\n",
-			certChain.Host,
-			certChain.Port,
-			name,
-			statusIcon,
-			certs.ChainSummary(
-				certChain.Certs,
-				certsExpireAgeCritical,
-				certsExpireAgeWarning,
-			).Summary,
-			certs.FormatCertSerialNumber(certChain.Certs[0].SerialNumber),
-		)
+		switch {
+		case hasHostNameVal:
+			fmt.Fprintf(
+				tw,
+				"%v\t%v\t%v\t%v\t%s\t%v\t%v\n",
+				certChain.Name,
+				certChain.IPAddress,
+				certChain.Port,
+				name,
+				statusIcon,
+				certs.ChainSummary(
+					certChain.Certs,
+					certsExpireAgeCritical,
+					certsExpireAgeWarning,
+				).Summary,
+				certs.FormatCertSerialNumber(certChain.Certs[0].SerialNumber),
+			)
+		default:
+			fmt.Fprintf(
+				tw,
+				"%v\t%v\t%v\t%s\t%v\t%v\n",
+				certChain.IPAddress,
+				certChain.Port,
+				name,
+				statusIcon,
+				certs.ChainSummary(
+					certChain.Certs,
+					certsExpireAgeCritical,
+					certsExpireAgeWarning,
+				).Summary,
+				certs.FormatCertSerialNumber(certChain.Certs[0].SerialNumber),
+			)
+		}
 
 	}
 
@@ -129,15 +166,33 @@ func printSummaryDetailedLevel(
 
 	fmt.Printf("\nResults (%s):\n\n", resultsDescription)
 
-	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, '\t', 0)
+	tw := tabwriter.NewWriter(os.Stdout, 4, 8, 2, '\t', 0)
 
-	// Header row in output
-	fmt.Fprintf(tw,
-		"Host\tPort\tSubject or SANs\tStatus (Type)\tSummary\tSerial\n")
+	var hasHostNameVal bool
+	for _, certChain := range discoveredChains {
+		if certChain.Name != "" {
+			hasHostNameVal = true
+		}
+	}
+	switch {
+	case hasHostNameVal:
+		// Header row in output
+		fmt.Fprintf(tw,
+			"Host (Name/FQDN)\tIP Addr\tPort\tSubject or SANs\tStatus (Type)\tSummary\tSerial\n")
 
-	// Separator row
-	fmt.Fprintln(tw,
-		"---\t---\t---\t---\t---\t---")
+		// Separator row
+		fmt.Fprintln(tw,
+			"---\t---\t---\t---\t---\t---\t---")
+
+	default:
+		// Header row in output
+		fmt.Fprintf(tw,
+			"Host\tPort\tSubject or SANs\tStatus (Type)\tSummary\tSerial\n")
+
+		// Separator row
+		fmt.Fprintln(tw,
+			"---\t---\t---\t---\t---\t---")
+	}
 
 	for _, certChain := range discoveredChains {
 		for _, cert := range certChain.Certs {
@@ -168,17 +223,34 @@ func printSummaryDetailedLevel(
 				name = strings.Join(cert.DNSNames, ", ")
 			}
 
-			fmt.Fprintf(
-				tw,
-				"%v\t%v\t%v\t%s (%s)\t%v\t%v\n",
-				certChain.Host,
-				certChain.Port,
-				name,
-				statusIcon,
-				certs.ChainPosition(cert, certChain.Certs),
-				certs.ExpirationStatus(cert, certsExpireAgeCritical, certsExpireAgeWarning),
-				certs.FormatCertSerialNumber(cert.SerialNumber),
-			)
+			switch {
+			case hasHostNameVal:
+				fmt.Fprintf(
+					tw,
+					"%v\t%v\t%v\t%v\t%s (%s)\t%v\t%v\n",
+					certChain.Name,
+					certChain.IPAddress,
+					certChain.Port,
+					name,
+					statusIcon,
+					certs.ChainPosition(cert, certChain.Certs),
+					certs.ExpirationStatus(cert, certsExpireAgeCritical, certsExpireAgeWarning),
+					certs.FormatCertSerialNumber(cert.SerialNumber),
+				)
+			default:
+				fmt.Fprintf(
+					tw,
+					"%v\t%v\t%v\t%s (%s)\t%v\t%v\n",
+					certChain.IPAddress,
+					certChain.Port,
+					name,
+					statusIcon,
+					certs.ChainPosition(cert, certChain.Certs),
+					certs.ExpirationStatus(cert, certsExpireAgeCritical, certsExpireAgeWarning),
+					certs.FormatCertSerialNumber(cert.SerialNumber),
+				)
+			}
+
 		}
 
 	}
