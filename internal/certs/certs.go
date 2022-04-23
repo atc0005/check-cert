@@ -37,8 +37,8 @@ import (
 	"github.com/atc0005/go-nagios"
 )
 
-// DiscoveredCertChain is a poorly named type that represents the certificate
-// chain found on a specific host along with that host's IP/Name and port.
+// DiscoveredCertChain represents the certificate chain found on a specific
+// host along with that host's IP/Name and port.
 type DiscoveredCertChain struct {
 	// Name is the hostname or FQDN of a system where a certificate chain was
 	// retrieved. Depending on how scan targets were specified, this value may

@@ -208,16 +208,14 @@ func certScanner(
 						Int("port", portScanResult.Port).
 						Msg("Retrieving certificate chain")
 
-					var hostValue string
-					switch {
-					case strings.TrimSpace(portScanResult.Host) != "":
-						hostValue = portScanResult.Host
-					default:
-						hostValue = portScanResult.IPAddress.String()
-					}
-
+					// NOTE: We explicitly specify the IP Address to prevent
+					// earlier port check results from occurring on one IP
+					// while we unintentionally connect to another IP (by way
+					// of using a name/FQDN to open the connection) to
+					// retrieve the certificate chain.
 					certChain, certFetchErr := netutils.GetCerts(
-						hostValue,
+						portScanResult.Host,
+						portScanResult.IPAddress.String(),
 						portScanResult.Port,
 						timeout,
 						log,
@@ -230,7 +228,8 @@ func certScanner(
 						}
 						log.Error().
 							Err(certFetchErr).
-							Str("host", hostValue).
+							Str("host", portScanResult.Host).
+							Str("ip_address", portScanResult.IPAddress.String()).
 							Int("port", portScanResult.Port).
 							Msg("error fetching certificates chain")
 
