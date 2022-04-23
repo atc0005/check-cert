@@ -216,23 +216,32 @@ func inc(ip net.IP) {
 	}
 }
 
-// GetCerts retrieves and returns the certificate chain from the specified
-// host & port or an error if one occurs. Enforced certificate verification is
-// intentionally disabled in order to successfully retrieve and examine all
-// certificates in the certificate chain.
-func GetCerts(server string, port int, timeout time.Duration, logger zerolog.Logger) ([]*x509.Certificate, error) {
+// GetCerts retrieves and returns the certificate chain from the specified IP
+// Address & port or an error if one occurs. If specified, the given host Name
+// or FQDN is included in the client's handshake to support virtual hosting
+// (SNI).
+//
+// Enforced certificate verification is intentionally disabled in order to
+// successfully retrieve and examine all certificates in the certificate
+// chain.
+func GetCerts(host string, ipAddr string, port int, timeout time.Duration, logger zerolog.Logger) ([]*x509.Certificate, error) {
 
-	if strings.TrimSpace(server) == "" {
+	if strings.TrimSpace(ipAddr) == "" {
 		return nil, fmt.Errorf(
-			"server not specified: %w",
+			"target IP Address not specified: %w",
 			ErrMissingValue,
 		)
 	}
 
+	// Explicitly trim to prevent (nearly) empty string from unintentionally
+	// breaking SNI support when setting TLS client configuration.
+	host = strings.TrimSpace(host)
+
 	var certChain []*x509.Certificate
 
 	logger = logger.With().
-		Str("server", server).
+		Str("host", host).
+		Str("ip_address", ipAddr).
 		Int("port", port).
 		Str("timeout", timeout.String()).
 		Logger()
@@ -251,6 +260,12 @@ func GetCerts(server string, port int, timeout time.Duration, logger zerolog.Log
 		// Ignore security (gosec) linting warnings re this choice.
 		// nolint:gosec
 		InsecureSkipVerify: true,
+
+		// ServerName is included in the client's handshake to support virtual
+		// hosting. Specifying the value here allows us to connect to a
+		// specific IP Address while also retrieving a certificate chain for a
+		// specific host value.
+		ServerName: host,
 	}
 
 	// Create custom dialer with user-specified timeout value
@@ -258,11 +273,16 @@ func GetCerts(server string, port int, timeout time.Duration, logger zerolog.Log
 		Timeout: timeout,
 	}
 
-	serverConnStr := net.JoinHostPort(server, strconv.Itoa(port))
+	serverConnStr := net.JoinHostPort(ipAddr, strconv.Itoa(port))
 	conn, connErr := tls.DialWithDialer(dialer, "tcp", serverConnStr, &tlsConfig)
 	if connErr != nil {
 		// logger.Error().Err(connErr).Msgf("error connecting to server")
-		return nil, fmt.Errorf("error connecting to server: %w", connErr)
+		return nil, fmt.Errorf(
+			"error connecting to server (host: %s, IP: %s): %w",
+			host,
+			ipAddr,
+			connErr,
+		)
 	}
 	logger.Debug().Msg("Connected")
 

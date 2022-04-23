@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 
 	"github.com/atc0005/check-cert/internal/certs"
@@ -83,6 +84,8 @@ func main() {
 
 	var certChain []*x509.Certificate
 
+	var certChainSource string
+
 	// Honor request to parse filename first
 	switch {
 	case cfg.Filename != "":
@@ -111,6 +114,8 @@ func main() {
 
 			return
 		}
+
+		certChainSource = cfg.Filename
 
 		log.Debug().Msg("certificate file parsed")
 
@@ -144,8 +149,124 @@ func main() {
 
 	case cfg.Server != "":
 
+		// We should only have one expanded host value from one given host
+		// pattern (since IP ranges are not valid server flag input values).
+		// If a resolvable name is given, we may have several IP Addresses
+		// returned.
+		expandedHost, expandErr := netutils.ExpandHost(cfg.Server)
+		switch {
+		case expandErr != nil:
+			log.Error().Err(expandErr).Msg(
+				"error expanding given host pattern")
+
+			nagiosExitState.LastError = expandErr
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				"%s: Error expanding given host pattern %q to target IP Address",
+				nagios.StateCRITICALLabel,
+				cfg.Server,
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+			// no need to go any further, we *want* to exit right away; we don't
+			// have a connection to the remote server and there isn't anything
+			// further we can do
+			return
+
+		case len(expandedHost) > 1:
+			invalidHostPatternErr := errors.New("invalid host pattern")
+			msg := fmt.Sprintf(
+				"Given host pattern invalid; "+
+					"host pattern expands to %d host values; only one expected",
+				len(expandedHost),
+			)
+			log.Error().Err(invalidHostPatternErr).Msg(msg)
+
+			nagiosExitState.LastError = invalidHostPatternErr
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				"%s: %s",
+				nagios.StateCRITICALLabel,
+				msg,
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+			// no need to go any further, we *want* to exit right away; we don't
+			// have a connection to the remote server and there isn't anything
+			// further we can do
+			return
+
+		case len(expandedHost[0].Expanded) == 0:
+			expandHostErr := errors.New("host pattern expansion failed")
+			msg := "Error expanding given host value to IP Address"
+
+			log.Error().Err(expandHostErr).Msg(msg)
+
+			nagiosExitState.LastError = expandHostErr
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				"%s: %s",
+				nagios.StateCRITICALLabel,
+				msg,
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+			// no need to go any further, we *want* to exit right away; we don't
+			// have a connection to the remote server and there isn't anything
+			// further we can do
+			return
+
+		case len(expandedHost[0].Expanded) > 1:
+
+			ipAddrs := zerolog.Arr()
+			for _, ip := range expandedHost[0].Expanded {
+				ipAddrs.Str(ip)
+			}
+
+			log.Warn().
+				Int("num_ip_addresses", len(expandedHost[0].Expanded)).
+				Array("ip_addresses", ipAddrs).
+				Msg("Multiple IP Addresses resolved from given host pattern")
+			log.Warn().Msg("Using first IP Address, ignoring others")
+		}
+
+		// Grab first IP Address from the resolved collection. We'll
+		// explicitly use it for cert retrieval and note it in the report
+		// output.
+		ipAddr := expandedHost[0].Expanded[0]
+
+		var hostVal string
+		switch {
+		case expandedHost[0].Resolved:
+			hostVal = expandedHost[0].Given
+			certChainSource = fmt.Sprintf(
+				"service running on %s (%s) at port %d",
+				hostVal,
+				ipAddr,
+				cfg.Port,
+			)
+		default:
+			certChainSource = fmt.Sprintf(
+				"service running on %s at port %d",
+				ipAddr,
+				cfg.Port,
+			)
+		}
+
 		var certFetchErr error
-		certChain, certFetchErr = netutils.GetCerts(cfg.Server, cfg.Port, cfg.Timeout(), log)
+		log.Debug().
+			Str("host", hostVal).
+			Str("ip_address", ipAddr).
+			Int("port", cfg.Port).
+			Msg("Retrieving certificate chain")
+
+		certChain, certFetchErr = netutils.GetCerts(
+			// NOTE: This is a potentially empty string depending on whether
+			// host pattern was a resolvable name/FQDN.
+			hostVal,
+
+			ipAddr,
+			cfg.Port,
+			cfg.Timeout(),
+			log,
+		)
 		if certFetchErr != nil {
 			log.Error().Err(certFetchErr).Msg(
 				"error fetching certificates chain")
@@ -315,12 +436,25 @@ func main() {
 				log.Debug().
 					Str("hostname", hostnameValue).
 					Str("cert_cn", certChain[0].Subject.CommonName).
-					Msg("verification of hostname succeeded for first cert in chain")
+					Msg("Verification of hostname succeeded for first cert in chain")
 
 			}
 		}
 
 	}
+
+	// Prepend a baseline lead-in that summarizes the number of certificates
+	// retrieved and from which target host/IP Address.
+	defer func() {
+		nagiosExitState.LongServiceOutput = fmt.Sprintf(
+			"%d certs found for %s%s%s%s",
+			certsSummary.TotalCertsCount,
+			certChainSource,
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+			nagiosExitState.LongServiceOutput,
+		)
+	}()
 
 	// check SANS entries if provided via command-line
 	if len(cfg.SANsEntries) > 0 {
@@ -339,10 +473,9 @@ func main() {
 				)
 
 				nagiosExitState.ServiceOutput = fmt.Sprintf(
-					"%s: Mismatch of %d SANs entries for certificate %q",
+					"%s: Mismatch of %d SANs entries for certificate",
 					nagios.StateCRITICALLabel,
 					mismatched,
-					cfg.Server,
 				)
 
 				nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode

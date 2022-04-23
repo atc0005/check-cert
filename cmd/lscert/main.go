@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 
 	"github.com/grantae/certinfo"
@@ -61,6 +62,8 @@ func main() {
 	switch {
 	case cfg.Filename != "":
 
+		log.Debug().Msg("Attempting to retrieve certificates from file")
+
 		var err error
 		certChain, parseAttemptLeftovers, err = certs.GetCertsFromFile(cfg.Filename)
 		if err != nil {
@@ -73,19 +76,82 @@ func main() {
 
 	case cfg.Server != "":
 
+		log.Debug().Msg("Attempting to retrieve certificates from server")
+
+		// We should only have one expanded host value from one given host
+		// pattern (since IP ranges are not valid server flag input values).
+		expandedHost, expandErr := netutils.ExpandHost(cfg.Server)
+		switch {
+		case expandErr != nil:
+			log.Error().Err(expandErr).Msg(
+				"error expanding given host pattern")
+			os.Exit(1)
+
+		case len(expandedHost) > 1:
+			log.Error().Msgf(
+				"given host pattern invalid; "+
+					"host pattern expands to %d host values; only one expected",
+				len(expandedHost),
+			)
+			os.Exit(1)
+
+		case len(expandedHost[0].Expanded) == 0:
+			log.Error().Msg(
+				"error expanding given host value to IP Address")
+			os.Exit(1)
+
+		case len(expandedHost[0].Expanded) > 1:
+
+			ipAddrs := zerolog.Arr()
+			for _, ip := range expandedHost[0].Expanded {
+				ipAddrs.Str(ip)
+			}
+
+			log.Warn().
+				Int("num_ip_addresses", len(expandedHost[0].Expanded)).
+				Array("ip_addresses", ipAddrs).
+				Msg("Multiple IP Addresses resolved from given host pattern")
+			log.Warn().Msg("Using first IP Address, ignoring others")
+
+		}
+
+		// Grab first IP Address from the resolved collection.
+		ipAddr := expandedHost[0].Expanded[0]
+
+		var hostVal string
+		switch {
+		case expandedHost[0].Resolved:
+			hostVal = expandedHost[0].Given
+			certChainSource = fmt.Sprintf(
+				"service running on %s (%s) at port %d",
+				hostVal,
+				ipAddr,
+				cfg.Port,
+			)
+		default:
+			certChainSource = fmt.Sprintf(
+				"service running on %s at port %d",
+				ipAddr,
+				cfg.Port,
+			)
+		}
+
 		var certFetchErr error
-		certChain, certFetchErr = netutils.GetCerts(cfg.Server, cfg.Port, cfg.Timeout(), log)
+		certChain, certFetchErr = netutils.GetCerts(
+			// NOTE: This is a potentially empty string depending on whether
+			// host pattern was a resolvable name/FQDN.
+			hostVal,
+
+			ipAddr,
+			cfg.Port,
+			cfg.Timeout(),
+			log,
+		)
 		if certFetchErr != nil {
 			log.Error().Err(certFetchErr).Msg(
 				"error fetching certificates chain")
 			os.Exit(1)
 		}
-
-		certChainSource = fmt.Sprintf(
-			"service running on %s at port %d",
-			cfg.Server,
-			cfg.Port,
-		)
 
 	}
 
@@ -147,10 +213,7 @@ func main() {
 
 			// verify leaf certificate is valid for the provided server FQDN
 			if err := certChain[0].VerifyHostname(hostnameValueToUse); err != nil {
-				log.Warn().Err(err).Msgf(
-					"provided hostname %q does not match server certificate",
-					hostnameValueToUse,
-				)
+				fmt.Printf("- WARNING: Provided hostname %q does not match server certificate: %v\n", hostnameValueToUse, err)
 			} else {
 				fmt.Println("- OK: Provided hostname matches discovered certificate")
 			}
