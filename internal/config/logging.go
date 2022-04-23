@@ -102,8 +102,10 @@ func (c *Config) setupLogging(appType AppType) error {
 	// application or Nagios plugin to cover unique details.
 	switch {
 	case appType.Inspecter:
-		// CLI app logging goes to stdout
-		c.Log = zerolog.New(os.Stdout).With().Timestamp().Caller().
+		// CLI app logging uses ConsoleWriter to generate human-friendly,
+		// colorized output to stdout.
+		consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}
+		c.Log = zerolog.New(consoleWriter).With().Timestamp().Caller().
 			Str("version", Version()).
 			Str("logging_level", c.LoggingLevel).
 			Str("app_type", appTypeInspecter).
@@ -116,9 +118,11 @@ func (c *Config) setupLogging(appType AppType) error {
 			Logger()
 
 	case appType.Plugin:
-		// plugin logging goes to stderr to prevent mixing in with stdout output
-		// intended for the Nagios console
-		c.Log = zerolog.New(os.Stderr).With().Timestamp().Caller().
+		// Plugin logging uses ConsoleWriter to generate human-friendly,
+		// colorized output to stderr. Log output is sent to stderr to prevent
+		// mixing in with stdout output intended for the Nagios console.
+		consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr}
+		c.Log = zerolog.New(consoleWriter).With().Timestamp().Caller().
 			Str("version", Version()).
 			Str("logging_level", c.LoggingLevel).
 			Str("app_type", appTypePlugin).
@@ -131,14 +135,16 @@ func (c *Config) setupLogging(appType AppType) error {
 			Logger()
 
 	case appType.Scanner:
-		// CLI app logging goes to stdout
+		// CLI app logging uses ConsoleWriter to generate human-friendly,
+		// colorized output to stdout.
 
 		ports := zerolog.Arr()
 		for _, port := range c.portsList {
 			ports.Int(port)
 		}
 
-		c.Log = zerolog.New(os.Stdout).With().Timestamp().Caller().
+		consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}
+		c.Log = zerolog.New(consoleWriter).With().Timestamp().Caller().
 			Str("version", Version()).
 			Str("logging_level", c.LoggingLevel).
 			Str("app_type", appTypeScanner).
