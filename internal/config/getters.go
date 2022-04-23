@@ -7,7 +7,11 @@
 
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/atc0005/check-cert/internal/netutils"
+)
 
 // Timeout converts the user-specified connection timeout value in
 // seconds to an appropriate time duration value for use with setting
@@ -43,10 +47,10 @@ func (c Config) CertPorts() []int {
 // Hosts returns a list of individual IP Addresses expanded from any
 // user-specified IP Addresses (single or ranges) and hostnames or FQDNs that
 // passed name resolution checks.
-func (c Config) Hosts() []string {
-	if c.hosts.expanded != nil {
-		return c.hosts.expanded
+func (c Config) Hosts() []netutils.HostPattern {
+	if c.hosts.hostValues != nil {
+		return c.hosts.hostValues
 	}
 
-	return []string{}
+	return []netutils.HostPattern{}
 }

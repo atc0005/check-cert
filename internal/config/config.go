@@ -64,8 +64,10 @@ type multiValueIntFlag []int
 // interface in order to accept multiple IP Addresses, hostnames or FQDNs for
 // some of our flags.
 type multiValueHostsFlag struct {
-	given    []string
-	expanded []string
+	// hostValues represents an original specified host pattern provided by
+	// the caller and the collection of IP Addresses expanded from the
+	// pattern.
+	hostValues []netutils.HostPattern
 }
 
 // String returns a comma separated string consisting of all slice elements.
@@ -96,8 +98,8 @@ func (mvi *multiValueIntFlag) String() string {
 
 // String returns a comma separated string consisting of all slice elements.
 // This implementation of the Stringer interface intentionally references the
-// slice of user-specified values while using the getter method to retrieve
-// the final list of IP Addresses.
+// slice of user-specified values. A separate getter method is used to
+// retrieve the resolved host values.
 func (mvh *multiValueHostsFlag) String() string {
 
 	switch {
@@ -108,17 +110,23 @@ func (mvh *multiValueHostsFlag) String() string {
 	case mvh == nil:
 		return ""
 
-	case len(mvh.given) > mvhPrintLimit:
+	case len(mvh.hostValues) > mvhPrintLimit:
 		return fmt.Sprintf(
-			"Provided IPs list has %d IPs (skipping printing of large list)",
-			len(mvh.given),
+			"Provided host list has %d entries (skipping printing of large list)",
+			len(mvh.hostValues),
 		)
 
 	default:
+
+		givenHostPatterns := make([]string, len(mvh.hostValues))
+		for i := range mvh.hostValues {
+			givenHostPatterns[i] = mvh.hostValues[i].Given
+		}
+
 		return fmt.Sprintf(
-			"Provided IPs list (%d IPs): %v",
-			len(mvh.given),
-			strings.Join(mvh.given, ", "),
+			"Provided hosts list (%d entries): %v",
+			len(mvh.hostValues),
+			strings.Join(givenHostPatterns, ", "),
 		)
 
 	}
@@ -134,17 +142,13 @@ func (mvh *multiValueHostsFlag) Set(value string) error {
 		items[index] = strings.TrimSpace(item)
 	}
 
-	// add them to the collection of user-specified IP Address (single and
-	// range) values.
-	mvh.given = append(mvh.given, items...)
-
-	// convert here
-	for i := range mvh.given {
-		ips, err := netutils.ExpandIPAddress(mvh.given[i])
+	// convert given host patterns
+	for _, hostPattern := range items {
+		hosts, err := netutils.ExpandHost(hostPattern)
 		if err != nil {
 			return err
 		}
-		mvh.expanded = append(mvh.expanded, ips...)
+		mvh.hostValues = append(mvh.hostValues, hosts...)
 	}
 
 	return nil

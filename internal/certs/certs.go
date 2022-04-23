@@ -40,8 +40,19 @@ import (
 // DiscoveredCertChain is a poorly named type that represents the certificate
 // chain found on a specific host along with that host's IP/Name and port.
 type DiscoveredCertChain struct {
-	Host  string
-	Port  int
+	// Name is the hostname or FQDN of a system where a certificate chain was
+	// retrieved. Depending on how scan targets were specified, this value may
+	// not be populated.
+	Name string
+
+	// IPAddress is the IP Address where a certificate chain was discovered.
+	// This value should always be populated.
+	IPAddress string
+
+	// Port is the TCP port where a certificate chain was retrieved.
+	Port int
+
+	// Certs is the certificate chain associated with a host.
 	Certs []*x509.Certificate
 }
 

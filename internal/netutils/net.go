@@ -93,17 +93,21 @@ func (rs PortCheckResult) Summary() string {
 	return fmt.Sprintf("%v: %v", rs.Port, rs.Open)
 }
 
-// CheckPort checks whether a specified TCP port for a given host is open. The
-// given host must be either a valid, resolvable hostname or a valid IP
-// Address. Any errors encountered are returned along with the port status.
+// CheckPort checks whether a specified TCP port for a given host is open.
+//
+// The given host value must provide a valid IP Address and optionally a
+// resolvable hostname. If provided, the hostname is recorded to enable SNI
+// support when retrieving certificates later.
+//
+// Any errors encountered are returned along with the port status.
 //
 // NOTE: This function explicitly returns real values for host & port instead
 // of zero values so that they may be used in summary output by callers.
-func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
+func CheckPort(host PortCheckTarget, port int, timeout time.Duration) PortCheckResult {
 
-	if strings.TrimSpace(host) == "" {
+	if strings.TrimSpace(host.IPAddress) == "" {
 		return PortCheckResult{
-			Host:      host,
+			Host:      host.Name,
 			IPAddress: net.IPAddr{IP: nil},
 			Port:      port,
 			Open:      false,
@@ -117,15 +121,13 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 	// this "severity" at the call site to determine whether to fail the scan
 	// or keep going with a WARNING status for the specific host.
 
-	ipAddress := net.ParseIP(host)
-
-	serverConnStr := net.JoinHostPort(host, strconv.Itoa(port))
+	serverConnStr := net.JoinHostPort(host.IPAddress, strconv.Itoa(port))
 	conn, connErr := net.DialTimeout("tcp", serverConnStr, timeout)
 	if connErr != nil {
 		// fmt.Printf("connErr: %v\n", connErr)
 		return PortCheckResult{
-			Host:      host,
-			IPAddress: net.IPAddr{IP: ipAddress},
+			Host:      host.Name,
+			IPAddress: net.IPAddr{IP: net.ParseIP(host.IPAddress)},
 			Port:      port,
 			Open:      false,
 			Err:       connErr,
@@ -137,8 +139,8 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 	disableKeepAliveErr := conn.(*net.TCPConn).SetKeepAlive(false)
 	if disableKeepAliveErr != nil {
 		return PortCheckResult{
-			Host:      host,
-			IPAddress: net.IPAddr{IP: ipAddress},
+			Host:      host.Name,
+			IPAddress: net.IPAddr{IP: net.ParseIP(host.IPAddress)},
 			Port:      port,
 			Open:      true,
 			Err:       disableKeepAliveErr,
@@ -149,8 +151,8 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 	if closeErr != nil {
 		// fmt.Println("connection close error")
 		return PortCheckResult{
-			Host:      host,
-			IPAddress: net.IPAddr{IP: ipAddress},
+			Host:      host.Name,
+			IPAddress: net.IPAddr{IP: net.ParseIP(host.IPAddress)},
 			Port:      port,
 			Open:      true,
 			Err:       closeErr,
@@ -158,8 +160,8 @@ func CheckPort(host string, port int, timeout time.Duration) PortCheckResult {
 	}
 
 	result := PortCheckResult{
-		Host:      host,
-		IPAddress: net.IPAddr{IP: ipAddress},
+		Host:      host.Name,
+		IPAddress: net.IPAddr{IP: net.ParseIP(host.IPAddress)},
 		Port:      port,
 		Open:      true,
 		Err:       nil,
@@ -307,17 +309,18 @@ func isIPv4AddrCandidate(s string) bool {
 	return err == nil
 }
 
-// ExpandIPAddress accepts a string value representing either an individual IP
-// Address, a CIDR IP range or a partial (dash-separated) range (e.g.,
-// 192.168.2.10-15).
+// ExpandHost accepts a host pattern as a string value that represents
+// either an individual IP Address, a CIDR IP range or a partial
+// (dash-separated) range (e.g., 192.168.2.10-15) and returns a collection of
+// Host values. Each Host value represents the original host pattern and a
+// collection of IP Addresses expanded from the original pattern.
 //
-// If a hostname is provided an attempt is made to resolve it. If it is
-// successfully resolved, the hostname is added to the results collection
-// as-is and returned. If it cannot be resolved, an error is returned
-// indicating this.
-func ExpandIPAddress(hostPattern string) ([]string, error) {
+// An error is returned if an invalid host pattern is provided (e.g., invalid
+// IP Address range) or if it fails name resolution (e.g., invalid hostname or
+// FQDN).
+func ExpandHost(hostPattern string) ([]HostPattern, error) {
 
-	expandedIPandHostValues := make([]string, 0, 1024)
+	expandedIPandHostValues := make([]HostPattern, 0, 1024)
 
 	switch {
 
@@ -330,7 +333,11 @@ func ExpandIPAddress(hostPattern string) ([]string, error) {
 				return nil, fmt.Errorf("error parsing CIDR range: %s", err)
 			}
 			// fmt.Printf("%q is a CIDR rangeof %d IPs\n", s, count)
-			expandedIPandHostValues = append(expandedIPandHostValues, ipAddrs...)
+			expandedIPandHostValues = append(expandedIPandHostValues, HostPattern{
+				Given:    hostPattern,
+				Expanded: ipAddrs,
+			},
+			)
 
 			return expandedIPandHostValues, nil
 		}
@@ -341,7 +348,11 @@ func ExpandIPAddress(hostPattern string) ([]string, error) {
 	case net.ParseIP(hostPattern) != nil:
 
 		// fmt.Printf("%q is an IP Address\n", s)
-		expandedIPandHostValues = append(expandedIPandHostValues, hostPattern)
+		expandedIPandHostValues = append(expandedIPandHostValues, HostPattern{
+			Given:    hostPattern,
+			Expanded: []string{hostPattern},
+		},
+		)
 
 		return expandedIPandHostValues, nil
 
@@ -534,7 +545,12 @@ func ExpandIPAddress(hostPattern string) ([]string, error) {
 							)
 						}
 
-						expandedIPandHostValues = append(expandedIPandHostValues, ipAddrString)
+						expandedIPandHostValues = append(
+							expandedIPandHostValues, HostPattern{
+								Given:    hostPattern,
+								Expanded: []string{ipAddrString},
+							},
+						)
 					}
 				}
 			}
@@ -547,10 +563,10 @@ func ExpandIPAddress(hostPattern string) ([]string, error) {
 	default:
 
 		// Attempt resolution of host pattern/string to IP Address. If
-		// successful, return the host name pattern as-is so that it can be
-		// used to provide SNI support for valid cert retrieval (instead of
-		// just the default cert on a port).
-		_, lookupErr := net.LookupHost(hostPattern)
+		// successful, indicate as much. The given host pattern can be used to
+		// provide SNI support for valid cert retrieval (instead of just the
+		// default cert on a port).
+		ipAddrs, lookupErr := net.LookupHost(hostPattern)
 		if lookupErr != nil {
 			return nil, fmt.Errorf(
 				"%q invalid; %w: %s",
@@ -560,9 +576,37 @@ func ExpandIPAddress(hostPattern string) ([]string, error) {
 			)
 		}
 
-		expandedIPandHostValues = append(expandedIPandHostValues, hostPattern)
+		expandedIPandHostValues = append(
+			expandedIPandHostValues, HostPattern{
+				Given:    hostPattern,
+				Expanded: ipAddrs,
+				Resolved: true,
+			},
+		)
 
 		return expandedIPandHostValues, nil
 
 	}
+}
+
+// DedupeHosts accepts a collection of given Host values and returns an
+// unordered, but deduped/unique collection of given Host values.
+//
+// NOTE: These Host values have yet to be resolved, so specifying a FQDN that
+// resolves to a single IP and the same IP Address as a second given Host
+// value are treated as two separate given Host values. This allows a user to
+// check a default certificate chain alongside certificate chains for specific
+// FQDNs.
+func DedupeHosts(hosts []HostPattern) []HostPattern {
+	uniqHostsIdx := make(map[string]HostPattern)
+	uniqHosts := make([]HostPattern, 0, len(hosts))
+
+	for _, host := range hosts {
+		if val, inMap := uniqHostsIdx[host.Given]; !inMap {
+			uniqHosts = append(uniqHosts, val)
+		}
+		uniqHostsIdx[host.Given] = host
+	}
+
+	return uniqHosts
 }

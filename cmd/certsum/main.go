@@ -19,7 +19,6 @@ import (
 	"github.com/atc0005/check-cert/internal/certs"
 	"github.com/atc0005/check-cert/internal/config"
 	"github.com/atc0005/check-cert/internal/netutils"
-	"github.com/atc0005/check-cert/internal/textutils"
 )
 
 func main() {
@@ -52,7 +51,7 @@ func main() {
 	log.Debug().Msgf("Host values before deduping: %v", expandedHostsList)
 	log.Debug().Msgf("Total host values before deduping: %d", len(expandedHostsList))
 
-	expandedHostsList = textutils.DedupeList(expandedHostsList)
+	expandedHostsList = netutils.DedupeHosts(expandedHostsList)
 	log.Debug().Msgf("Total host values after deduping: %d", len(expandedHostsList))
 	log.Debug().Msgf("Host values after deduping: %v", expandedHostsList)
 
