@@ -107,11 +107,11 @@ func main() {
 				ipAddrs.Str(ip)
 			}
 
-			log.Warn().
+			log.Debug().
 				Int("num_ip_addresses", len(expandedHost[0].Expanded)).
 				Array("ip_addresses", ipAddrs).
 				Msg("Multiple IP Addresses resolved from given host pattern")
-			log.Warn().Msg("Using first IP Address, ignoring others")
+			log.Debug().Msg("Using first IP Address, ignoring others")
 
 		}
 
