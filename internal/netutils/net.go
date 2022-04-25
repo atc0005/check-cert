@@ -322,8 +322,9 @@ func octetWithinBounds(i int) bool {
 // to an integer after any octet separators and partial range dash specifiers
 // are removed.
 func isIPv4AddrCandidate(s string) bool {
+	s = strings.ReplaceAll(s, ".", "")
+	s = strings.ReplaceAll(s, "-", "")
 
-	s = strings.Trim(s, ".-")
 	_, err := strconv.Atoi(s)
 
 	return err == nil
