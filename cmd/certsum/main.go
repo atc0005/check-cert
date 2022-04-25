@@ -124,7 +124,14 @@ func main() {
 	)
 
 	fmt.Printf(
-		"Beginning cert scan against %d unique hosts using ports: %v\n",
+		"Beginning cert scan against %d IPs expanded from %d unique host patterns using ports: %v\n",
+		func() int {
+			var targetIPs int
+			for _, host := range expandedHostsList {
+				targetIPs += len(host.Expanded)
+			}
+			return targetIPs
+		}(),
 		len(expandedHostsList),
 		cfg.CertPorts(),
 	)

@@ -622,8 +622,8 @@ func DedupeHosts(hosts []HostPattern) []HostPattern {
 	uniqHosts := make([]HostPattern, 0, len(hosts))
 
 	for _, host := range hosts {
-		if val, inMap := uniqHostsIdx[host.Given]; !inMap {
-			uniqHosts = append(uniqHosts, val)
+		if _, inMap := uniqHostsIdx[host.Given]; !inMap {
+			uniqHosts = append(uniqHosts, host)
 		}
 		uniqHostsIdx[host.Given] = host
 	}
