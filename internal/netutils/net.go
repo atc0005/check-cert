@@ -330,18 +330,16 @@ func isIPv4AddrCandidate(s string) bool {
 	return err == nil
 }
 
-// ExpandHost accepts a host pattern as a string value that represents
-// either an individual IP Address, a CIDR IP range or a partial
-// (dash-separated) range (e.g., 192.168.2.10-15) and returns a collection of
-// Host values. Each Host value represents the original host pattern and a
-// collection of IP Addresses expanded from the original pattern.
+// ExpandHost accepts a host pattern as a string value that represents either
+// an individual IP Address, a CIDR IP range or a partial (dash-separated)
+// range (e.g., 192.168.2.10-15) and returns a HostPattern value. The
+// HostPattern value represents the original host pattern and a collection of
+// IP Addresses expanded from the original pattern.
 //
 // An error is returned if an invalid host pattern is provided (e.g., invalid
 // IP Address range) or if it fails name resolution (e.g., invalid hostname or
 // FQDN).
-func ExpandHost(hostPattern string) ([]HostPattern, error) {
-
-	expandedIPandHostValues := make([]HostPattern, 0, 1024)
+func ExpandHost(hostPattern string) (HostPattern, error) {
 
 	switch {
 
@@ -351,31 +349,27 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 		if IsCIDR(hostPattern) {
 			ipAddrs, _, err := CIDRHosts(hostPattern)
 			if err != nil {
-				return nil, fmt.Errorf("error parsing CIDR range: %s", err)
+				return HostPattern{}, fmt.Errorf("error parsing CIDR range: %s", err)
 			}
 			// fmt.Printf("%q is a CIDR rangeof %d IPs\n", s, count)
-			expandedIPandHostValues = append(expandedIPandHostValues, HostPattern{
+
+			return HostPattern{
 				Given:    hostPattern,
 				Expanded: ipAddrs,
-			},
-			)
-
-			return expandedIPandHostValues, nil
+				Range:    true,
+			}, nil
 		}
 
-		return nil, fmt.Errorf("%q contains slash, but fails CIDR parsing", hostPattern)
+		return HostPattern{}, fmt.Errorf("%q contains slash, but fails CIDR parsing", hostPattern)
 
 	// valid (presumably single) IPv4 or IPv6 address
 	case net.ParseIP(hostPattern) != nil:
 
 		// fmt.Printf("%q is an IP Address\n", s)
-		expandedIPandHostValues = append(expandedIPandHostValues, HostPattern{
+		return HostPattern{
 			Given:    hostPattern,
 			Expanded: []string{hostPattern},
-		},
-		)
-
-		return expandedIPandHostValues, nil
+		}, nil
 
 	// no CIDR mask, not a single IP Address (earlier check would have
 	// triggered), and so potentially a partial range of IPv4 Addresses
@@ -384,7 +378,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 		octets := strings.Split(hostPattern, ".")
 
 		if len(octets) != 4 {
-			return nil, fmt.Errorf(
+			return HostPattern{}, fmt.Errorf(
 				"%q (%d octets) not IPv4 Address; does not contain 4 octets: %w",
 				hostPattern,
 				len(octets),
@@ -400,7 +394,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 
 		// check for dash character used to specify partial IP range
 		if !strings.Contains(hostPattern, "-") {
-			return nil, fmt.Errorf(
+			return HostPattern{}, fmt.Errorf(
 				"%q not IP Address range; does not contain dash character: %w",
 				hostPattern,
 				ErrUnrecognizedIPRange,
@@ -424,7 +418,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 
 				num, err := strconv.Atoi(halves[0])
 				if err != nil {
-					return nil, fmt.Errorf(
+					return HostPattern{}, fmt.Errorf(
 						"octet %q of IP pattern %q invalid; "+
 							"non-numeric values present: %w",
 						octets[octIdx],
@@ -434,7 +428,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 				}
 
 				if !octetWithinBounds(num) {
-					return nil, fmt.Errorf(
+					return HostPattern{}, fmt.Errorf(
 						"octet %q of IP pattern %q outside lower (0), upper (255) bounds: %w",
 						octets[octIdx],
 						hostPattern,
@@ -452,7 +446,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 
 				rangeStart, err := strconv.Atoi(halves[0])
 				if err != nil {
-					return nil, fmt.Errorf(
+					return HostPattern{}, fmt.Errorf(
 						"octet %q of IP pattern %q invalid; "+
 							"non-numeric values present: %w",
 						octets[octIdx],
@@ -463,7 +457,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 
 				rangeEnd, err := strconv.Atoi(halves[1])
 				if err != nil {
-					return nil, fmt.Errorf(
+					return HostPattern{}, fmt.Errorf(
 						"octet %q of IP pattern %q invalid; "+
 							"non-numeric values present: %w",
 						octets[octIdx],
@@ -474,7 +468,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 
 				switch {
 				case rangeStart > rangeEnd:
-					return nil, fmt.Errorf(
+					return HostPattern{}, fmt.Errorf(
 						"%q is invalid octet range; "+
 							"given start value %d greater than end value %d: %w",
 						octets[octIdx],
@@ -484,7 +478,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 					)
 
 				case rangeStart == rangeEnd:
-					return nil, fmt.Errorf(
+					return HostPattern{}, fmt.Errorf(
 						"%q is invalid octet range; "+
 							"given start value %d equal to end value %d: %w",
 						octets[octIdx],
@@ -496,7 +490,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 
 				for i := rangeStart; i <= rangeEnd; i++ {
 					if !octetWithinBounds(i) {
-						return nil, fmt.Errorf(
+						return HostPattern{}, fmt.Errorf(
 							"octet %q of IP pattern %q outside lower (0), upper (255) bounds: %w",
 							octets[octIdx],
 							hostPattern,
@@ -513,7 +507,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 			default:
 
 				numDashes := strings.Count(octets[octIdx], "-")
-				return nil, fmt.Errorf(
+				return HostPattern{}, fmt.Errorf(
 					"%d dash separators in octet %q (%d of %d); expected one: %w",
 					numDashes,
 					octIdx,
@@ -527,7 +521,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 
 		// internal state validity check
 		if len(ipAddrOctIdx) != len(octets) {
-			return nil, fmt.Errorf(
+			return HostPattern{}, fmt.Errorf(
 				"ipAddress octet map size incorrect; got %d, wanted %d: %w",
 				len(ipAddrOctIdx),
 				len(octets),
@@ -535,9 +529,11 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 			)
 		}
 
-		// Ex IP: 192.168.5.10
-		// 192(w).168(x).5(y).10(z)
+		expandedIPAddresses := make([]string, 0, 1024)
 		for i := range ipAddrOctIdx[0] {
+			// Example IP: 192.168.5.10
+			// 192(w).168(x).5(y).10(z)
+
 			w := strconv.Itoa(ipAddrOctIdx[0][i])
 
 			for j := range ipAddrOctIdx[1] {
@@ -557,7 +553,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 						// to implement a specific error type that we can
 						// match on to determine severity.
 						if net.ParseIP(ipAddrString) == nil {
-							return nil, fmt.Errorf(
+							return HostPattern{}, fmt.Errorf(
 								"%q (from parsed range) invalid: %w",
 								ipAddrString,
 
@@ -566,18 +562,20 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 							)
 						}
 
-						expandedIPandHostValues = append(
-							expandedIPandHostValues, HostPattern{
-								Given:    hostPattern,
-								Expanded: []string{ipAddrString},
-							},
+						// Collect expanded IP Addresses for IP Address range
+						expandedIPAddresses = append(
+							expandedIPAddresses, ipAddrString,
 						)
 					}
 				}
 			}
 		}
 
-		return expandedIPandHostValues, nil
+		return HostPattern{
+			Given:    hostPattern,
+			Expanded: expandedIPAddresses,
+			Range:    true,
+		}, nil
 
 	// not a CIDR range, IP Address or partial IP Address range, so
 	// potentially a hostname or FQDN (or completely invalid)
@@ -589,7 +587,7 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 		// default cert on a port).
 		ipAddrs, lookupErr := net.LookupHost(hostPattern)
 		if lookupErr != nil {
-			return nil, fmt.Errorf(
+			return HostPattern{}, fmt.Errorf(
 				"%q invalid; %w: %s",
 				hostPattern,
 				ErrHostnameFailsNameResolution,
@@ -597,15 +595,11 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 			)
 		}
 
-		expandedIPandHostValues = append(
-			expandedIPandHostValues, HostPattern{
-				Given:    hostPattern,
-				Expanded: ipAddrs,
-				Resolved: true,
-			},
-		)
-
-		return expandedIPandHostValues, nil
+		return HostPattern{
+			Given:    hostPattern,
+			Expanded: ipAddrs,
+			Resolved: true,
+		}, nil
 
 	}
 }

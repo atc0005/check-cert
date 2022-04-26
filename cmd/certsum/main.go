@@ -98,7 +98,7 @@ func main() {
 	log.Debug().Msg("Starting portScanner")
 	go portScanner(
 		ctx,
-		cfg.Hosts(),
+		expandedHostsList,
 		cfg.CertPorts(),
 		cfg.TimeoutPortScan(),
 		portScanResultsChan,
