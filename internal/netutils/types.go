@@ -78,4 +78,8 @@ type HostPattern struct {
 	// hostname or FQDN values which successfully resolve to one or more IP
 	// Addresses.
 	Resolved bool
+
+	// Range indicates whether the given host pattern was determined to be a
+	// CIDR or partial IP Address range.
+	Range bool
 }

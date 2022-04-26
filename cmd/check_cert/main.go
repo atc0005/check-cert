@@ -150,9 +150,9 @@ func main() {
 	case cfg.Server != "":
 
 		// We should only have one expanded host value from one given host
-		// pattern (since IP ranges are not valid server flag input values).
-		// If a resolvable name is given, we may have several IP Addresses
-		// returned.
+		// pattern. If a resolvable name is given, we may have several IP
+		// Addresses returned. If a range is specified the results are
+		// unspecified.
 		expandedHost, expandErr := netutils.ExpandHost(cfg.Server)
 		switch {
 		case expandErr != nil:
@@ -172,12 +172,14 @@ func main() {
 			// further we can do
 			return
 
-		case len(expandedHost) > 1:
+		// Fail early for IP Ranges. While we could just grab the first
+		// expanded IP Address, this may be a potential source of confusion
+		// best avoided.
+		case expandedHost.Range:
 			invalidHostPatternErr := errors.New("invalid host pattern")
 			msg := fmt.Sprintf(
-				"Given host pattern invalid; "+
-					"host pattern expands to %d host values; only one expected",
-				len(expandedHost),
+				"Given host pattern invalid; " +
+					"host pattern is a CIDR or partial IP range",
 			)
 			log.Error().Err(invalidHostPatternErr).Msg(msg)
 
@@ -194,7 +196,7 @@ func main() {
 			// further we can do
 			return
 
-		case len(expandedHost[0].Expanded) == 0:
+		case len(expandedHost.Expanded) == 0:
 			expandHostErr := errors.New("host pattern expansion failed")
 			msg := "Error expanding given host value to IP Address"
 
@@ -213,15 +215,15 @@ func main() {
 			// further we can do
 			return
 
-		case len(expandedHost[0].Expanded) > 1:
+		case len(expandedHost.Expanded) > 1:
 
 			ipAddrs := zerolog.Arr()
-			for _, ip := range expandedHost[0].Expanded {
+			for _, ip := range expandedHost.Expanded {
 				ipAddrs.Str(ip)
 			}
 
 			log.Debug().
-				Int("num_ip_addresses", len(expandedHost[0].Expanded)).
+				Int("num_ip_addresses", len(expandedHost.Expanded)).
 				Array("ip_addresses", ipAddrs).
 				Msg("Multiple IP Addresses resolved from given host pattern")
 			log.Debug().Msg("Using first IP Address, ignoring others")
@@ -230,12 +232,12 @@ func main() {
 		// Grab first IP Address from the resolved collection. We'll
 		// explicitly use it for cert retrieval and note it in the report
 		// output.
-		ipAddr := expandedHost[0].Expanded[0]
+		ipAddr := expandedHost.Expanded[0]
 
 		var hostVal string
 		switch {
-		case expandedHost[0].Resolved:
-			hostVal = expandedHost[0].Given
+		case expandedHost.Resolved:
+			hostVal = expandedHost.Given
 			certChainSource = fmt.Sprintf(
 				"service running on %s (%s) at port %d",
 				hostVal,

@@ -143,12 +143,12 @@ func (mvh *multiValueHostsFlag) Set(value string) error {
 	}
 
 	// convert given host patterns
-	for _, hostPattern := range items {
-		hosts, err := netutils.ExpandHost(hostPattern)
+	for _, givenPattern := range items {
+		host, err := netutils.ExpandHost(givenPattern)
 		if err != nil {
 			return err
 		}
-		mvh.hostValues = append(mvh.hostValues, hosts...)
+		mvh.hostValues = append(mvh.hostValues, host)
 	}
 
 	return nil
