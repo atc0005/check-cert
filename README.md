@@ -64,11 +64,11 @@ submit improvements for review and potential inclusion into the project.
 
 This repo contains various tools used to monitor/validate certificates.
 
-| Tool Name     | Status | Description                                                                                   |
-| ------------- | ------ | --------------------------------------------------------------------------------------------- |
-| `check_certs` | Beta   | Nagios plugin used to monitor certificate chains.                                             |
-| `lscert`      | Beta   | Small CLI app used to generate a summary of certificate metadata and expiration status.       |
-| `certsum`     | Alpha  | CLI app used to scan one or more given CIDR IP ranges for certs and provide a summary report. |
+| Tool Name     | Description                                                                                   |
+| ------------- | --------------------------------------------------------------------------------------------- |
+| `check_certs` | Nagios plugin used to monitor certificate chains.                                             |
+| `lscert`      | Small CLI app used to generate a summary of certificate metadata and expiration status.       |
+| `certsum`     | CLI app used to scan one or more given CIDR IP ranges for certs and provide a summary report. |
 
 ### `check_certs`
 
@@ -107,18 +107,19 @@ Certificate metadata can be retrieved from:
 
 If specifying a host via IP Address, a warning will be emitted unless the IP
 Address is in the SANs list for the certificate. This warning can be ignored
-for the purposes of reviewing the cert details, Provide a valid FQDN as the
+for the purposes of reviewing the cert details. Provide a valid FQDN as the
 server name or the "dns name" if you wish to apply hostname validation.
 
 ### `certsum`
 
-`certsum` is an IP range cert scanner prototype. This tool is currently of
-"alpha" level quality; many of the exposed flags, help text and summary output
-are subject to change significantly in later releases.
+`certsum` is a cert scanner prototype. This tool is currently of "beta" level
+quality; many of the exposed flags, help text and summary output are subject
+to change significantly in later releases.
 
-This tool is intended for scanning one or more given IP ranges in order to
-generate a report for discovered certificates, but may be used to scan as few
-as one target.
+This tool is intended for scanning one or more given IP ranges or collection
+of name/FQDN values in order to generate a report for discovered certificates.
+While intended for mass discovery this tool may be used to scan as few as one
+target.
 
 Performance is likely to be acceptable as-is for smaller IP ranges, but may be
 adjusted as needed using the rate limit tuning flag (see the [configuration
@@ -139,6 +140,7 @@ IP Addresses may be specified as comma-separated values:
   - using partial implementation of octet range addressing (e.g.,
     192.168.2.10-15)
 - Fully-qualified domain names (FQDNs)
+  - needed if retrieving a non-default certificate chain
 - Hostnames (**fragile**)
   - this is highly dependent on your DNS configuration, particularly any
     configured search list (aka, `DNS Suffix Search List` in Windows
@@ -177,7 +179,7 @@ of detail in the provided output.
   - if `SKIPSANSCHECKS` keyword is supplied as the value no SANs entry checks
     will be performed; this keyword is useful for defining a shared Nagios
     check command and service check where SANs list validation may not be
-    desired for some certificates (e.g., those with a very long list of
+    desired for some certificate chains (e.g., those with a very long list of
     entries)
 
 - Optional support for skipping hostname verification for a certificate when
@@ -196,7 +198,9 @@ of detail in the provided output.
   - thanks to the `grantae/certinfo` package
 
 - Optional, leveled logging using `rs/zerolog` package
-  - JSON-format output (to `stderr`)
+  - [`logfmt`][logfmt] format output
+    - to `stderr` for `check_cert`
+    - to `stdout` for `lscert` & `certsum`
   - choice of `disabled`, `panic`, `fatal`, `error`, `warn`, `info` (the
     default), `debug` or `trace`.
 
@@ -417,7 +421,7 @@ NOTE: Use the `--verbose` flag to expose further details.
 
 ```ShellSession
 $ ./check_cert --server www.google.com --port 443 --age-critical 30 --age-warning 50
-OK: leaf cert "www.google.com" expires next with 52d 16h remaining (until 2021-09-20 04:12:57 +0000 UTC) [EXPIRED: 0, EXPIRING: 0, OK: 3]
+OK: leaf cert "www.google.com" expires next with 69d 23h remaining (until 2022-07-04 09:43:40 +0000 UTC) [EXPIRED: 0, EXPIRING: 0, OK: 3]
 
 **ERRORS**
 
@@ -425,19 +429,21 @@ OK: leaf cert "www.google.com" expires next with 52d 16h remaining (until 2021-0
 
 **THRESHOLDS**
 
-* CRITICAL: Expires before 2021-08-28 11:55:42 +0000 UTC (30 days)
-* WARNING: Expires before 2021-09-17 11:55:42 +0000 UTC (50 days)
+* CRITICAL: Expires before 2022-05-25 10:28:38 +0000 UTC (30 days)
+* WARNING: Expires before 2022-06-14 10:28:38 +0000 UTC (50 days)
 
 **DETAILED INFO**
+
+3 certs found for service running on www.google.com (74.125.136.147) at port 443
 
 Certificate 1 of 3 (leaf):
         Name: CN=www.google.com
         SANs entries: [www.google.com]
         Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
-        Serial: 12:D4:D6:BA:D3:7B:1D:D1:0A:00:00:00:00:EB:61:08
-        Issued On: 2021-06-28 04:12:58 +0000 UTC
-        Expiration: 2021-09-20 04:12:57 +0000 UTC
-        Status: [OK] 52d 16h remaining
+        Serial: 50:69:89:19:16:59:07:17:0A:54:D0:54:F5:95:1D:3B
+        Issued On: 2022-04-11 09:43:41 +0000 UTC
+        Expiration: 2022-07-04 09:43:40 +0000 UTC
+        Status: [OK] 69d 23h remaining
 
 Certificate 2 of 3 (intermediate):
         Name: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
@@ -446,7 +452,7 @@ Certificate 2 of 3 (intermediate):
         Serial: 02:03:BC:53:59:6B:34:C7:18:F5:01:50:66
         Issued On: 2020-08-13 00:00:42 +0000 UTC
         Expiration: 2027-09-30 00:00:42 +0000 UTC
-        Status: [OK] 2253d 12h remaining
+        Status: [OK] 1983d 13h remaining
 
 Certificate 3 of 3 (intermediate):
         Name: CN=GTS Root R1,O=Google Trust Services LLC,C=US
@@ -455,7 +461,7 @@ Certificate 3 of 3 (intermediate):
         Serial: 77:BD:0D:6C:DB:36:F9:1A:EA:21:0F:C4:F0:58:D3:0D
         Issued On: 2020-06-19 00:00:42 +0000 UTC
         Expiration: 2028-01-28 00:00:42 +0000 UTC
-        Status: [OK] 2373d 12h remaining
+        Status: [OK] 2103d 13h remaining
 ```
 
 See the `WARNING` example output for additional details.
@@ -465,15 +471,15 @@ See the `WARNING` example output for additional details.
 Here we do the same thing again, but using the expiration date values returned
 earlier as a starting point, we intentionally move the threshold values in
 order to trigger a `WARNING` state for the leaf certificate: if the leaf
-certificate is good for 52 days and 16 hours more, we indicate that warnings
-that should trigger once the cert has fewer than 53 days left.
+certificate is good for 69 days and 23 hours more, we indicate that warnings
+that should trigger once the cert has fewer than 70 days left.
 
 NOTE: Use the `--verbose` flag to expose further details.
 
 ```ShellSession
-$ ./check_c./check_cert --server www.google.com --port 443 --age-critical 30 --age-warning 53
-{"level":"error","version":"check-cert v0.4.2-6-g934c303 (https://github.com/atc0005/check-cert)","logging_level":"info","app_type":"plugin","cert_check_timeout":"10s","age_warning":53,"age_critical":30,"expected_sans_entries":"","server":"www.google.com","port":443,"error":"1 certificates expired or expiring","expired_certs":0,"expiring_certs":1,"time":"2021-07-29T06:57:11-05:00","caller":"github.com/atc0005/check-cert/cmd/check_cert/main.go:241","message":"expired or expiring certs present in chain"}
-WARNING: leaf cert "www.google.com" expires next with 52d 16h remaining (until 2021-09-20 04:12:57 +0000 UTC) [EXPIRED: 0, EXPIRING: 1, OK: 2]
+$ ./check_cert --server www.google.com --port 443 --age-critical 30 --age-warning 70
+5:29AM ERR cmd/check_cert/main.go:516 > expired or expiring certs present in chain error="1 certificates expired or expiring" age_critical=30 age_warning=70 app_type=plugin cert_check_timeout=10s expected_sans_entries= expired_certs=0 expiring_certs=1 filename= logging_level=info port=443 server=www.google.com version="check-cert x.y.z (https://github.com/atc0005/check-cert)"
+WARNING: leaf cert "www.google.com" expires next with 69d 23h remaining (until 2022-07-04 09:43:40 +0000 UTC) [EXPIRED: 0, EXPIRING: 1, OK: 2]
 
 **ERRORS**
 
@@ -481,19 +487,21 @@ WARNING: leaf cert "www.google.com" expires next with 52d 16h remaining (until 2
 
 **THRESHOLDS**
 
-* CRITICAL: Expires before 2021-08-28 11:57:11 +0000 UTC (30 days)
-* WARNING: Expires before 2021-09-20 11:57:11 +0000 UTC (53 days)
+* CRITICAL: Expires before 2022-05-25 10:29:46 +0000 UTC (30 days)
+* WARNING: Expires before 2022-07-04 10:29:46 +0000 UTC (70 days)
 
 **DETAILED INFO**
+
+3 certs found for service running on www.google.com (74.125.136.147) at port 443
 
 Certificate 1 of 3 (leaf):
         Name: CN=www.google.com
         SANs entries: [www.google.com]
         Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
-        Serial: 12:D4:D6:BA:D3:7B:1D:D1:0A:00:00:00:00:EB:61:08
-        Issued On: 2021-06-28 04:12:58 +0000 UTC
-        Expiration: 2021-09-20 04:12:57 +0000 UTC
-        Status: [WARNING] 52d 16h remaining
+        Serial: 50:69:89:19:16:59:07:17:0A:54:D0:54:F5:95:1D:3B
+        Issued On: 2022-04-11 09:43:41 +0000 UTC
+        Expiration: 2022-07-04 09:43:40 +0000 UTC
+        Status: [WARNING] 69d 23h remaining
 
 Certificate 2 of 3 (intermediate):
         Name: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
@@ -502,7 +510,7 @@ Certificate 2 of 3 (intermediate):
         Serial: 02:03:BC:53:59:6B:34:C7:18:F5:01:50:66
         Issued On: 2020-08-13 00:00:42 +0000 UTC
         Expiration: 2027-09-30 00:00:42 +0000 UTC
-        Status: [OK] 2253d 12h remaining
+        Status: [OK] 1983d 13h remaining
 
 Certificate 3 of 3 (intermediate):
         Name: CN=GTS Root R1,O=Google Trust Services LLC,C=US
@@ -511,12 +519,12 @@ Certificate 3 of 3 (intermediate):
         Serial: 77:BD:0D:6C:DB:36:F9:1A:EA:21:0F:C4:F0:58:D3:0D
         Issued On: 2020-06-19 00:00:42 +0000 UTC
         Expiration: 2028-01-28 00:00:42 +0000 UTC
-        Status: [OK] 2373d 12h remaining
+        Status: [OK] 2103d 13h remaining
 ```
 
 Some items to note (in order of appearance):
 
-1. JSON output providing structured logging information
+1. `logfmt` output providing human-readable, structured logging information
    - this is sent to `stderr`
    - Nagios ignores `stderr` output from plugins; `stdout` is for Nagios,
      `stderr` is for humans
@@ -544,16 +552,16 @@ Some items to note (in order of appearance):
 As with the `WARNING` example, we use the expiration date values returned from
 the initial check as a starting point and intentionally move the threshold
 values in order to trigger a `CRITICAL` state for the leaf certificate: if the
-leaf certificate is good for 52 days and 16 hours more, we specify 90 days for
-the `WARNING` threshold and 60 days for the `CRITICAL` threshold. This
+leaf certificate is good for 69 days and 23 hours more, we specify 90 days for
+the `WARNING` threshold and 70 days for the `CRITICAL` threshold. This
 triggers a `CRITICAL` state.
 
 NOTE: Use the `--verbose` flag to expose further details.
 
 ```ShellSession
-$ ./check_c./check_cert --server www.google.com --port 443 --age-critical 60 --age-warning 90
-{"level":"error","version":"check-cert v0.4.2-6-g934c303 (https://github.com/atc0005/check-cert)","logging_level":"info","app_type":"plugin","cert_check_timeout":"10s","age_warning":90,"age_critical":60,"expected_sans_entries":"","server":"www.google.com","port":443,"error":"1 certificates expired or expiring","expired_certs":0,"expiring_certs":1,"time":"2021-07-29T06:58:35-05:00","caller":"github.com/atc0005/check-cert/cmd/check_cert/main.go:241","message":"expired or expiring certs present in chain"}
-CRITICAL: leaf cert "www.google.com" expires next with 52d 16h remaining (until 2021-09-20 04:12:57 +0000 UTC) [EXPIRED: 0, EXPIRING: 1, OK: 2]
+$ ./check_cert --server www.google.com --port 443 --age-critical 70 --age-warning 90
+5:35AM ERR cmd/check_cert/main.go:516 > expired or expiring certs present in chain error="1 certificates expired or expiring" age_critical=70 age_warning=90 app_type=plugin cert_check_timeout=10s expected_sans_entries= expired_certs=0 expiring_certs=1 filename= logging_level=info port=443 server=www.google.com version="check-cert x.y.z (https://github.com/atc0005/check-cert)"
+CRITICAL: leaf cert "www.google.com" expires next with 69d 23h remaining (until 2022-07-04 09:43:40 +0000 UTC) [EXPIRED: 0, EXPIRING: 1, OK: 2]
 
 **ERRORS**
 
@@ -561,19 +569,21 @@ CRITICAL: leaf cert "www.google.com" expires next with 52d 16h remaining (until 
 
 **THRESHOLDS**
 
-* CRITICAL: Expires before 2021-09-27 11:58:35 +0000 UTC (60 days)
-* WARNING: Expires before 2021-10-27 11:58:35 +0000 UTC (90 days)
+* CRITICAL: Expires before 2022-07-04 10:35:46 +0000 UTC (70 days)
+* WARNING: Expires before 2022-07-24 10:35:46 +0000 UTC (90 days)
 
 **DETAILED INFO**
+
+3 certs found for service running on www.google.com (74.125.136.106) at port 443
 
 Certificate 1 of 3 (leaf):
         Name: CN=www.google.com
         SANs entries: [www.google.com]
         Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
-        Serial: 12:D4:D6:BA:D3:7B:1D:D1:0A:00:00:00:00:EB:61:08
-        Issued On: 2021-06-28 04:12:58 +0000 UTC
-        Expiration: 2021-09-20 04:12:57 +0000 UTC
-        Status: [CRITICAL] 52d 16h remaining
+        Serial: 50:69:89:19:16:59:07:17:0A:54:D0:54:F5:95:1D:3B
+        Issued On: 2022-04-11 09:43:41 +0000 UTC
+        Expiration: 2022-07-04 09:43:40 +0000 UTC
+        Status: [CRITICAL] 69d 23h remaining
 
 Certificate 2 of 3 (intermediate):
         Name: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
@@ -582,7 +592,7 @@ Certificate 2 of 3 (intermediate):
         Serial: 02:03:BC:53:59:6B:34:C7:18:F5:01:50:66
         Issued On: 2020-08-13 00:00:42 +0000 UTC
         Expiration: 2027-09-30 00:00:42 +0000 UTC
-        Status: [OK] 2253d 12h remaining
+        Status: [OK] 1983d 13h remaining
 
 Certificate 3 of 3 (intermediate):
         Name: CN=GTS Root R1,O=Google Trust Services LLC,C=US
@@ -591,7 +601,7 @@ Certificate 3 of 3 (intermediate):
         Serial: 77:BD:0D:6C:DB:36:F9:1A:EA:21:0F:C4:F0:58:D3:0D
         Issued On: 2020-06-19 00:00:42 +0000 UTC
         Expiration: 2028-01-28 00:00:42 +0000 UTC
-        Status: [OK] 2373d 12h remaining
+        Status: [OK] 2103d 13h remaining
 ```
 
 ##### Expired certificate
@@ -604,8 +614,8 @@ NOTE: Use the `--verbose` flag to expose further details.
 
 ```ShellSession
 $ ./check_cert --server expired.badssl.com
-{"level":"error","version":"check-cert v0.4.2-6-g934c303 (https://github.com/atc0005/check-cert)","logging_level":"info","app_type":"plugin","cert_check_timeout":"10s","age_warning":30,"age_critical":15,"expected_sans_entries":"","server":"expired.badssl.com","port":443,"error":"2 certificates expired or expiring","expired_certs":2,"expiring_certs":0,"time":"2021-07-29T07:02:17-05:00","caller":"github.com/atc0005/check-cert/cmd/check_cert/main.go:241","message":"expired or expiring certs present in chain"}
-CRITICAL: leaf cert "*.badssl.com" expired 2299d 12h ago (on 2015-04-12 23:59:59 +0000 UTC) [EXPIRED: 2, EXPIRING: 0, OK: 1]
+5:36AM ERR cmd/check_cert/main.go:516 > expired or expiring certs present in chain error="2 certificates expired or expiring" age_critical=15 age_warning=30 app_type=plugin cert_check_timeout=10s expected_sans_entries= expired_certs=2 expiring_certs=0 filename= logging_level=info port=443 server=expired.badssl.com version="check-cert x.y.z (https://github.com/atc0005/check-cert)"
+CRITICAL: leaf cert "*.badssl.com" expired 2569d 10h ago (on 2015-04-12 23:59:59 +0000 UTC) [EXPIRED: 2, EXPIRING: 0, OK: 1]
 
 **ERRORS**
 
@@ -613,10 +623,12 @@ CRITICAL: leaf cert "*.badssl.com" expired 2299d 12h ago (on 2015-04-12 23:59:59
 
 **THRESHOLDS**
 
-* CRITICAL: Expires before 2021-08-13 12:02:16 +0000 UTC (15 days)
-* WARNING: Expires before 2021-08-28 12:02:16 +0000 UTC (30 days)
+* CRITICAL: Expires before 2022-05-10 10:36:26 +0000 UTC (15 days)
+* WARNING: Expires before 2022-05-25 10:36:26 +0000 UTC (30 days)
 
 **DETAILED INFO**
+
+3 certs found for service running on expired.badssl.com (104.154.89.105) at port 443
 
 Certificate 1 of 3 (leaf):
         Name: CN=*.badssl.com,OU=Domain Control Validated+OU=PositiveSSL Wildcard
@@ -625,7 +637,7 @@ Certificate 1 of 3 (leaf):
         Serial: 4A:E7:95:49:FA:9A:BE:3F:10:0F:17:A4:78:E1:69:09
         Issued On: 2015-04-09 00:00:00 +0000 UTC
         Expiration: 2015-04-12 23:59:59 +0000 UTC
-        Status: [EXPIRED] 2299d 12h ago
+        Status: [EXPIRED] 2569d 10h ago
 
 Certificate 2 of 3 (intermediate):
         Name: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
@@ -634,7 +646,7 @@ Certificate 2 of 3 (intermediate):
         Serial: 2B:2E:6E:EA:D9:75:36:6C:14:8A:6E:DB:A3:7C:8C:07
         Issued On: 2014-02-12 00:00:00 +0000 UTC
         Expiration: 2029-02-11 23:59:59 +0000 UTC
-        Status: [OK] 2754d 11h remaining
+        Status: [OK] 2484d 13h remaining
 
 Certificate 3 of 3 (intermediate):
         Name: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
@@ -643,7 +655,7 @@ Certificate 3 of 3 (intermediate):
         Serial: 27:66:EE:56:EB:49:F3:8E:AB:D7:70:A2:FC:84:DE:22
         Issued On: 2000-05-30 10:48:38 +0000 UTC
         Expiration: 2020-05-30 10:48:38 +0000 UTC
-        Status: [EXPIRED] 425d 1h ago
+        Status: [EXPIRED] 694d 23h ago
 ```
 
 ### `lscert` CLI tool
@@ -656,48 +668,57 @@ performed earlier using the Nagios plugin.
 NOTE: Use the `--verbose` flag to expose further details.
 
 ```ShellSession
-$ ./lscert --server www.google.com --port 443 --age-critical 50 --age-warning 55
-
-Connecting to remote server "www.google.com" at port 443
+$ ./lscert --server www.google.com --port 443 --age-critical 30 --age-warning 50
 
 
 =============================
 CERTIFICATES | AGE THRESHOLDS
 =============================
 
-- WARNING:      Expires before 2020-08-30 11:12:01 +0000 UTC (55 days)
-- CRITICAL:     Expires before 2020-08-25 11:12:01 +0000 UTC (50 days)
+- WARNING:      Expires before 2022-06-14 10:38:35 +0000 UTC (50 days)
+- CRITICAL:     Expires before 2022-05-25 10:38:35 +0000 UTC (30 days)
 
 
 ======================
 CERTIFICATES | SUMMARY
 ======================
 
-- OK: 2 certs found for service running on www.google.com at port 443
+- OK: 3 certs found for service running on www.google.com (74.125.136.147) at port 443
 - OK: Provided hostname matches discovered certificate
-- OK: leaf cert "www.google.com" expires next with 65d 3h remaining (until 2020-09-09 14:31:22 +0000 UTC)
-- OK: [EXPIRED: 0, EXPIRING: 0, OK: 2]
+- OK: leaf cert "www.google.com" expires next with 69d 23h remaining (until 2022-07-04 09:43:40 +0000 UTC)
+- OK: [EXPIRED: 0, EXPIRING: 0, OK: 3]
 
 
 ============================
 CERTIFICATES | CHAIN DETAILS
 ============================
 
-Certificate 1 of 2 (leaf):
-        Name: CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US
+Certificate 1 of 3 (leaf):
+        Name: CN=www.google.com
         SANs entries: [www.google.com]
-        Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
-        Serial: FD:6F:3E:24:98:C2:5B:1D:08:00:00:00:00:47:F0:33
-        Expiration: 2020-09-09 14:31:22 +0000 UTC
-        Status: [OK] 65d 3h remaining
+        Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
+        Serial: 50:69:89:19:16:59:07:17:0A:54:D0:54:F5:95:1D:3B
+        Issued On: 2022-04-11 09:43:41 +0000 UTC
+        Expiration: 2022-07-04 09:43:40 +0000 UTC
+        Status: [OK] 69d 23h remaining
 
-Certificate 2 of 2 (intermediate):
-        Name: CN=GTS CA 1O1,O=Google Trust Services,C=US
+Certificate 2 of 3 (intermediate):
+        Name: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
         SANs entries: []
-        Issuer: CN=GlobalSign,OU=GlobalSign Root CA - R2,O=GlobalSign
-        Serial: 01:E3:B4:9A:A1:8D:8A:A9:81:25:69:50:B8
-        Expiration: 2021-12-15 00:00:42 +0000 UTC
-        Status: [OK] 526d 12h remaining
+        Issuer: CN=GTS Root R1,O=Google Trust Services LLC,C=US
+        Serial: 02:03:BC:53:59:6B:34:C7:18:F5:01:50:66
+        Issued On: 2020-08-13 00:00:42 +0000 UTC
+        Expiration: 2027-09-30 00:00:42 +0000 UTC
+        Status: [OK] 1983d 13h remaining
+
+Certificate 3 of 3 (intermediate):
+        Name: CN=GTS Root R1,O=Google Trust Services LLC,C=US
+        SANs entries: []
+        Issuer: CN=GlobalSign Root CA,OU=Root CA,O=GlobalSign nv-sa,C=BE
+        Serial: 77:BD:0D:6C:DB:36:F9:1A:EA:21:0F:C4:F0:58:D3:0D
+        Issued On: 2020-06-19 00:00:42 +0000 UTC
+        Expiration: 2028-01-28 00:00:42 +0000 UTC
+        Status: [OK] 2103d 13h remaining
 ```
 
 #### WARNING results
@@ -705,48 +726,57 @@ Certificate 2 of 2 (intermediate):
 NOTE: Use the `--verbose` flag to expose further details.
 
 ```ShellSession
-$ ./lscert --server www.google.com --port 443 --age-critical 50 --age-warning 66
-
-Connecting to remote server "www.google.com" at port 443
+$ ./lscert --server www.google.com --port 443 --age-critical 30 --age-warning 70
 
 
 =============================
 CERTIFICATES | AGE THRESHOLDS
 =============================
 
-- WARNING:      Expires before 2020-09-10 11:13:11 +0000 UTC (66 days)
-- CRITICAL:     Expires before 2020-08-25 11:13:11 +0000 UTC (50 days)
+- WARNING:      Expires before 2022-07-04 10:40:01 +0000 UTC (70 days)
+- CRITICAL:     Expires before 2022-05-25 10:40:01 +0000 UTC (30 days)
 
 
 ======================
 CERTIFICATES | SUMMARY
 ======================
 
-- OK: 2 certs found for service running on www.google.com at port 443
+- OK: 3 certs found for service running on www.google.com (74.125.136.147) at port 443
 - OK: Provided hostname matches discovered certificate
-- WARNING: leaf cert "www.google.com" expires next with 65d 3h remaining (until 2020-09-09 14:31:22 +0000 UTC)
-- WARNING: [EXPIRED: 0, EXPIRING: 1, OK: 1]
+- WARNING: leaf cert "www.google.com" expires next with 69d 23h remaining (until 2022-07-04 09:43:40 +0000 UTC)
+- WARNING: [EXPIRED: 0, EXPIRING: 1, OK: 2]
 
 
 ============================
 CERTIFICATES | CHAIN DETAILS
 ============================
 
-Certificate 1 of 2 (leaf):
-        Name: CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US
+Certificate 1 of 3 (leaf):
+        Name: CN=www.google.com
         SANs entries: [www.google.com]
-        Issuer: CN=GTS CA 1O1,O=Google Trust Services,C=US
-        Serial: FD:6F:3E:24:98:C2:5B:1D:08:00:00:00:00:47:F0:33
-        Expiration: 2020-09-09 14:31:22 +0000 UTC
-        Status: [WARNING] 65d 3h remaining
+        Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
+        Serial: 50:69:89:19:16:59:07:17:0A:54:D0:54:F5:95:1D:3B
+        Issued On: 2022-04-11 09:43:41 +0000 UTC
+        Expiration: 2022-07-04 09:43:40 +0000 UTC
+        Status: [WARNING] 69d 23h remaining
 
-Certificate 2 of 2 (intermediate):
-        Name: CN=GTS CA 1O1,O=Google Trust Services,C=US
+Certificate 2 of 3 (intermediate):
+        Name: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
         SANs entries: []
-        Issuer: CN=GlobalSign,OU=GlobalSign Root CA - R2,O=GlobalSign
-        Serial: 01:E3:B4:9A:A1:8D:8A:A9:81:25:69:50:B8
-        Expiration: 2021-12-15 00:00:42 +0000 UTC
-        Status: [OK] 526d 12h remaining
+        Issuer: CN=GTS Root R1,O=Google Trust Services LLC,C=US
+        Serial: 02:03:BC:53:59:6B:34:C7:18:F5:01:50:66
+        Issued On: 2020-08-13 00:00:42 +0000 UTC
+        Expiration: 2027-09-30 00:00:42 +0000 UTC
+        Status: [OK] 1983d 13h remaining
+
+Certificate 3 of 3 (intermediate):
+        Name: CN=GTS Root R1,O=Google Trust Services LLC,C=US
+        SANs entries: []
+        Issuer: CN=GlobalSign Root CA,OU=Root CA,O=GlobalSign nv-sa,C=BE
+        Serial: 77:BD:0D:6C:DB:36:F9:1A:EA:21:0F:C4:F0:58:D3:0D
+        Issued On: 2020-06-19 00:00:42 +0000 UTC
+        Expiration: 2028-01-28 00:00:42 +0000 UTC
+        Status: [OK] 2103d 13h remaining
 ```
 
 In general, the differences between the `OK` and `WARNING` output for the two
@@ -768,24 +798,22 @@ NOTE: Use the `--verbose` flag to expose further details.
 ```ShellSession
 $ ./lscert --server expired.badssl.com
 
-Connecting to remote server "expired.badssl.com" at port 443
-
 
 =============================
 CERTIFICATES | AGE THRESHOLDS
 =============================
 
-- WARNING:      Expires before 2020-08-05 11:14:32 +0000 UTC (30 days)
-- CRITICAL:     Expires before 2020-07-21 11:14:32 +0000 UTC (15 days)
+- WARNING:      Expires before 2022-05-25 10:40:41 +0000 UTC (30 days)
+- CRITICAL:     Expires before 2022-05-10 10:40:41 +0000 UTC (15 days)
 
 
 ======================
 CERTIFICATES | SUMMARY
 ======================
 
-- OK: 3 certs found for service running on expired.badssl.com at port 443
+- OK: 3 certs found for service running on expired.badssl.com (104.154.89.105) at port 443
 - OK: Provided hostname matches discovered certificate
-- CRITICAL: leaf cert "*.badssl.com" expired 1911d 11h ago (on 2015-04-12 23:59:59 +0000 UTC)
+- CRITICAL: leaf cert "*.badssl.com" expired 2569d 10h ago (on 2015-04-12 23:59:59 +0000 UTC)
 - CRITICAL: [EXPIRED: 2, EXPIRING: 0, OK: 1]
 
 
@@ -798,24 +826,27 @@ Certificate 1 of 3 (leaf):
         SANs entries: [*.badssl.com badssl.com]
         Issuer: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         Serial: 4A:E7:95:49:FA:9A:BE:3F:10:0F:17:A4:78:E1:69:09
+        Issued On: 2015-04-09 00:00:00 +0000 UTC
         Expiration: 2015-04-12 23:59:59 +0000 UTC
-        Status: [EXPIRED] 1911d 11h ago
+        Status: [EXPIRED] 2569d 10h ago
 
 Certificate 2 of 3 (intermediate):
         Name: CN=COMODO RSA Domain Validation Secure Server CA,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         SANs entries: []
         Issuer: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         Serial: 2B:2E:6E:EA:D9:75:36:6C:14:8A:6E:DB:A3:7C:8C:07
+        Issued On: 2014-02-12 00:00:00 +0000 UTC
         Expiration: 2029-02-11 23:59:59 +0000 UTC
-        Status: [OK] 3142d 12h remaining
+        Status: [OK] 2484d 13h remaining
 
 Certificate 3 of 3 (intermediate):
         Name: CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
         SANs entries: []
         Issuer: CN=AddTrust External CA Root,OU=AddTrust External TTP Network,O=AddTrust AB,C=SE
         Serial: 27:66:EE:56:EB:49:F3:8E:AB:D7:70:A2:FC:84:DE:22
+        Issued On: 2000-05-30 10:48:38 +0000 UTC
         Expiration: 2020-05-30 10:48:38 +0000 UTC
-        Status: [EXPIRED] 37d 0h ago
+        Status: [EXPIRED] 694d 23h ago
 ```
 
 Some items to note in the `CERTIFICATES | SUMMARY` section:
@@ -844,36 +875,29 @@ The following options generate a one-liner, high-level overview for each host
 with a certificate. Hosts without a certificate are omitted from the results.
 
 ```ShellSession
-$ ./certsum --hosts 192.168.5.0/24 --show-hosts-with-valid-certs --show-overview
-Beginning cert scan against 254 unique hosts using ports: [443]
-...................
-Completed certificates scan in 2.3670248s
-19 certificates (8 issues) found.
+$ ./certsum --hosts www.google.com,expired.badssl.com,scanme.nmap.org --show-hosts-with-valid-certs --show-overview
+Beginning cert scan against 13 IPs expanded from 3 unique host patterns using ports: [443]
+.......
+Completed certificates scan in 371.6517ms
+7 certificate chains (1 issues) found.
 
 Results (all):
 
-IP Address            Port    Subject or SANs                       Status          Chain Summary                           Serial
----                   ---     ---                                   ---             ---                                     ---
-192.168.5.22          443     VMware                                ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        92:4A:AD:38:3C:DC:C1:B6
-192.168.5.3           443     VMware                                ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        DE:FD:50:2B:C5:7F:79:F4
-192.168.5.24          443     VMware                                ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        9A:DF:A1:A6:60:16:4E:C0
-192.168.5.11          443     VMware                                ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        8D:2C:61:CF:AE:57:58:98
-192.168.5.83          443     HP Jetdirect 4639304E                 ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        47:F0:56:50
-192.168.5.109         443     HP LaserJet M506 F2A68A               ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        -29:25:F5:A8:D5:E2:FC:C3:71:77:F4:48:3A:09:2E:24:0F:0E:37:1A
-192.168.5.93          443     NPI25BC25                             ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        -61:CE:BD:13
-192.168.5.113         443     NPI253CDE                             ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        38:BC:BD:21
-192.168.5.136         443     HP Jetdirect BAC74492                 ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        20:46:94:C0
-192.168.5.104         443     HP Jetdirect 7FE7AF22                 ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        02
-192.168.5.165         443     192.168.5.165                         ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        EF:E5:A3:0E:2F:FA:C1:3A
-192.168.5.183         443     192.168.5.183                         ⛔ (!!)         [EXPIRED: 1, EXPIRING: 0, OK: 0]        F7:A2:CD:4A:F2:A0:63:10
-192.168.5.182         443     192.168.5.182                         ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        AC:53:68:BB:38:5E:5A:6C
-192.168.5.105         443     192.168.5.105                         ✅ (OK)         [EXPIRED: 0, EXPIRING: 0, OK: 1]        64:36:33:33:32:36:37:38:30:31:64:66:37:31:31:62:32:62:37:63
+Host (Name/FQDN)        IP Addr         Port    Subject or SANs         Status  Chain Summary                           Serial
+---                     ---             ---     ---                     ---     ---                                     ---
+www.google.com          74.125.136.147  443     www.google.com          ✅ (OK) [EXPIRED: 0, EXPIRING: 0, OK: 3]        50:69:89:19:16:59:07:17:0A:54:D0:54:F5:95:1D:3B
+www.google.com          74.125.136.99   443     www.google.com          ✅ (OK) [EXPIRED: 0, EXPIRING: 0, OK: 3]        50:69:89:19:16:59:07:17:0A:54:D0:54:F5:95:1D:3B
+www.google.com          74.125.136.103  443     www.google.com          ✅ (OK) [EXPIRED: 0, EXPIRING: 0, OK: 3]        50:69:89:19:16:59:07:17:0A:54:D0:54:F5:95:1D:3B
+www.google.com          74.125.136.105  443     www.google.com          ✅ (OK) [EXPIRED: 0, EXPIRING: 0, OK: 3]        50:69:89:19:16:59:07:17:0A:54:D0:54:F5:95:1D:3B
+www.google.com          74.125.136.106  443     www.google.com          ✅ (OK) [EXPIRED: 0, EXPIRING: 0, OK: 3]        50:69:89:19:16:59:07:17:0A:54:D0:54:F5:95:1D:3B
+www.google.com          74.125.136.104  443     www.google.com          ✅ (OK) [EXPIRED: 0, EXPIRING: 0, OK: 3]        50:69:89:19:16:59:07:17:0A:54:D0:54:F5:95:1D:3B
+expired.badssl.com      104.154.89.105  443     *.badssl.com            ⛔ (!!) [EXPIRED: 2, EXPIRING: 0, OK: 1]        4A:E7:95:49:FA:9A:BE:3F:10:0F:17:A4:78:E1:69:09
 ```
 
 Of note:
 
 - implicitly use the default port of `443/tcp`
-- scan the entire `192.168.5.0/24` range
+- specify multiple given host patterns (which expand to multiple IP Addresses)
 - generate output in the *overview* or summary format
 - show "OK" hosts alongside problem hosts (usually omitted for brevity)
 
@@ -881,18 +905,19 @@ Of note:
 
 ```ShellSession
 $ ./certsum --ports 443 --hosts 192.168.5.0/24
-Total IPs from all ranges before deduping: 254
-Total IPs from all ranges after deduping: 254
-Beginning scan of ports: [443]
-Completed port scan
-Beginning certificate analysis
-..........................
-Completed certificate analysis
+Beginning cert scan against 254 IPs expanded from 1 unique host patterns using ports: [443]
+............
+6:00AM ERR ../../mnt/t/github/check-cert/cmd/certsum/certcheck.go:234 > error fetching certificates chain error="error connecting to server (host: , IP: 192.168.5.125): read tcp 192.168.5.90:33582->192.168.5.125:443: read: connection reset by peer" age_critical=15 age_warning=30 app_timeout=30s app_type=scanner cert_check_timeout=10s filename= host= ip_address=192.168.5.125 logging_level=info port=443 port_scan_timeout=200ms ports=[443] version="check-cert x.y.z (https://github.com/atc0005/check-cert)"
 
-Results:
+6:00AM ERR ../../mnt/t/github/check-cert/cmd/certsum/certcheck.go:234 > error fetching certificates chain error="error connecting to server (host: , IP: 192.168.5.141): read tcp 192.168.5.90:57634->192.168.5.141:443: read: connection reset by peer" age_critical=15 age_warning=30 app_timeout=30s app_type=scanner cert_check_timeout=10s filename= host= ip_address=192.168.5.141 logging_level=info port=443 port_scan_timeout=200ms ports=[443] version="check-cert x.y.z (https://github.com/atc0005/check-cert)"
+.....
+Completed certificates scan in 1.007037835s
+15 certificate chains (4 issues) found.
 
-IP Address              Port    Subject or SANs                 Status (Type)                   Summary                         Serial
----                     ---     ---                             ---                             ---                             ---
+Results (issues only):
+
+Host                    Port    Subject or SANs                 Status (Type)                    Summary                        Serial
+---                     ---     ---                             ---                              ---                            ---
 192.168.5.104           443     HP Jetdirect 7FE7AF22           ⛔ (leaf; self-signed)          [EXPIRED] 3942d 12h ago         02
 192.168.5.3             443     VMware                          ⛔ (root)                       [EXPIRED] 571d 23h ago          DE:FD:50:2B:C5:7F:79:F4
 192.168.5.109           443     HP LaserJet M506 F2A68A         ⛔ (leaf; self-signed)          [CRITICAL] 1d 7h remaining      -29:25:F5:A8:D5:E2:FC:C3:71:77:F4:48:3A:09:2E:24:0F:0E:37:1A
@@ -916,18 +941,15 @@ supported at this time.
 
 ```ShellSession
 $ ./certsum --ports 443 --hosts 192.168.5.104-110
-Total IPs from all ranges before deduping: 6
-Total IPs from all ranges after deduping: 6
-Beginning scan of ports: [443]
-Completed port scan
-Beginning certificate analysis
-..........................
-Completed certificate analysis
+Beginning cert scan against 7 IPs expanded from 1 unique host patterns using ports: [443]
+..
+Completed certificates scan in 200.475679ms
+2 certificate chains (2 issues) found.
 
-Results:
+Results (issues only):
 
-IP Address              Port    Subject or SANs                 Status (Type)                   Summary                         Serial
----                     ---     ---                             ---                             ---                             ---
+Host                    Port    Subject or SANs                 Status (Type)                    Summary                        Serial
+---                     ---     ---                             ---                              ---                            ---
 192.168.5.104           443     HP Jetdirect 7FE7AF22           ⛔ (leaf; self-signed)          [EXPIRED] 3942d 12h ago         02
 192.168.5.109           443     HP LaserJet M506 F2A68A         ⛔ (leaf; self-signed)          [CRITICAL] 1d 7h remaining      -29:25:F5:A8:D5:E2:FC:C3:71:77:F4:48:3A:09:2E:24:0F:0E:37:1A
 ```
@@ -936,18 +958,15 @@ IP Address              Port    Subject or SANs                 Status (Type)   
 
 ```ShellSession
 $ ./certsum --ports 443 --hosts 192.168.5.3,192.168.5.104-110
-Total IPs from all ranges before deduping: 7
-Total IPs from all ranges after deduping: 7
-Beginning scan of ports: [443]
-Completed port scan
-Beginning certificate analysis
-..........................
-Completed certificate analysis
+Beginning cert scan against 8 IPs expanded from 2 unique host patterns using ports: [443]
+...
+Completed certificates scan in 201.044547ms
+3 certificate chains (3 issues) found.
 
-Results:
+Results (issues only):
 
-IP Address              Port    Subject or SANs                 Status (Type)                   Summary                         Serial
----                     ---     ---                             ---                             ---                             ---
+Host                    Port    Subject or SANs                 Status (Type)                    Summary                        Serial
+---                     ---     ---                             ---                              ---                            ---
 192.168.5.3             443     VMware                          ⛔ (root)                       [EXPIRED] 577d 0h ago           DE:FD:50:2B:C5:7F:79:F4
 192.168.5.104           443     HP Jetdirect 7FE7AF22           ⛔ (leaf; self-signed)          [EXPIRED] 3942d 12h ago         02
 192.168.5.109           443     HP LaserJet M506 F2A68A         ⛔ (leaf; self-signed)          [CRITICAL] 1d 7h remaining      -29:25:F5:A8:D5:E2:FC:C3:71:77:F4:48:3A:09:2E:24:0F:0E:37:1A
@@ -955,14 +974,33 @@ IP Address              Port    Subject or SANs                 Status (Type)   
 
 #### Partial range, CIDR range and a single IP Address
 
+NOTE: As of the v0.7.0 release, deduping is only applied to literal given host
+patterns and not when IP ranges overlap.
+
+For example, these given host values are deduped:
+
+- exact IPs
+  1. 192.168.5.3
+  1. 192.168.5.3
+- FQDNs
+  1. www.example.com
+  1. www.example.com
+- exact IP ranges (CIDR or partial)
+  1. 192.168.5.0/24
+  1. 192.168.5.0/24
+
+whereas overlap is not handled:
+
+- 192.168.5.0/24
+- 192.168.5.3
+- 192.168.5.10-15
+
+In this scenario, `192.168.5.3` will be scanned twice as would `192.168.5.11`.
+
 ```ShellSession
 $ ./certsum --ports 443 --hosts 192.168.5.3,192.168.5.104-110,192.168.2.0/24
-Total IPs from all ranges before deduping: 260
-Total IPs from all ranges after deduping: 260
-Beginning scan of ports: [443]
-Completed port scan
-Beginning certificate analysis
-...............................................................
+Beginning cert scan against 261 IPs expanded from 3 unique host patterns using ports: [443]
+..............
 ```
 
 Only the lead-in text is included as the output closely matches the other
@@ -977,20 +1015,18 @@ Of note:
 
 ```ShellSession
 $ ./certsum --hosts 192.168.5.3,expired.badssl.com
-Total IPs from all ranges before deduping: 2
-Total IPs from all ranges after deduping: 2
-Beginning scan of ports: [443]
-Completed port scan
-Beginning certificate analysis
+Beginning cert scan against 2 IPs expanded from 2 unique host patterns using ports: [443]
 ..
-Completed certificate analysis
+Completed certificates scan in 115.808542ms
+2 certificate chains (2 issues) found.
 
-Results:
+Results (issues only):
 
-IP Address              Port    Subject or SANs                                 Status (Type)           Summary                         Serial
----                     ---     ---                                             ---                     ---                             ---
-192.168.5.3             443     VMware                                          ⛔ (root)               [EXPIRED] 577d 0h ago           DE:FD:50:2B:C5:7F:79:F4
-104.154.89.105          443     badssl-fallback-unknown-subdomain-or-no-sni     ⛔ (leaf)               [EXPIRED] 865d 13h ago          CD:BC:5A:4A:EC:97:67:B1
+Host (Name/FQDN)        IP Addr         Port    Subject or SANs                         Status (Type)           Summary                         Serial
+---                     ---             ---     ---                                     ---                     ---                             ---
+                        192.168.5.3     443     VMware                                  ⛔ (root)               [EXPIRED] 577d 0h ago           DE:FD:50:2B:C5:7F:79:F4
+expired.badssl.com      104.154.89.105  443     *.badssl.com                            ⛔ (leaf)               [EXPIRED] 2570d 11h ago         4A:E7:95:49:FA:9A:BE:3F:10:0F:17:A4:78:E1:69:09
+expired.badssl.com      104.154.89.105  443     COMODO RSA Certification Authority      ⛔ (intermediate)       [EXPIRED] 696d 0h ago           27:66:EE:56:EB:49:F3:8E:AB:D7:70:A2:FC:84:DE:22
 ```
 
 #### Show all scan results
@@ -1000,23 +1036,22 @@ would normally be muted/hidden away with the default scan results.
 
 ```ShellSession
 $ ./certsum --hosts 192.168.5.3,expired.badssl.com,scanme.nmap.org --show-valid-certs --show-port-scan-results --show-hosts-with-valid-certs --show-closed-ports
-Total IPs from all ranges before deduping: 4
-Total IPs from all ranges after deduping: 4
-Beginning scan of ports: [443]
-Completed port scan
-Beginning certificate analysis
+Beginning cert scan against 4 IPs expanded from 3 unique host patterns using ports: [443]
+scanme.nmap.org (2600:3c01::f03c:91ff:fe18:bb2f): [443: false]
 192.168.5.3: [443: true]
-104.154.89.105: [443: true]
-45.33.32.156: [None]
-2600:3c01::f03c:91ff:fe18:bb2f: [None]
-Completed certificate analysis
+expired.badssl.com (104.154.89.105): [443: true]
+scanme.nmap.org (45.33.32.156): [443: false]
+Completed certificates scan in 114.645878ms
+2 certificate chains (2 issues) found.
 
-Results:
+Results (all):
 
-IP Address              Port    Subject or SANs                                 Status (Type)           Summary                         Serial
----                     ---     ---                                             ---                     ---                             ---
-192.168.5.3             443     VMware                                          ⛔ (root)               [EXPIRED] 577d 21h ago          DE:FD:50:2B:C5:7F:79:F4
-104.154.89.105          443     badssl-fallback-unknown-subdomain-or-no-sni     ⛔ (leaf)               [EXPIRED] 865d 13h ago          CD:BC:5A:4A:EC:97:67:B1
+Host (Name/FQDN)        IP Addr         Port    Subject or SANs                                 Status (Type)           Summary                         Serial
+---                     ---             ---     ---                                             ---                     ---                             ---
+                        192.168.5.3     443     VMware                                          ⛔ (root)               [EXPIRED] 577d 21h ago          DE:FD:50:2B:C5:7F:79:F4
+expired.badssl.com      104.154.89.105  443     *.badssl.com                                    ⛔ (leaf)               [EXPIRED] 2570d 11h ago         4A:E7:95:49:FA:9A:BE:3F:10:0F:17:A4:78:E1:69:09
+expired.badssl.com      104.154.89.105  443     COMODO RSA Domain Validation Secure Server CA   ✅ (intermediate)       [OK] 2483d 12h remaining        2B:2E:6E:EA:D9:75:36:6C:14:8A:6E:DB:A3:7C:8C:07
+expired.badssl.com      104.154.89.105  443     COMODO RSA Certification Authority              ⛔ (intermediate)       [EXPIRED] 696d 0h ago           27:66:EE:56:EB:49:F3:8E:AB:D7:70:A2:FC:84:DE:22
 ```
 
 ## License
@@ -1084,5 +1119,7 @@ SOFTWARE.
 [go-docs-install]: <https://golang.org/doc/install>  "Install Go"
 
 [go-supported-releases]: <https://go.dev/doc/devel/release#policy> "Go Release Policy"
+
+[logfmt]: <https://brandur.org/logfmt>
 
 <!-- []: PLACEHOLDER "DESCRIPTION_HERE" -->
