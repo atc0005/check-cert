@@ -90,7 +90,7 @@ func main() {
 	switch {
 	case cfg.Filename != "":
 
-		log.Debug().Msg("attempting to parse certificate file")
+		log.Debug().Msg("Attempting to parse certificate file")
 
 		// Anything from the specified file that couldn't be converted to a
 		// certificate chain. While likely not of high value by itself,
@@ -102,7 +102,7 @@ func main() {
 		certChain, parseAttemptLeftovers, err = certs.GetCertsFromFile(cfg.Filename)
 		if err != nil {
 			log.Error().Err(err).Msg(
-				"error parsing certificates file")
+				"Error parsing certificates file")
 
 			nagiosExitState.LastError = err
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
@@ -117,11 +117,11 @@ func main() {
 
 		certChainSource = cfg.Filename
 
-		log.Debug().Msg("certificate file parsed")
+		log.Debug().Msg("Certificate file parsed")
 
 		if len(parseAttemptLeftovers) > 0 {
 			log.Error().Err(err).Msg(
-				"unknown data encountered while parsing certificates file")
+				"Unknown data encountered while parsing certificates file")
 
 			nagiosExitState.LastError = fmt.Errorf(
 				"%d unknown/unparsed bytes remaining at end of cert file %q",
@@ -149,15 +149,12 @@ func main() {
 
 	case cfg.Server != "":
 
-		// We should only have one expanded host value from one given host
-		// pattern. If a resolvable name is given, we may have several IP
-		// Addresses returned. If a range is specified the results are
-		// unspecified.
+		log.Debug().Msg("Expanding given host pattern in order to obtain IP Address")
 		expandedHost, expandErr := netutils.ExpandHost(cfg.Server)
 		switch {
 		case expandErr != nil:
 			log.Error().Err(expandErr).Msg(
-				"error expanding given host pattern")
+				"Error expanding given host pattern")
 
 			nagiosExitState.LastError = expandErr
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
@@ -252,13 +249,12 @@ func main() {
 			)
 		}
 
-		var certFetchErr error
 		log.Debug().
 			Str("host", hostVal).
 			Str("ip_address", ipAddr).
 			Int("port", cfg.Port).
 			Msg("Retrieving certificate chain")
-
+		var certFetchErr error
 		certChain, certFetchErr = netutils.GetCerts(
 			// NOTE: This is a potentially empty string depending on whether
 			// host pattern was a resolvable name/FQDN.
@@ -271,7 +267,7 @@ func main() {
 		)
 		if certFetchErr != nil {
 			log.Error().Err(certFetchErr).Msg(
-				"error fetching certificates chain")
+				"Error fetching certificates chain")
 
 			nagiosExitState.LastError = certFetchErr
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
@@ -309,7 +305,7 @@ func main() {
 			cfg.Server,
 		)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-		log.Error().Err(noCertsErr).Msg("no certificates found")
+		log.Error().Err(noCertsErr).Msg("No certificates found")
 
 		return
 	}

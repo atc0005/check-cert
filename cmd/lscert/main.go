@@ -68,7 +68,7 @@ func main() {
 		certChain, parseAttemptLeftovers, err = certs.GetCertsFromFile(cfg.Filename)
 		if err != nil {
 			log.Error().Err(err).Msg(
-				"error parsing certificates file")
+				"Error parsing certificates file")
 			os.Exit(1)
 		}
 
@@ -76,17 +76,12 @@ func main() {
 
 	case cfg.Server != "":
 
-		log.Debug().Msg("Attempting to retrieve certificates from server")
-
-		// We should only have one expanded host value from one given host
-		// pattern. If a resolvable name is given, we may have several IP
-		// Addresses returned. If a range is specified the results are
-		// unspecified.
+		log.Debug().Msg("Expanding given host pattern in order to obtain IP Address")
 		expandedHost, expandErr := netutils.ExpandHost(cfg.Server)
 		switch {
 		case expandErr != nil:
 			log.Error().Err(expandErr).Msg(
-				"error expanding given host pattern")
+				"Error expanding given host pattern")
 			os.Exit(1)
 
 		// Fail early for IP Ranges. While we could just grab the first
@@ -101,7 +96,7 @@ func main() {
 
 		case len(expandedHost.Expanded) == 0:
 			log.Error().Msg(
-				"error expanding given host value to IP Address")
+				"Error expanding given host value to IP Address")
 			os.Exit(1)
 
 		case len(expandedHost.Expanded) > 1:
@@ -140,6 +135,11 @@ func main() {
 			)
 		}
 
+		log.Debug().
+			Str("host", hostVal).
+			Str("ip_address", ipAddr).
+			Int("port", cfg.Port).
+			Msg("Retrieving certificate chain")
 		var certFetchErr error
 		certChain, certFetchErr = netutils.GetCerts(
 			// NOTE: This is a potentially empty string depending on whether
@@ -153,7 +153,7 @@ func main() {
 		)
 		if certFetchErr != nil {
 			log.Error().Err(certFetchErr).Msg(
-				"error fetching certificates chain")
+				"Error fetching certificates chain")
 			os.Exit(1)
 		}
 
