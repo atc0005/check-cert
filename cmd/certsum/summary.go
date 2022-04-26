@@ -24,7 +24,7 @@ func printSummaryHighLevel(
 
 	certIssuesCount := discoveredChains.NumProblems(certsExpireAgeCritical, certsExpireAgeWarning)
 
-	fmt.Printf("%d certificates (%d issues) found.\n", len(discoveredChains), certIssuesCount)
+	fmt.Printf("%d certificate chains (%d issues) found.\n", len(discoveredChains), certIssuesCount)
 
 	if certIssuesCount == 0 && !showAllHosts {
 		fmt.Printf("\nResults: No certificate issues found!\n")
@@ -152,7 +152,7 @@ func printSummaryDetailedLevel(
 
 	certIssuesCount := discoveredChains.NumProblems(certsExpireAgeCritical, certsExpireAgeWarning)
 
-	fmt.Printf("%d certificates (%d issues) found.\n", len(discoveredChains), certIssuesCount)
+	fmt.Printf("%d certificate chains (%d issues) found.\n", len(discoveredChains), certIssuesCount)
 
 	if certIssuesCount == 0 && !showAllCerts {
 		fmt.Printf("\nResults: No certificate issues found!\n")
