@@ -422,11 +422,11 @@ func main() {
 				nagiosExitState.LongServiceOutput =
 					"Consider updating the service check or command " +
 						"definition to specify the website FQDN instead of " +
-						"the host FQDN as the 'server' flag value. " +
+						"the host FQDN as the 'dns-name' (or 'server') flag value. " +
 						"E.g., use 'www.example.org' instead of " +
 						"'host7.example.com' in order to allow the remote " +
 						"server to select the correct certificate instead " +
-						"of the certificate for the first website in its list."
+						"of using the default certificate."
 
 				return
 
