@@ -610,14 +610,26 @@ func ExpandHost(hostPattern string) ([]HostPattern, error) {
 	}
 }
 
-// DedupeHosts accepts a collection of given Host values and returns an
-// unordered, but deduped/unique collection of given Host values.
+// DedupeHosts accepts a collection of HostPattern values and returns an
+// unordered, but deduped/unique collection of HostPattern values.
 //
-// NOTE: These Host values have yet to be resolved, so specifying a FQDN that
-// resolves to a single IP and the same IP Address as a second given Host
-// value are treated as two separate given Host values. This allows a user to
-// check a default certificate chain alongside certificate chains for specific
-// FQDNs.
+// NOTE: Each HostPattern value consists of the user-specified host pattern
+// and a collection of IP Addresses that were expanded from the given host
+// pattern. Deduping only takes place for the given host patterns, not the IP
+// Addresses that the host patterns resolve to.
+//
+// For example, if www1.example.com and www2.example.com both resolve to the
+// same IP Address both given host patterns remain after deduping. This allows
+// a user to check certificate chains for specific FQDNs. Likewise, if the IP
+// Address for www1.example.com and www2.example.com is given alongside those
+// FQDNs (three values total) all three host patterns remain after deduping.
+// This allows retrieving a default certificate chain alongside FQDN-specific
+// certificate chains. This is intended to be stable behavior.
+//
+// However, if two IP Address ranges such as 192.168.5.10-15 and
+// 192.168.5.10-20 are given, both are treated as separate values and not
+// deduped. Because this is a potential source of confusion, this behavior is
+// not considered stable and may change in the future.
 func DedupeHosts(hosts []HostPattern) []HostPattern {
 	uniqHostsIdx := make(map[string]HostPattern)
 	uniqHosts := make([]HostPattern, 0, len(hosts))
