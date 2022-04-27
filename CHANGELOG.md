@@ -26,6 +26,51 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.7.0] - 2022-04-27
+
+### Overview
+
+- Log output format change
+- Rework SNI support
+- Output tweaks
+- Bugfixes
+- Dependency updates
+- built using Go 1.17.9
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- (GH-272) certsum | Note which host was scanned for sites using a wildcard
+  cert
+- (GH-282) List IP of host where cert was retrieved
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.8` to `1.17.9`
+
+- (GH-295) Switch logger output format from `JSON` to `logfmt`
+- (GH-308) Update summary cert chain count desc/label
+
+### Fixed
+
+- (GH-273) certsum does not use SNI when given hostnames
+- (GH-286) certsum | `port` and `server` fields in logger indicate "zero"
+  values regardless of CLI flag values given
+- (GH-290) certsum | Empty host/IP value for host with no open ports
+- (GH-293) References to IP Addresses instead of hosts
+- (GH-298) Update README to note SNI support, change in logging format,
+  refresh examples
+- (GH-302) Fix `netutils.DedupeHosts()` logic, intro details
+- (GH-303) Fix `netutils.isIPv4AddrCandidate()` logic
+- (GH-304) Note issue with `netutils.DedupeHosts()`
+- (GH-305) Update hostname verification failure suggestion
+- (GH-306) Fix IP Address range expansion & update handling
+- (GH-307) Minor logging & doc comment tweaks
+
 ## [v0.6.0] - 2022-03-08
 
 ### Overview
@@ -851,7 +896,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.7.0...HEAD
+[v0.7.0]: https://github.com/atc0005/check-cert/releases/tag/v0.7.0
 [v0.6.0]: https://github.com/atc0005/check-cert/releases/tag/v0.6.0
 [v0.5.5]: https://github.com/atc0005/check-cert/releases/tag/v0.5.5
 [v0.5.4]: https://github.com/atc0005/check-cert/releases/tag/v0.5.4
