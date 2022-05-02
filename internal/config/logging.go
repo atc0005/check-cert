@@ -148,7 +148,6 @@ func (c *Config) setupLogging(appType AppType) error {
 			Str("version", Version()).
 			Str("logging_level", c.LoggingLevel).
 			Str("app_type", appTypeScanner).
-			Str("filename", c.Filename).
 			Array("ports", ports).
 			Str("cert_check_timeout", c.Timeout().String()).
 			Int("age_warning", c.AgeWarning).
