@@ -203,15 +203,18 @@ func main() {
 		certChainSource,
 	)
 
-	// Apply hostname verification if we're evaluating a remote server OR if
-	// the user has explicitly specified a DNSName value for that purpose.
+	// Apply hostname verification if a server or DNSName value has been
+	// specified.
 	if cfg.Server != "" || cfg.DNSName != "" {
 
-		// While we default to using the server FQDN or IP Address used to
-		// make the connection as our hostname value, we allow the user to
-		// explicitly specify which hostname should be used for comparison
-		// against the leaf certificate.
+		// Default to using the server FQDN or IP Address used to make the
+		// connection as our hostname value.
 		hostnameValueToUse := cfg.Server
+
+		// Allow the user to explicitly specify which hostname should be used
+		// for comparison against the leaf certificate. This works for a
+		// certificate retrieved by a server as well as a certificate
+		// retrieved from a file.
 		if cfg.DNSName != "" {
 			hostnameValueToUse = cfg.DNSName
 		}
