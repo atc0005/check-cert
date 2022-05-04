@@ -310,6 +310,19 @@ func main() {
 		return
 	}
 
+	// Prepend a baseline lead-in that summarizes the number of certificates
+	// retrieved and from which target host/IP Address.
+	defer func() {
+		nagiosExitState.LongServiceOutput = fmt.Sprintf(
+			"%d certs found for %s%s%s%s",
+			certsSummary.TotalCertsCount,
+			certChainSource,
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+			nagiosExitState.LongServiceOutput,
+		)
+	}()
+
 	if certsSummary.TotalCertsCount > 0 {
 
 		hostnameValue := cfg.Server
@@ -440,19 +453,6 @@ func main() {
 		}
 
 	}
-
-	// Prepend a baseline lead-in that summarizes the number of certificates
-	// retrieved and from which target host/IP Address.
-	defer func() {
-		nagiosExitState.LongServiceOutput = fmt.Sprintf(
-			"%d certs found for %s%s%s%s",
-			certsSummary.TotalCertsCount,
-			certChainSource,
-			nagios.CheckOutputEOL,
-			nagios.CheckOutputEOL,
-			nagiosExitState.LongServiceOutput,
-		)
-	}()
 
 	// check SANS entries if provided via command-line
 	if len(cfg.SANsEntries) > 0 {
