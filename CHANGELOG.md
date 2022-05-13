@@ -26,6 +26,31 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.7.1] - 2022-05-13
+
+### Overview
+
+- Bugfixes
+- Dependency updates
+- built using Go 1.17.10
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.9` to `1.17.10`
+
+### Fixed
+
+- (GH-312) certsum | invalid `filename` structured logging field
+- (GH-316) check_cert | Include the baseline certs "lead-in" immediately after
+  retrieving the certificate chain
+- (GH-317) lscert | Verify hostname if dns-name flag is used
+- (GH-321) lscert | Tweak wording regarding certificate source
+
 ## [v0.7.0] - 2022-04-27
 
 ### Overview
@@ -896,7 +921,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.7.1...HEAD
+[v0.7.1]: https://github.com/atc0005/check-cert/releases/tag/v0.7.1
 [v0.7.0]: https://github.com/atc0005/check-cert/releases/tag/v0.7.0
 [v0.6.0]: https://github.com/atc0005/check-cert/releases/tag/v0.6.0
 [v0.5.5]: https://github.com/atc0005/check-cert/releases/tag/v0.5.5
