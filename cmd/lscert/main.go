@@ -220,9 +220,9 @@ func main() {
 		}
 
 		if err := certChain[0].VerifyHostname(hostnameValueToUse); err != nil {
-			fmt.Printf("- WARNING: Provided hostname %q does not match server certificate: %v\n", hostnameValueToUse, err)
+			fmt.Printf("- WARNING: Provided hostname %q does not match evaluated certificate: %v\n", hostnameValueToUse, err)
 		} else {
-			fmt.Printf("- OK: Provided hostname %q matches discovered certificate\n", hostnameValueToUse)
+			fmt.Printf("- OK: Provided hostname %q matches evaluated certificate\n", hostnameValueToUse)
 		}
 	}
 
