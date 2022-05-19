@@ -505,7 +505,7 @@ func isSelfSigned(cert *x509.Certificate) bool {
 }
 
 // ChainPosition receives a cert and the cert chain that it belongs to and
-// returns a string indicating what position or "role" it occurpies in the
+// returns a string indicating what position or "role" it occupies in the
 // certificate chain.
 //
 // https://en.wikipedia.org/wiki/X.509
@@ -973,7 +973,7 @@ func OneLineCheckSummary(certsStatus ChainStatus, includeSummary bool) string {
 	// Start by assuming that the CommonName is *not* blank
 	nextCertToExpireServerName := nextCertToExpire.Subject.CommonName
 
-	// but if it is, use the first SubjectAlterateName field in its place
+	// but if it is, use the first SubjectAlternateName field in its place
 	if nextCertToExpire.Subject.CommonName == "" {
 		if len(nextCertToExpire.DNSNames[0]) > 0 {
 			nextCertToExpireServerName = nextCertToExpire.DNSNames[0]
