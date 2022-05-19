@@ -243,8 +243,9 @@ func main() {
 					Msg("SANs entries mismatch")
 
 				fmt.Printf(
-					"- %s: %v \n", err,
+					"- %s: %v \n",
 					certsSummary.ServiceState().Label,
+					err,
 				)
 			}
 
