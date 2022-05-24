@@ -763,12 +763,18 @@ func GenerateCertsReport(chainStatus ChainStatus, verboseDetails bool) string {
 
 // CheckSANsEntries receives a x509 certificate, the x509 certificate chain it
 // is a part of and a list of expected SANs entries that should be present for
-// the certificate. The number of unmatched SANs entries is returned along
-// with an error if validation failed.
-func CheckSANsEntries(cert *x509.Certificate, certChain []*x509.Certificate, expectedEntries []string) (int, error) {
+// the certificate. The number of unmatched SANs entries, the number of total
+// SANs entries for the cert chain and an error (if validation failed, nil
+// otherwise) are returned.
+func CheckSANsEntries(cert *x509.Certificate, certChain []*x509.Certificate, expectedEntries []string) (int, int, error) {
 
 	unmatchedSANsEntriesFromList := make([]string, 0, len(expectedEntries))
 	unmatchedSANsEntriesFromCert := make([]string, 0, len(cert.DNSNames))
+
+	var sansEntriesFound int
+	for _, cert := range certChain {
+		sansEntriesFound += len(cert.DNSNames)
+	}
 
 	// Assuming that the DNSNames slice is NOT already lowercase, so forcing
 	// them to be so first before comparing against the user-provided slice of
@@ -787,7 +793,7 @@ func CheckSANsEntries(cert *x509.Certificate, certChain []*x509.Certificate, exp
 		}
 
 		if len(unmatchedSANsEntriesFromList) > 0 {
-			return len(unmatchedSANsEntriesFromList), fmt.Errorf(
+			return len(unmatchedSANsEntriesFromList), sansEntriesFound, fmt.Errorf(
 				"%d specified SANs entries missing from %s certificate: %v",
 				len(unmatchedSANsEntriesFromList),
 				ChainPosition(cert, certChain),
@@ -805,7 +811,7 @@ func CheckSANsEntries(cert *x509.Certificate, certChain []*x509.Certificate, exp
 			}
 		}
 
-		return len(unmatchedSANsEntriesFromCert), fmt.Errorf(
+		return len(unmatchedSANsEntriesFromCert), sansEntriesFound, fmt.Errorf(
 			"%d SANs entries on %s certificate not specified in provided list: %v",
 			len(unmatchedSANsEntriesFromCert),
 			ChainPosition(cert, certChain),
@@ -815,7 +821,7 @@ func CheckSANsEntries(cert *x509.Certificate, certChain []*x509.Certificate, exp
 	}
 
 	// best case, everything checks out
-	return 0, nil
+	return 0, sansEntriesFound, nil
 
 }
 

@@ -233,21 +233,29 @@ func main() {
 		firstSANsEntry := strings.ToLower(strings.TrimSpace(cfg.SANsEntries[0]))
 		if firstSANsEntry != strings.ToLower(strings.TrimSpace(config.SkipSANSCheckKeyword)) {
 
-			if mismatched, err := certs.CheckSANsEntries(certChain[0], certChain, cfg.SANsEntries); err != nil {
+			mismatched, found, err := certs.CheckSANsEntries(certChain[0], certChain, cfg.SANsEntries)
+			switch {
+			case err != nil:
 
 				log.Debug().
 					Err(err).
 					Int("sans_entries_requested", len(cfg.SANsEntries)).
-					Int("sans_entries_found", len(certChain)).
+					Int("sans_entries_found", found).
 					Int("sans_entries_mismatched", mismatched).
 					Msg("SANs entries mismatch")
+			default:
 
-				fmt.Printf(
-					"- %s: %v \n",
-					nagios.StateCRITICALLabel,
-					err,
-				)
+				log.Debug().
+					Int("sans_entries_requested", len(cfg.SANsEntries)).
+					Int("sans_entries_found", found).
+					Msg("SANs entries match")
 			}
+
+			fmt.Printf(
+				"- %s: %v \n",
+				nagios.StateCRITICALLabel,
+				err,
+			)
 
 		}
 	}
