@@ -244,7 +244,7 @@ func main() {
 
 				fmt.Printf(
 					"- %s: %v \n",
-					certsSummary.ServiceState().Label,
+					nagios.StateCRITICALLabel,
 					err,
 				)
 			}
