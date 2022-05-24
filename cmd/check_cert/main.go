@@ -476,7 +476,7 @@ func main() {
 					mismatched,
 				)
 
-				nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
+				nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 				log.Warn().
 					Err(nagiosExitState.LastError).
 					Int("sans_entries_requested", len(cfg.SANsEntries)).
