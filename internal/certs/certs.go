@@ -771,10 +771,9 @@ func CheckSANsEntries(cert *x509.Certificate, certChain []*x509.Certificate, exp
 	unmatchedSANsEntriesFromList := make([]string, 0, len(expectedEntries))
 	unmatchedSANsEntriesFromCert := make([]string, 0, len(cert.DNSNames))
 
-	var sansEntriesFound int
-	for _, cert := range certChain {
-		sansEntriesFound += len(cert.DNSNames)
-	}
+	// We assume that the given certificate is a leaf certificate, so we use
+	// the SANs entries from that cert.
+	sansEntriesFound := len(cert.DNSNames)
 
 	// Assuming that the DNSNames slice is NOT already lowercase, so forcing
 	// them to be so first before comparing against the user-provided slice of
