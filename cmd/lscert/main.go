@@ -243,19 +243,25 @@ func main() {
 					Int("sans_entries_found", found).
 					Int("sans_entries_mismatched", mismatched).
 					Msg("SANs entries mismatch")
+
+				fmt.Printf(
+					"- %s: %v \n",
+					nagios.StateCRITICALLabel,
+					err,
+				)
+
 			default:
 
 				log.Debug().
 					Int("sans_entries_requested", len(cfg.SANsEntries)).
 					Int("sans_entries_found", found).
 					Msg("SANs entries match")
-			}
 
-			fmt.Printf(
-				"- %s: %v \n",
-				nagios.StateCRITICALLabel,
-				err,
-			)
+				fmt.Printf(
+					"- %s: Provided SANs entries match evaluated certificate\n",
+					nagios.StateOKLabel,
+				)
+			}
 
 		}
 	}
