@@ -185,23 +185,20 @@ func main() {
 
 	textutils.PrintHeader("CERTIFICATES | SUMMARY")
 
-	if certsSummary.TotalCertsCount == 0 {
+	switch {
+	case certsSummary.TotalCertsCount == 0:
 		noCertsErr := fmt.Errorf("no certificates found")
 		log.Err(noCertsErr).Msg("")
+		os.Exit(1)
 
-		// defer os.Exit so that the deferred server connection close step can
-		// run
-		defer func() {
-			os.Exit(1)
-		}()
+	default:
+		fmt.Printf(
+			"- %s: %d certs found for %s\n",
+			nagios.StateOKLabel,
+			certsSummary.TotalCertsCount,
+			certChainSource,
+		)
 	}
-
-	fmt.Printf(
-		"- %s: %d certs found for %s\n",
-		nagios.StateOKLabel,
-		certsSummary.TotalCertsCount,
-		certChainSource,
-	)
 
 	// Apply hostname verification if a server or DNSName value has been
 	// specified.
