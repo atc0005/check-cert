@@ -231,15 +231,44 @@ func main() {
 		// output.
 		ipAddr := expandedHost.Expanded[0]
 
+		// Server Name Indication (SNI) support is used to request a specific
+		// certificate chain from a remote server.
+		//
+		// We use the value specified by the `server` flag to open a
+		// connection to the remote server. If available, we use the DNS Name
+		// value specified by the `dns-name` flag as our host value, otherwise
+		// we fallback to using the value specified by the `server` flag as
+		// our host value.
+		//
+		// For a service with only one certificate chain the host value is
+		// less important, but for a host with multiple certificate chains
+		// having the correct host value is crucial.
 		var hostVal string
 		switch {
-		case expandedHost.Resolved:
-			hostVal = expandedHost.Given
+
+		// We have a resolved IP Address and a sysadmin-specified DNS Name
+		// value to use for a SNI-enabled certificate retrieval attempt.
+		case expandedHost.Resolved && cfg.DNSName != "":
+			hostVal = cfg.DNSName
 			certChainSource = fmt.Sprintf(
-				"service running on %s (%s) at port %d",
-				hostVal,
+				"service running on %s (%s) at port %d using host value %q",
+				expandedHost.Given,
 				ipAddr,
 				cfg.Port,
+				hostVal,
+			)
+
+		// We have a resolved IP Address, but not a sysadmin-specified DNS
+		// Name value. We'll use the resolvable name/FQDN for a SNI-enabled
+		// certificate retrieval attempt.
+		case expandedHost.Resolved && cfg.DNSName == "":
+			hostVal = expandedHost.Given
+			certChainSource = fmt.Sprintf(
+				"service running on %s (%s) at port %d using host value %q",
+				expandedHost.Given,
+				ipAddr,
+				cfg.Port,
+				expandedHost.Given,
 			)
 		default:
 			certChainSource = fmt.Sprintf(
@@ -250,16 +279,15 @@ func main() {
 		}
 
 		log.Debug().
-			Str("host", hostVal).
+			Str("server", cfg.Server).
+			Str("dns_name", cfg.DNSName).
 			Str("ip_address", ipAddr).
+			Str("host_value", hostVal).
 			Int("port", cfg.Port).
 			Msg("Retrieving certificate chain")
 		var certFetchErr error
 		certChain, certFetchErr = netutils.GetCerts(
-			// NOTE: This is a potentially empty string depending on whether
-			// host pattern was a resolvable name/FQDN.
 			hostVal,
-
 			ipAddr,
 			cfg.Port,
 			cfg.Timeout(),
