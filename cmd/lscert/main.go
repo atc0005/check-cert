@@ -197,19 +197,15 @@ func main() {
 		certsExpireAgeWarning,
 	)
 
-	textutils.PrintHeader("CERTIFICATES | AGE THRESHOLDS")
-	fmt.Printf(
-		"- %s:\tExpires before %v (%d days)\n",
-		nagios.StateWARNINGLabel,
-		certsExpireAgeWarning.Format(certs.CertValidityDateLayout),
-		cfg.AgeWarning,
-	)
-	fmt.Printf(
-		"- %s:\tExpires before %v (%d days)\n",
-		nagios.StateCRITICALLabel,
-		certsExpireAgeCritical.Format(certs.CertValidityDateLayout),
-		cfg.AgeCritical,
-	)
+	log.Debug().
+		Str("threshold_expires_date", certsExpireAgeWarning.Format(certs.CertValidityDateLayout)).
+		Int("threshold_expires_days", cfg.AgeWarning).
+		Msgf("%s expiration threshold", nagios.StateWARNINGLabel)
+
+	log.Debug().
+		Str("threshold_expires_date", certsExpireAgeCritical.Format(certs.CertValidityDateLayout)).
+		Int("threshold_expires_days", cfg.AgeCritical).
+		Msgf("%s expiration threshold", nagios.StateCRITICALLabel)
 
 	textutils.PrintHeader("CERTIFICATES | SUMMARY")
 
