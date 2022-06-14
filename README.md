@@ -79,7 +79,7 @@ one of the available SANs entries.
 Optional support is available to skip hostname verification if a certificate
 is missing SANs entries.
 
-- in version v0.5.4 and earlier, support was available for validating a given
+- in version v0.5.3 and earlier, support was available for validating a given
   hostname against the Common Name field of a certificate, regardless of
   whether SANs entries were present
   - Go 1.15 marked this support as deprecated
