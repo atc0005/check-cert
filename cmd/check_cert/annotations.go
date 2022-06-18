@@ -25,39 +25,74 @@ var errRuntimeTimeoutReached = errors.New("plugin runtime exceeded specified tim
 const runtimeTimeoutReachedAdvice string = "consider increasing value if this is routinely encountered"
 
 // annotateError is a helper function used to add additional human-readable
-// explanation for errors commonly emitted by dependencies. This function
-// receives an error, evaluates whether it contains specific errors in its
-// chain and then (potentially) appends additional details for later use. This
-// updated error chain is returned to the caller, preserving the original
-// wrapped error. The original error is returned unmodified if no annotations
-// were deemed necessary.
-func annotateError(err error, logger zerolog.Logger) error {
+// explanation for errors commonly emitted by dependencies.
+//
+// This function receives a logger and one or more errors, evaluates whether
+// any contain specific errors in its chain and then (potentially) appends
+// additional details for later use. This updated collection of error chains
+// are returned to the caller, preserving any original wrapped errors.
+//
+// The original error collection is returned unmodified if no annotations were
+// deemed necessary.
+//
+// Nil is returned if an empty collection or a collection of nil values are
+// provided for evaluation.
+func annotateError(logger zerolog.Logger, errs ...error) []error {
 
 	funcTimeStart := time.Now()
 
-	defer func() {
+	var errsAnnotated int
+	defer func(counter *int) {
 		logger.Printf(
-			"It took %v to execute annotateError func.",
+			"It took %v to execute annotateError func (errors evaluated: %d, annotated: %d)",
 			time.Since(funcTimeStart),
+			len(errs),
+			*counter,
 		)
-	}()
+	}(&errsAnnotated)
+
+	isNilErrCollection := func(collection []error) bool {
+		if len(collection) != 0 {
+			for _, err := range errs {
+				if err != nil {
+					return false
+				}
+			}
+		}
+		return true
+	}
 
 	switch {
 
-	case errors.Is(err, context.DeadlineExceeded):
-		return fmt.Errorf(
-			"%w: %s; %s",
-			err,
-			errRuntimeTimeoutReached,
-			runtimeTimeoutReachedAdvice,
-		)
+	// Process errors as long as the collection is not empty or not composed
+	// entirely of nil values.
+	case !isNilErrCollection(errs):
+		annotatedErrors := make([]error, 0, len(errs))
 
+		for _, err := range errs {
+			if err != nil {
+				switch {
+				case errors.Is(err, context.DeadlineExceeded):
+					annotatedErrors = append(annotatedErrors, fmt.Errorf(
+						"%w: %s; %s",
+						err,
+						errRuntimeTimeoutReached,
+						runtimeTimeoutReachedAdvice,
+					))
+
+				default:
+					// Record error unmodified if additional decoration isn't defined
+					// for the error type.
+					annotatedErrors = append(annotatedErrors, err)
+				}
+			}
+		}
+
+		return annotatedErrors
+
+	// An empty collection was No errors were provided for evaluation
 	default:
-
-		// Return error unmodified if additional decoration isn't defined for the
-		// error type.
-		return err
-
+		return nil
 	}
 
 }
