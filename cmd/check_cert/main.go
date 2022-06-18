@@ -54,7 +54,7 @@ func main() {
 			"%s: Error initializing application",
 			nagios.StateCRITICALLabel,
 		)
-		nagiosExitState.LastError = cfgErr
+		nagiosExitState.AddError(cfgErr)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
@@ -77,7 +77,7 @@ func main() {
 
 		// Annotate errors (if applicable) with additional context to aid in
 		// troubleshooting.
-		nagiosExitState.LastError = annotateError(nagiosExitState.LastError, logger)
+		nagiosExitState.Errors = annotateError(logger, nagiosExitState.Errors...)
 	}(&nagiosExitState, pluginStart, cfg.Log)
 
 	if cfg.EmitBranding {
@@ -128,7 +128,7 @@ func main() {
 			log.Error().Err(err).Msg(
 				"Error parsing certificates file")
 
-			nagiosExitState.LastError = err
+			nagiosExitState.AddError(err)
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
 				"%s: Error parsing certificates file %q",
 				nagios.StateCRITICALLabel,
@@ -147,11 +147,11 @@ func main() {
 			log.Error().Err(err).Msg(
 				"Unknown data encountered while parsing certificates file")
 
-			nagiosExitState.LastError = fmt.Errorf(
+			nagiosExitState.AddError(fmt.Errorf(
 				"%d unknown/unparsed bytes remaining at end of cert file %q",
 				len(parseAttemptLeftovers),
 				cfg.Filename,
-			)
+			))
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
 				"%s: Unknown data encountered while parsing certificates file %q",
 				nagios.StateCRITICALLabel,
@@ -180,7 +180,7 @@ func main() {
 			log.Error().Err(expandErr).Msg(
 				"Error expanding given host pattern")
 
-			nagiosExitState.LastError = expandErr
+			nagiosExitState.AddError(expandErr)
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
 				"%s: Error expanding given host pattern %q to target IP Address",
 				nagios.StateCRITICALLabel,
@@ -204,7 +204,7 @@ func main() {
 			)
 			log.Error().Err(invalidHostPatternErr).Msg(msg)
 
-			nagiosExitState.LastError = invalidHostPatternErr
+			nagiosExitState.AddError(invalidHostPatternErr)
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
 				"%s: %s",
 				nagios.StateCRITICALLabel,
@@ -223,7 +223,7 @@ func main() {
 
 			log.Error().Err(expandHostErr).Msg(msg)
 
-			nagiosExitState.LastError = expandHostErr
+			nagiosExitState.AddError(expandHostErr)
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
 				"%s: %s",
 				nagios.StateCRITICALLabel,
@@ -321,7 +321,7 @@ func main() {
 			log.Error().Err(certFetchErr).Msg(
 				"Error fetching certificates chain")
 
-			nagiosExitState.LastError = certFetchErr
+			nagiosExitState.AddError(certFetchErr)
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
 				"%s: Error fetching certificates from port %d on %s",
 				nagios.StateCRITICALLabel,
@@ -349,7 +349,7 @@ func main() {
 	// tls.Dial() that a certificate is present for the connection
 	if certsSummary.TotalCertsCount == 0 {
 		noCertsErr := fmt.Errorf("no certificates found")
-		nagiosExitState.LastError = noCertsErr
+		nagiosExitState.AddError(noCertsErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: 0 certificates found at port %d on %q",
 			nagios.StateCRITICALLabel,
@@ -434,7 +434,7 @@ func main() {
 				(verifyErr.Error() == certs.X509CertReliesOnCommonName ||
 					len(certChain[0].DNSNames) == 0):
 
-				nagiosExitState.LastError = verifyErr
+				nagiosExitState.AddError(verifyErr)
 				nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 				nagiosExitState.ServiceOutput = fmt.Sprintf(
@@ -474,7 +474,7 @@ func main() {
 					Str("sans_entries", fmt.Sprintf("%s", certChain[0].DNSNames)).
 					Msg("verification of hostname failed for first cert in chain")
 
-				nagiosExitState.LastError = verifyErr
+				nagiosExitState.AddError(verifyErr)
 				nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 				nagiosExitState.ServiceOutput = fmt.Sprintf(
@@ -516,7 +516,7 @@ func main() {
 			mismatched, found, err := certs.CheckSANsEntries(certChain[0], certChain, cfg.SANsEntries)
 			if err != nil {
 
-				nagiosExitState.LastError = err
+				nagiosExitState.AddError(err)
 
 				nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
 					certsSummary,
@@ -531,7 +531,7 @@ func main() {
 
 				nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 				log.Warn().
-					Err(nagiosExitState.LastError).
+					Err(err).
 					Int("sans_entries_requested", len(cfg.SANsEntries)).
 					Int("sans_entries_found", found).
 					Msg("SANs entries mismatch")
@@ -550,10 +550,10 @@ func main() {
 	switch {
 	case certsSummary.IsCriticalState() || certsSummary.IsWarningState():
 
-		nagiosExitState.LastError = fmt.Errorf(
+		nagiosExitState.AddError(fmt.Errorf(
 			"%d certificates expired or expiring",
 			certsSummary.ExpiredCertsCount+certsSummary.ExpiringCertsCount,
-		)
+		))
 		nagiosExitState.LongServiceOutput = certs.GenerateCertsReport(
 			certsSummary,
 			cfg.VerboseOutput,
@@ -566,13 +566,11 @@ func main() {
 		nagiosExitState.ExitStatusCode = certsSummary.ServiceState().ExitCode
 
 		log.Error().
-			Err(nagiosExitState.LastError).
 			Int("expired_certs", certsSummary.ExpiredCertsCount).
 			Int("expiring_certs", certsSummary.ExpiringCertsCount).
 			Msg("expired or expiring certs present in chain")
 
 	default:
-		nagiosExitState.LastError = nil
 
 		nagiosExitState.ServiceOutput = certs.OneLineCheckSummary(
 			certsSummary,
