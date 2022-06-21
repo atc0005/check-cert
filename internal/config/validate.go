@@ -122,14 +122,14 @@ func (c Config) validate(appType AppType) error {
 		return fmt.Errorf("invalid timeout value %d provided", c.Timeout())
 	}
 
-	if c.AgeWarning < 0 {
+	if c.AgeWarning < 1 {
 		return fmt.Errorf(
 			"invalid cert expiration WARNING threshold number: %d",
 			c.AgeWarning,
 		)
 	}
 
-	if c.AgeCritical < 0 {
+	if c.AgeCritical < 1 {
 		return fmt.Errorf(
 			"invalid cert expiration CRITICAL threshold number: %d",
 			c.AgeCritical,
@@ -139,6 +139,12 @@ func (c Config) validate(appType AppType) error {
 	if c.AgeCritical > c.AgeWarning {
 		return fmt.Errorf(
 			"critical threshold set higher than warning threshold",
+		)
+	}
+
+	if c.AgeCritical == c.AgeWarning {
+		return fmt.Errorf(
+			"critical threshold set equal to warning threshold",
 		)
 	}
 
