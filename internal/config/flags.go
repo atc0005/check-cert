@@ -7,7 +7,20 @@
 
 package config
 
-import "flag"
+import (
+	"flag"
+	"fmt"
+)
+
+// supportedValuesFlagHelpText is a flag package helper function that combines
+// base help text with a list of supported values for the flag.
+func supportedValuesFlagHelpText(baseHelpText string, supportedValues []string) string {
+	return fmt.Sprintf(
+		"%s Supported values: %v",
+		baseHelpText,
+		supportedValues,
+	)
+}
 
 // handleFlagsConfig handles toggling the exposure of specific configuration
 // flags to the user. This behavior is controlled via the specified
@@ -19,95 +32,128 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 	// Flags specific to one application type or the other
 	switch {
 	case appType.Plugin:
-		flag.BoolVar(&c.EmitBranding, "branding", defaultBranding, brandingFlagHelp)
+		flag.BoolVar(&c.EmitBranding, BrandingFlag, defaultBranding, brandingFlagHelp)
 		flag.BoolVar(
-			&c.DisableHostnameVerificationIfEmptySANsList,
-			"disable-hostname-verification-if-empty-sans",
-			defaultDisableHostnameVerificationIfEmptySANsList,
-			disableHostnameVerificationIfEmptySANsListFlagHelp,
+			&c.IgnoreHostnameVerificationFailureIfEmptySANsList,
+			IgnoreHostnameVerificationFailureIfEmptySANsListFlag,
+			defaultIgnoreHostnameVerificationIfEmptySANsList,
+			ignoreHostnameVerificationFailureIfEmptySANsListFlagHelp,
 		)
 
-		flag.BoolVar(&c.VerboseOutput, "v", defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
-		flag.BoolVar(&c.VerboseOutput, "verbose", defaultVerboseOutput, verboseOutputFlagHelp)
+		// DEPRECATED flag support. This is an alias for a previous stable
+		// release. Slated for removal in v0.9.0 release per GH-356.
+		flag.BoolVar(
+			&c.IgnoreHostnameVerificationFailureIfEmptySANsList,
+			DisableHostnameVerificationFailureIfEmptySANsListFlag,
+			defaultIgnoreHostnameVerificationIfEmptySANsList,
+			disableHostnameVerificationFailureIfEmptySANsListFlagHelp,
+		)
 
-		flag.StringVar(&c.Filename, "filename", defaultFilename, filenameFlagHelp)
+		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
 
-		flag.StringVar(&c.Server, "s", defaultServer, serverFlagHelp+" (shorthand)")
-		flag.StringVar(&c.Server, "server", defaultServer, serverFlagHelp)
+		flag.BoolVar(&c.ListIgnoredValidationCheckResultErrors, ListIgnoredErrorsFlag, defaultListIgnoredValidationCheckResultErrors, listIgnoredErrorsFlagHelp)
 
-		flag.StringVar(&c.DNSName, "dn", defaultDNSName, dnsNameFlagHelp)
-		flag.StringVar(&c.DNSName, "dns-name", defaultDNSName, dnsNameFlagHelp)
+		flag.StringVar(&c.Filename, FilenameFlagLong, defaultFilename, filenameFlagHelp)
 
-		flag.IntVar(&c.Port, "p", defaultPort, portFlagHelp+" (shorthand)")
-		flag.IntVar(&c.Port, "port", defaultPort, portFlagHelp)
+		flag.StringVar(&c.Server, ServerFlagShort, defaultServer, serverFlagHelp+" (shorthand)")
+		flag.StringVar(&c.Server, ServerFlagLong, defaultServer, serverFlagHelp)
+
+		flag.StringVar(&c.DNSName, DNSNameFlagShort, defaultDNSName, dnsNameFlagHelp+" (shorthand)")
+		flag.StringVar(&c.DNSName, DNSNameFlagLong, defaultDNSName, dnsNameFlagHelp)
+
+		flag.IntVar(&c.Port, PortFlagShort, defaultPort, portFlagHelp+" (shorthand)")
+		flag.IntVar(&c.Port, PortFlagLong, defaultPort, portFlagHelp)
+
+		flag.Var(
+			&c.ignoreValidationResults,
+			IgnoreValidationResultFlag,
+			supportedValuesFlagHelpText(ignoreValidationResultsFlagHelp, supportedValidationCheckResultKeywords()),
+		)
+
+		flag.Var(
+			&c.applyValidationResults,
+			ApplyValidationResultFlag,
+			supportedValuesFlagHelpText(applyValidationResultsFlagHelp, supportedValidationCheckResultKeywords()),
+		)
 
 	case appType.Inspecter:
-		flag.BoolVar(&c.VerboseOutput, "v", defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
-		flag.BoolVar(&c.VerboseOutput, "verbose", defaultVerboseOutput, verboseOutputFlagHelp)
+		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
 
-		flag.StringVar(&c.Filename, "filename", defaultFilename, filenameFlagHelp)
-		flag.BoolVar(&c.EmitCertText, "text", defaultEmitCertText, emitCertTextFlagHelp)
+		flag.StringVar(&c.Filename, FilenameFlagLong, defaultFilename, filenameFlagHelp)
+		flag.BoolVar(&c.EmitCertText, EmitCertTextFlagLong, defaultEmitCertText, emitCertTextFlagHelp)
 
-		flag.StringVar(&c.Server, "s", defaultServer, serverFlagHelp+" (shorthand)")
-		flag.StringVar(&c.Server, "server", defaultServer, serverFlagHelp)
+		flag.StringVar(&c.Server, ServerFlagShort, defaultServer, serverFlagHelp+" (shorthand)")
+		flag.StringVar(&c.Server, ServerFlagLong, defaultServer, serverFlagHelp)
 
-		flag.StringVar(&c.DNSName, "dn", defaultDNSName, dnsNameFlagHelp)
-		flag.StringVar(&c.DNSName, "dns-name", defaultDNSName, dnsNameFlagHelp)
+		flag.StringVar(&c.DNSName, DNSNameFlagShort, defaultDNSName, dnsNameFlagHelp)
+		flag.StringVar(&c.DNSName, DNSNameFlagLong, defaultDNSName, dnsNameFlagHelp)
 
-		flag.IntVar(&c.Port, "p", defaultPort, portFlagHelp+" (shorthand)")
-		flag.IntVar(&c.Port, "port", defaultPort, portFlagHelp)
+		flag.IntVar(&c.Port, PortFlagShort, defaultPort, portFlagHelp+" (shorthand)")
+		flag.IntVar(&c.Port, PortFlagLong, defaultPort, portFlagHelp)
 
 	case appType.Scanner:
-		flag.IntVar(&c.timeoutPortScan, "scan-timeout", defaultPortScanTimeout, timeoutPortScanFlagHelp)
-		flag.IntVar(&c.timeoutPortScan, "st", defaultPortScanTimeout, timeoutPortScanFlagHelp+" (shorthand)")
+		flag.IntVar(&c.timeoutPortScan, TimeoutPortScanFlagLong, defaultPortScanTimeout, timeoutPortScanFlagHelp)
+		flag.IntVar(&c.timeoutPortScan, TimeoutPortScanFlagShort, defaultPortScanTimeout, timeoutPortScanFlagHelp+" (shorthand)")
 
-		flag.Var(&c.hosts, "hosts", hostsFlagHelp)
-		flag.Var(&c.hosts, "ips", hostsFlagHelp+" (alt name)")
+		flag.Var(&c.hosts, HostsFlagLong, hostsFlagHelp)
+		flag.Var(&c.hosts, HostsFlagAlt, hostsFlagHelp+" (alt name)")
 
-		flag.IntVar(&c.ScanRateLimit, "scan-rate-limit", defaultScanRateLimit, scanRateLimitFlagHelp)
-		flag.IntVar(&c.ScanRateLimit, "srl", defaultScanRateLimit, scanRateLimitFlagHelp+" (shorthand)")
+		flag.IntVar(&c.ScanRateLimit, ScanRateLimitFlagLong, defaultScanRateLimit, scanRateLimitFlagHelp)
+		flag.IntVar(&c.ScanRateLimit, ScanRateLimitFlagShort, defaultScanRateLimit, scanRateLimitFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.timeoutAppInactivity, "app-timeout", defaultAppTimeout, timeoutAppInactivityFlagHelp)
-		flag.IntVar(&c.timeoutAppInactivity, "at", defaultAppTimeout, timeoutAppInactivityFlagHelp+" (shorthand)")
+		flag.IntVar(&c.timeoutAppInactivity, AppTimeoutFlagLong, defaultAppTimeout, timeoutAppInactivityFlagHelp)
+		flag.IntVar(&c.timeoutAppInactivity, AppTimeoutFlagShort, defaultAppTimeout, timeoutAppInactivityFlagHelp+" (shorthand)")
 
-		flag.Var(&c.portsList, "ports", portsListFlagHelp)
-		flag.Var(&c.portsList, "p", portsListFlagHelp+" (shorthand)")
+		flag.Var(&c.portsList, PortsFlagLong, portsListFlagHelp)
+		flag.Var(&c.portsList, PortsFlagShort, portsListFlagHelp+" (shorthand)")
 
-		flag.BoolVar(&c.ShowPortScanResults, "show-port-scan-results", defaultShowPortScanResults, showPortScanResultsFlagHelp)
-		flag.BoolVar(&c.ShowPortScanResults, "spsr", defaultShowPortScanResults, showPortScanResultsFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.ShowPortScanResults, ShowPortScanResultsFlagLong, defaultShowPortScanResults, showPortScanResultsFlagHelp)
+		flag.BoolVar(&c.ShowPortScanResults, ShowPortScanResultsFlagShort, defaultShowPortScanResults, showPortScanResultsFlagHelp+" (shorthand)")
 
-		flag.BoolVar(&c.ShowHostsWithClosedPorts, "show-closed-ports", defaultShowHostsWithClosedPorts, showHostsWithClosedPortsFlagHelp)
-		flag.BoolVar(&c.ShowHostsWithClosedPorts, "scp", defaultShowHostsWithClosedPorts, showHostsWithClosedPortsFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.ShowHostsWithClosedPorts, ShowHostsWithClosedPortsFlagLong, defaultShowHostsWithClosedPorts, showHostsWithClosedPortsFlagHelp)
+		flag.BoolVar(&c.ShowHostsWithClosedPorts, ShowHostsWithClosedPortsFlagShort, defaultShowHostsWithClosedPorts, showHostsWithClosedPortsFlagHelp+" (shorthand)")
 
-		flag.BoolVar(&c.ShowHostsWithValidCerts, "show-hosts-with-valid-certs", defaultShowHostsWithValidCerts, showHostsWithValidCertsFlagHelp)
-		flag.BoolVar(&c.ShowHostsWithValidCerts, "shwvc", defaultShowHostsWithValidCerts, showHostsWithValidCertsFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.ShowHostsWithValidCerts, ShowHostsWithValidCertsFlagLong, defaultShowHostsWithValidCerts, showHostsWithValidCertsFlagHelp)
+		flag.BoolVar(&c.ShowHostsWithValidCerts, ShowHostsWithValidCertsFlagShort, defaultShowHostsWithValidCerts, showHostsWithValidCertsFlagHelp+" (shorthand)")
 
-		flag.BoolVar(&c.ShowValidCerts, "show-valid-certs", defaultShowValidCerts, showValidCertsFlagHelp)
-		flag.BoolVar(&c.ShowValidCerts, "svc", defaultShowValidCerts, showValidCertsFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.ShowValidCerts, ShowValidCertsFlagLong, defaultShowValidCerts, showValidCertsFlagHelp)
+		flag.BoolVar(&c.ShowValidCerts, ShowValidCertsFlagShort, defaultShowValidCerts, showValidCertsFlagHelp+" (shorthand)")
 
-		flag.BoolVar(&c.ShowOverview, "show-overview", defaultShowOverview, showOverviewFlagHelp)
-		flag.BoolVar(&c.ShowOverview, "so", defaultShowOverview, showOverviewFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.ShowOverview, ShowOverviewFlagLong, defaultShowOverview, showOverviewFlagHelp)
+		flag.BoolVar(&c.ShowOverview, ShowOverviewFlagShort, defaultShowOverview, showOverviewFlagHelp+" (shorthand)")
 
 	}
 
 	// Shared flags for all application type
 
-	flag.Var(&c.SANsEntries, "se", sansEntriesFlagHelp+" (shorthand)")
-	flag.Var(&c.SANsEntries, "sans-entries", sansEntriesFlagHelp)
+	flag.Var(&c.SANsEntries, SANsEntriesFlagShort, sansEntriesFlagHelp+" (shorthand)")
+	flag.Var(&c.SANsEntries, SANsEntriesFlagLong, sansEntriesFlagHelp)
 
-	flag.IntVar(&c.AgeWarning, "w", defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp+" (shorthand)")
-	flag.IntVar(&c.AgeWarning, "age-warning", defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
+	flag.IntVar(&c.AgeWarning, AgeWarningFlagShort, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp+" (shorthand)")
+	flag.IntVar(&c.AgeWarning, AgeWarningFlagLong, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
 
-	flag.IntVar(&c.AgeCritical, "c", defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp+" (shorthand)")
-	flag.IntVar(&c.AgeCritical, "age-critical", defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
+	flag.IntVar(&c.AgeCritical, AgeCriticalFlagShort, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp+" (shorthand)")
+	flag.IntVar(&c.AgeCritical, AgeCriticalFlagLong, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
 
-	flag.IntVar(&c.timeout, "t", defaultConnectTimeout, timeoutConnectFlagHelp+" (shorthand)")
-	flag.IntVar(&c.timeout, "timeout", defaultConnectTimeout, timeoutConnectFlagHelp)
+	flag.IntVar(&c.timeout, TimeoutFlagShort, defaultConnectTimeout, timeoutConnectFlagHelp+" (shorthand)")
+	flag.IntVar(&c.timeout, TimeoutFlagLong, defaultConnectTimeout, timeoutConnectFlagHelp)
 
-	flag.StringVar(&c.LoggingLevel, "ll", defaultLogLevel, logLevelFlagHelp+" (shorthand)")
-	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
+	flag.StringVar(
+		&c.LoggingLevel,
+		LogLevelFlagShort,
+		defaultLogLevel,
+		supportedValuesFlagHelpText(logLevelFlagHelp, supportedLogLevels())+" (shorthand)",
+	)
+	flag.StringVar(
+		&c.LoggingLevel,
+		LogLevelFlagLong,
+		defaultLogLevel,
+		supportedValuesFlagHelpText(logLevelFlagHelp, supportedLogLevels()),
+	)
 
-	flag.BoolVar(&c.ShowVersion, "version", defaultDisplayVersionAndExit, versionFlagHelp)
+	flag.BoolVar(&c.ShowVersion, VersionFlagLong, defaultDisplayVersionAndExit, versionFlagHelp)
 
 	// Allow our function to override the default Help output
 	flag.Usage = Usage

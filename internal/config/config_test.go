@@ -117,3 +117,288 @@ func TestExpirationAgeThresholds(t *testing.T) {
 		})
 	}
 }
+
+// TestConfigValidationForCheckResultsFlags asserts that given a specific
+// configuration based on expected flag values and "apply" or "ignore"
+// settings that configuration validation passes or fails as indicated.
+func TestConfigValidationForCheckResultsFlags(t *testing.T) {
+
+	tests := []struct {
+		name        string
+		cfg         Config
+		errExpected bool
+	}{
+		{
+			name: "DefaultValidateExpirationResults",
+			cfg: Config{
+				LoggingLevel: defaultLogLevel,
+				Server:       "www.example.com",
+				AgeWarning:   defaultCertExpireAgeWarning,
+				AgeCritical:  defaultCertExpireAgeCritical,
+			},
+			errExpected: false,
+		},
+		{
+			name: "IgnoreValidateExpirationResults",
+			cfg: Config{
+				LoggingLevel:            defaultLogLevel,
+				Server:                  "www.example.com",
+				AgeWarning:              defaultCertExpireAgeWarning,
+				AgeCritical:             defaultCertExpireAgeCritical,
+				ignoreValidationResults: []string{ValidationKeywordExpiration},
+			},
+			errExpected: false,
+		},
+		{
+			name: "ApplyValidateExpirationResults",
+			cfg: Config{
+				LoggingLevel:           defaultLogLevel,
+				Server:                 "www.example.com",
+				AgeWarning:             defaultCertExpireAgeWarning,
+				AgeCritical:            defaultCertExpireAgeCritical,
+				applyValidationResults: []string{ValidationKeywordExpiration},
+			},
+			errExpected: false,
+		},
+		{
+			name: "DefaultValidateHostnameResults",
+			cfg: Config{
+				LoggingLevel: defaultLogLevel,
+				Server:       "www.example.com",
+				AgeWarning:   defaultCertExpireAgeWarning,
+				AgeCritical:  defaultCertExpireAgeCritical,
+			},
+			errExpected: false,
+		},
+		{
+			name: "IgnoreValidateHostnameResults",
+			cfg: Config{
+				LoggingLevel:            defaultLogLevel,
+				Server:                  "www.example.com",
+				AgeWarning:              defaultCertExpireAgeWarning,
+				AgeCritical:             defaultCertExpireAgeCritical,
+				ignoreValidationResults: []string{ValidationKeywordHostname},
+			},
+			errExpected: false,
+		},
+		{
+			name: "ApplyValidateHostnameResults",
+			cfg: Config{
+				LoggingLevel:           defaultLogLevel,
+				Server:                 "www.example.com",
+				AgeWarning:             defaultCertExpireAgeWarning,
+				AgeCritical:            defaultCertExpireAgeCritical,
+				applyValidationResults: []string{ValidationKeywordHostname},
+			},
+			errExpected: false,
+		},
+		{
+			name: "DefaultValidateSANsListResultsWithoutSANsEntries",
+			cfg: Config{
+				LoggingLevel: defaultLogLevel,
+				Server:       "www.example.com",
+				AgeWarning:   defaultCertExpireAgeWarning,
+				AgeCritical:  defaultCertExpireAgeCritical,
+			},
+			errExpected: false,
+		},
+		{
+			name: "DefaultValidateSANsListResultsWithSANsEntries",
+			cfg: Config{
+				LoggingLevel: defaultLogLevel,
+				Server:       "www.example.com",
+				AgeWarning:   defaultCertExpireAgeWarning,
+				AgeCritical:  defaultCertExpireAgeCritical,
+				SANsEntries:  []string{"tacos.example.com"},
+			},
+			errExpected: false,
+		},
+		{
+			name: "IgnoreValidateSANsListResults",
+			cfg: Config{
+				LoggingLevel:            defaultLogLevel,
+				Server:                  "www.example.com",
+				AgeWarning:              defaultCertExpireAgeWarning,
+				AgeCritical:             defaultCertExpireAgeCritical,
+				ignoreValidationResults: []string{ValidationKeywordSANsList},
+			},
+			errExpected: false,
+		},
+		{
+			name: "ApplyValidateSANsListResultsWithSANsEntries",
+			cfg: Config{
+				LoggingLevel:           defaultLogLevel,
+				Server:                 "www.example.com",
+				AgeWarning:             defaultCertExpireAgeWarning,
+				AgeCritical:            defaultCertExpireAgeCritical,
+				applyValidationResults: []string{ValidationKeywordSANsList},
+				SANsEntries:            []string{"tacos.example.com"},
+			},
+			errExpected: false,
+		},
+		{
+			name: "ApplyValidateSANsListResultsWithoutSANsEntries",
+			cfg: Config{
+				LoggingLevel:           defaultLogLevel,
+				Server:                 "www.example.com",
+				AgeWarning:             defaultCertExpireAgeWarning,
+				AgeCritical:            defaultCertExpireAgeCritical,
+				applyValidationResults: []string{ValidationKeywordSANsList},
+				// SANsEntries:            []string{"tacos.example.com"},
+			},
+			errExpected: true,
+		},
+	}
+
+	for _, tt := range tests {
+
+		// Make scopelint linter happy
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Perform configuration validation.
+			cfgErr := tt.cfg.validate(AppType{Plugin: true})
+			switch {
+			case !tt.errExpected && cfgErr != nil:
+				t.Errorf("want error: %v; got %v", tt.errExpected, cfgErr)
+			case tt.errExpected && cfgErr == nil:
+				t.Errorf("want error: %v; got %v", tt.errExpected, cfgErr)
+			default:
+				t.Log("configuration validation successful")
+			}
+		})
+	}
+
+}
+
+// TestApplyIgnoreDecision asserts that given a specific configuration (based
+// on expected flag values) the "should validation check result be applied"
+// question is answered as expected. Configuration validation is not
+// performed.
+func TestApplyIgnoreDecision(t *testing.T) {
+
+	tests := []struct {
+		name         string
+		cfg          Config
+		validateFunc func(Config) bool
+		applyResults bool
+	}{
+		{
+			name:         "DefaultValidateExpirationResults",
+			cfg:          Config{},
+			validateFunc: Config.ApplyCertExpirationValidationResults,
+			applyResults: defaultApplyCertExpirationValidationResults,
+		},
+		{
+			name: "IgnoreValidateExpirationResults",
+			cfg: Config{
+				ignoreValidationResults: []string{ValidationKeywordExpiration},
+			},
+			validateFunc: Config.ApplyCertExpirationValidationResults,
+			applyResults: false,
+		},
+		{
+			name: "ApplyValidateExpirationResults",
+			cfg: Config{
+				applyValidationResults: []string{ValidationKeywordExpiration},
+			},
+			validateFunc: Config.ApplyCertExpirationValidationResults,
+			applyResults: true,
+		},
+		{
+			name:         "DefaultValidateHostnameResults",
+			cfg:          Config{},
+			validateFunc: Config.ApplyCertHostnameValidationResults,
+			applyResults: defaultApplyCertHostnameValidationResults,
+		},
+		{
+			name: "IgnoreValidateHostnameResults",
+			cfg: Config{
+				ignoreValidationResults: []string{ValidationKeywordHostname},
+			},
+			validateFunc: Config.ApplyCertHostnameValidationResults,
+			applyResults: false,
+		},
+		{
+			name: "ApplyValidateHostnameResults",
+			cfg: Config{
+				applyValidationResults: []string{ValidationKeywordHostname},
+			},
+			validateFunc: Config.ApplyCertHostnameValidationResults,
+			applyResults: true,
+		},
+		{
+			name:         "DefaultValidateSANsListResultsWithoutSANsEntries",
+			cfg:          Config{},
+			validateFunc: Config.ApplyCertSANsListValidationResults,
+			applyResults: false,
+		},
+		{
+			name: "DefaultValidateSANsListResultsWithSANsEntries",
+			cfg: Config{
+				SANsEntries: []string{"tacos.example.com"},
+			},
+			validateFunc: Config.ApplyCertSANsListValidationResults,
+			applyResults: defaultApplyCertSANsListValidationResults,
+		},
+		{
+			name: "IgnoreValidateSANsListResults",
+			cfg: Config{
+				ignoreValidationResults: []string{ValidationKeywordSANsList},
+			},
+			validateFunc: Config.ApplyCertSANsListValidationResults,
+			applyResults: false,
+		},
+		{
+			name: "ApplyValidateSANsListResults",
+			cfg: Config{
+				applyValidationResults: []string{ValidationKeywordSANsList},
+			},
+			validateFunc: Config.ApplyCertSANsListValidationResults,
+			applyResults: true,
+		},
+	}
+
+	for _, tt := range tests {
+
+		// Make scopelint linter happy
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+
+			switch {
+
+			// If the test case indicates that validation results should be
+			// applied but the validation function indicates it is not.
+			case tt.applyResults && !tt.validateFunc(tt.cfg):
+				t.Errorf(
+					"want: validation results applied (%v); got: validation results applied (%v)",
+					tt.applyResults,
+					tt.validateFunc(tt.cfg),
+				)
+
+			// If the test case indicates that validation results should not
+			// be applied but the validation function indicates it is.
+			case !tt.applyResults && tt.validateFunc(tt.cfg):
+				t.Errorf(
+					"want: validation results applied (%v); got: validation results applied (%v)",
+					tt.applyResults,
+					tt.validateFunc(tt.cfg),
+				)
+
+			// Test case and validation function agree.
+			default:
+				t.Logf(
+					"want: validation results applied (%v); got: validation results applied (%v)",
+					tt.applyResults,
+					tt.validateFunc(tt.cfg),
+				)
+			}
+
+		})
+	}
+
+}

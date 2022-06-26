@@ -37,6 +37,66 @@ import (
 	"github.com/atc0005/go-nagios"
 )
 
+var (
+	// ErrMissingValue indicates that an expected value was missing.
+	ErrMissingValue = errors.New("missing expected value")
+
+	// ErrNoCertsFound indicates that no certificates were found when
+	// evaluating a certificate chain. This error is not really expected to
+	// ever occur.
+	ErrNoCertsFound = errors.New("no certificates found")
+
+	// ErrExpiredCertsFound indicates that one or more certificates were found
+	// to be expired when evaluating a certificate chain.
+	ErrExpiredCertsFound = errors.New("expired certificates found")
+
+	// ErrExpiringCertsFound indicates that one or more certificates were
+	// found to be expiring soon when evaluating a certificate chain.
+	ErrExpiringCertsFound = errors.New("expiring certificates found")
+
+	// ErrHostnameVerificationFailed indicates a mismatch between a
+	// certificate and a given hostname.
+	ErrHostnameVerificationFailed = errors.New("hostname verification failed")
+
+	// ErrCertMissingSANsEntries indicates that a certificate is missing one or
+	// more Subject Alternate Names specified by the user.
+	ErrCertMissingSANsEntries = errors.New("certificate is missing requested SANs entries")
+	// ErrCertMissingSANsEntries = errors.New("certificate is missing Subject Alternate Name entries")
+
+	// ErrCertHasUnexpectedSANsEntries indicates that a certificate has one or
+	// more Subject Alternate Names not specified by the user.
+	ErrCertHasUnexpectedSANsEntries = errors.New("certificate has unexpected SANs entries")
+	// ErrCertHasUnexpectedSANsEntries = errors.New("certificate has unexpected Subject Alternate Name entries")
+
+	// ErrCertHasMissingAndUnexpectedSANsEntries indicates that a certificate is
+	// missing one or more Subject Alternate Names specified by the user and also
+	// contains one more more Subject Alternate Names not specified by the user.
+	ErrCertHasMissingAndUnexpectedSANsEntries = errors.New("certificate is missing requested SANs entries, has unexpected SANs entries")
+	// ErrCertHasMissingAndUnexpectedSANsEntries = errors.New("certificate is missing and has unexpected Subject Alternate Name entries")
+
+	// ErrX509CertReliesOnCommonName mirrors the unexported error string
+	// emitted by the HostnameError.Error() method from the x509 package.
+	//
+	// This error string is emitted when a certificate is missing Subject
+	// Alternate Names (SANs) AND a specified hostname matches the Common Name
+	// field.
+	ErrX509CertReliesOnCommonName = errors.New("x509: certificate relies on legacy Common Name field, use SANs instead")
+
+	// ErrNoCertValidationResults indicates that the cert chain validation
+	// results collection is empty. This is an unusual condition as
+	// configuration validation requires that at least one validation check is
+	// performed.
+	ErrNoCertValidationResults = errors.New("certificate validation results collection is empty")
+)
+
+// ServiceStater represents a type that is capable of evaluating its overall
+// state.
+type ServiceStater interface {
+	IsCriticalState() bool
+	IsWarningState() bool
+	IsOKState() bool
+}
+
 // DiscoveredCertChain represents the certificate chain found on a specific
 // host along with that host's IP/Name and port.
 type DiscoveredCertChain struct {
@@ -72,15 +132,15 @@ const (
 	certChainPositionUnknown        string = "UNKNOWN cert chain position; please submit a bug report"
 )
 
-// CertCheckOneLineSummaryTmpl is a shared template string used for emitting
-// one-line service check status output for certificate chains whose
-// certificates have not expired yet.
-const CertCheckOneLineSummaryTmpl string = "%s: %s cert %q expires next with %s (until %s) %s"
+// ExpirationValidationOneLineSummaryExpiresNextTmpl is a shared template
+// string used for emitting one-line service check status output for
+// certificate chains whose certificates have not expired yet.
+const ExpirationValidationOneLineSummaryExpiresNextTmpl string = "%s validation %s: %s cert %q expires next with %s (until %s)"
 
-// CertCheckOneLineSummaryExpiredTmpl is a shared template string used for
-// emitting one-line service check status output for certificate chains with
-// expired certificates.
-const CertCheckOneLineSummaryExpiredTmpl string = "%s: %s cert %q expired %s (on %s) %s"
+// ExpirationValidationOneLineSummaryExpiredTmpl is a shared template string
+// used for emitting one-line service check status output for certificate
+// chains with expired certificates.
+const ExpirationValidationOneLineSummaryExpiredTmpl string = "%s validation %s: %s cert %q expired %s (on %s)"
 
 // X509CertReliesOnCommonName mirrors the unexported error string emitted by
 // the HostnameError.Error() method from the x509 package.
@@ -88,52 +148,79 @@ const CertCheckOneLineSummaryExpiredTmpl string = "%s: %s cert %q expired %s (on
 // This error string is emitted when a certificate is missing Subject
 // Alternate Names (SANs) AND a specified hostname matches the Common Name
 // field.
+//
+// Deprecated: See the ErrX509CertReliesOnCommonName value instead.
 const X509CertReliesOnCommonName string = "x509: certificate relies on legacy Common Name field, use SANs instead"
 
-// ChainStatus provides a quick status overview of the certificates in a
-// provided certificate chain.
-type ChainStatus struct {
+// Names of certificate chain validation checks.
+const (
+	// checkNameExpirationValidationResult string = "Certificate Chain Expiration"
+	// checkNameHostnameValidationResult   string = "Leaf Certificate Hostname"
+	// checkNameSANsListValidationResult   string = "Leaf Certificate SANs List"
+	// checkNameExpirationValidationResult string = "Expiration Validation"
+	// checkNameHostnameValidationResult   string = "Hostname Validation"
+	// checkNameSANsListValidationResult   string = "SANs List Validation"
+	checkNameExpirationValidationResult string = "Expiration"
+	checkNameHostnameValidationResult   string = "Hostname"
+	checkNameSANsListValidationResult   string = "SANs List"
+)
 
-	// HasExpiredCerts indicates whether the certificate chain has any
-	// expired certificates.
-	HasExpiredCerts bool
+// Baseline priority values for validation results. Higher values indicate
+// higher priority.
+const (
+	baselinePrioritySANsListValidationResult int = iota + 1
+	baselinePriorityHostnameValidationResult
+	baselinePriorityExpirationValidationResult
+)
 
-	// HasExpiringCerts indicates whether the certificate chain has any
-	// certificates set to expire before the WARNING or CRITICAL age
-	// thresholds.
-	HasExpiringCerts bool
+// Priority modifiers for validation results. These values are used to boost
+// the baseline priority of a validation result in order to allow it to "jump
+// the line" for review purposes.
+const (
 
-	// ExpiredCertsCount is the number of expired certificates in the chain.
-	ExpiredCertsCount int
+	// priorityModifierMaximum represents the maximum priority modifier for a
+	// validation result. This modifier is usually applied for critical sanity
+	// check failures (e.g., wrong range of requested values) or significant
+	// issues needing immediate attention (e.g., "expired certificates" vs
+	// "expiring soon" certificates).
+	priorityModifierMaximum int = 999
 
-	// ExpiringCertsCount is the number of certificates expiring before one of
-	// the WARNING or CRITICAL age thresholds.
-	ExpiringCertsCount int
+	// priorityModifierMedium represents a medium priority modifier for a
+	// validation result. This modifier is usually applied for check failures
+	// with optional workarounds (e.g., "empty SANs list on cert").
+	priorityModifierMedium int = 2
 
-	// ValidCertsCount is the number of certificates not yet expired or
-	// expiring
-	ValidCertsCount int
+	// priorityModifierMinimum represents the minimum priority modifier for a
+	// validation result. This modifier is usually applied for minor check
+	// failures (e.g., "expiring soon").
+	priorityModifierMinimum int = 1
+)
 
-	// TotalCertsCount is the total number of certificates in a chain
-	TotalCertsCount int
+// ServiceState accepts a type capable of evaluating its status and uses those
+// results to map to a compatible ServiceState value.
+func ServiceState(val ServiceStater) nagios.ServiceState {
+	var stateLabel string
+	var stateExitCode int
 
-	// Summary is a high-level overview of the number of expired, expiring and
-	// certificates not yet crossing over a WARNING or CRITICAL age threshold.
-	// This is commonly used as the lead-out text for a one-line summary.
-	Summary string
+	switch {
+	case val.IsCriticalState():
+		stateLabel = nagios.StateCRITICALLabel
+		stateExitCode = nagios.StateCRITICALExitCode
+	case val.IsWarningState():
+		stateLabel = nagios.StateWARNINGLabel
+		stateExitCode = nagios.StateWARNINGExitCode
+	case val.IsOKState():
+		stateLabel = nagios.StateOKLabel
+		stateExitCode = nagios.StateOKExitCode
+	default:
+		stateLabel = nagios.StateUNKNOWNLabel
+		stateExitCode = nagios.StateUNKNOWNExitCode
+	}
 
-	// AgeWarningThreshold is the specified age threshold for when
-	// certificates in the chain with an expiration less than this value are
-	// considered to be in a WARNING state.
-	AgeWarningThreshold time.Time
-
-	// AgeCriticalThreshold is the specified age threshold for when
-	// certificates in the chain with an expiration less than this value are
-	// considered to be in a CRITICAL state.
-	AgeCriticalThreshold time.Time
-
-	// CertChain is the collection of certificates under evaluation.
-	CertChain []*x509.Certificate
+	return nagios.ServiceState{
+		Label:    stateLabel,
+		ExitCode: stateExitCode,
+	}
 }
 
 // GetCertsFromFile is a helper function for retrieving a certificate chain
@@ -217,7 +304,8 @@ func IsExpiredCert(cert *x509.Certificate) bool {
 // IsExpiringCert receives a x509 certificate, CRITICAL age threshold and
 // WARNING age threshold values and uses the provided thresholds to determine
 // if the certificate is about to expire. A boolean value is returned to
-// indicate the results of this check.
+// indicate the results of this check. An expired certificate fails this
+// check.
 func IsExpiringCert(cert *x509.Certificate, ageCritical time.Time, ageWarning time.Time) bool {
 
 	switch {
@@ -490,6 +578,10 @@ func isSelfSigned(cert *x509.Certificate) bool {
 
 			}
 
+			// TODO: Do we need to check this ourselves in Go 1.18?
+			// if cert.SignatureAlgorithm == x509.SHA1WithRSA {
+			// }
+
 			return false
 
 		// no problems verifying self-signed signature
@@ -616,25 +708,30 @@ func ChainPosition(cert *x509.Certificate, certChain []*x509.Certificate) string
 
 }
 
-// GenerateCertsReport receives the current certificate chain status generates
-// a formatted report suitable for display on the console or (potentially) via
-// Microsoft Teams provided suitable conversion is performed on the output. If
-// specified, additional details are provided such as certificate fingerprint
-// and key IDs.
-func GenerateCertsReport(chainStatus ChainStatus, verboseDetails bool) string {
+// GenerateCertChainReport receives the current certificate chain status
+// generates a formatted report suitable for display on the console or
+// (potentially) via Microsoft Teams provided suitable conversion is performed
+// on the output. If specified, additional details are provided such as
+// certificate fingerprint and key IDs.
+func GenerateCertChainReport(
+	certChain []*x509.Certificate,
+	ageCriticalThreshold time.Time,
+	ageWarningThreshold time.Time,
+	verboseDetails bool,
+) string {
 
 	var certsReport string
 
-	certsTotal := len(chainStatus.CertChain)
+	certsTotal := len(certChain)
 
-	for idx, certificate := range chainStatus.CertChain {
+	for idx, certificate := range certChain {
 
-		certPosition := ChainPosition(certificate, chainStatus.CertChain)
+		certPosition := ChainPosition(certificate, certChain)
 
 		expiresText := ExpirationStatus(
 			certificate,
-			chainStatus.AgeCriticalThreshold,
-			chainStatus.AgeWarningThreshold,
+			ageCriticalThreshold,
+			ageWarningThreshold,
 		)
 
 		fingerprints := struct {
@@ -757,70 +854,7 @@ func GenerateCertsReport(chainStatus ChainStatus, verboseDetails bool) string {
 		}
 	}
 
-	return certsReport
-
-}
-
-// CheckSANsEntries receives a x509 certificate, the x509 certificate chain it
-// is a part of and a list of expected SANs entries that should be present for
-// the certificate. The number of unmatched SANs entries, the number of total
-// SANs entries for the cert chain and an error (if validation failed, nil
-// otherwise) are returned.
-func CheckSANsEntries(cert *x509.Certificate, certChain []*x509.Certificate, expectedEntries []string) (int, int, error) {
-
-	unmatchedSANsEntriesFromList := make([]string, 0, len(expectedEntries))
-	unmatchedSANsEntriesFromCert := make([]string, 0, len(cert.DNSNames))
-
-	// We assume that the given certificate is a leaf certificate, so we use
-	// the SANs entries from that cert.
-	sansEntriesFound := len(cert.DNSNames)
-
-	// Assuming that the DNSNames slice is NOT already lowercase, so forcing
-	// them to be so first before comparing against the user-provided slice of
-	// SANs entries.
-	lcDNSNames := textutils.LowerCaseStringSlice(cert.DNSNames)
-
-	switch {
-
-	// more entries than is on the cert
-	case len(expectedEntries) >= len(lcDNSNames):
-		for idx := range expectedEntries {
-			if !textutils.InList(strings.ToLower(expectedEntries[idx]), lcDNSNames) {
-				unmatchedSANsEntriesFromList = append(unmatchedSANsEntriesFromList, expectedEntries[idx])
-				continue
-			}
-		}
-
-		if len(unmatchedSANsEntriesFromList) > 0 {
-			return len(unmatchedSANsEntriesFromList), sansEntriesFound, fmt.Errorf(
-				"%d specified SANs entries missing from %s certificate: %v",
-				len(unmatchedSANsEntriesFromList),
-				ChainPosition(cert, certChain),
-				unmatchedSANsEntriesFromList,
-			)
-		}
-
-	// having more entries on the cert than specified is also a problem
-	case len(expectedEntries) < len(lcDNSNames):
-
-		for idx := range lcDNSNames {
-			if !textutils.InList(strings.ToLower(lcDNSNames[idx]), expectedEntries) {
-				unmatchedSANsEntriesFromCert = append(unmatchedSANsEntriesFromCert, lcDNSNames[idx])
-				continue
-			}
-		}
-
-		return len(unmatchedSANsEntriesFromCert), sansEntriesFound, fmt.Errorf(
-			"%d SANs entries on %s certificate not specified in provided list: %v",
-			len(unmatchedSANsEntriesFromCert),
-			ChainPosition(cert, certChain),
-			unmatchedSANsEntriesFromCert,
-		)
-
-	}
-
-	// best case, everything checks out
-	return 0, sansEntriesFound, nil
+	return strings.TrimSpace(certsReport)
 
 }
 
@@ -893,6 +927,9 @@ func (dcc DiscoveredCertChains) HasProblems(
 
 // NumProblems indicates how many evaluated certificates are expired or
 // expiring soon.
+//
+// TODO: Need to either rename or expand the scope to also include hostname
+// verification errors, chain validity, etc.
 func (dcc DiscoveredCertChains) NumProblems(
 	certsExpireAgeCritical time.Time,
 	certsExpireAgeWarning time.Time) int {
@@ -914,172 +951,5 @@ func (dcc DiscoveredCertChains) NumProblems(
 	}
 
 	return problems
-
-}
-
-// ChainSummary receives a certificate chain, the critical age threshold and
-// the warning age threshold and generates a summary of certificate details.
-func ChainSummary(
-	certChain []*x509.Certificate,
-	certsExpireAgeCritical time.Time,
-	certsExpireAgeWarning time.Time,
-) ChainStatus {
-
-	hasExpiredCerts := HasExpiredCert(certChain)
-	expiredCertsCount := NumExpiredCerts(certChain)
-
-	hasExpiringCerts := HasExpiringCert(
-		certChain,
-		certsExpireAgeCritical,
-		certsExpireAgeWarning,
-	)
-	expiringCertsCount := NumExpiringCerts(
-		certChain,
-		certsExpireAgeCritical,
-		certsExpireAgeWarning,
-	)
-
-	totalCerts := len(certChain)
-	validCertsCount := totalCerts - expiredCertsCount - expiringCertsCount
-
-	certsSummary := fmt.Sprintf(
-		"[EXPIRED: %d, EXPIRING: %d, OK: %d]",
-		expiredCertsCount,
-		expiringCertsCount,
-		validCertsCount,
-	)
-
-	chainStatus := ChainStatus{
-		CertChain:            certChain,
-		AgeWarningThreshold:  certsExpireAgeWarning,
-		AgeCriticalThreshold: certsExpireAgeCritical,
-		HasExpiredCerts:      hasExpiredCerts,
-		HasExpiringCerts:     hasExpiringCerts,
-		ExpiredCertsCount:    expiredCertsCount,
-		ExpiringCertsCount:   expiringCertsCount,
-		TotalCertsCount:      totalCerts,
-		Summary:              certsSummary,
-	}
-
-	return chainStatus
-
-}
-
-// OneLineCheckSummary receives the current certificate chain status and a
-// flag indicating whether a summary of the certs which have expired, are
-// expiring or will soon expire should be included, then generates a one-line
-// summary of the check results for display and notification purposes.
-func OneLineCheckSummary(certsStatus ChainStatus, includeSummary bool) string {
-
-	// Give the all clear: no issues found. Do go ahead and mention the next
-	// expiration date in the chain for quick reference however.
-	nextCertToExpire := NextToExpire(certsStatus.CertChain, false)
-
-	// Start by assuming that the CommonName is *not* blank
-	nextCertToExpireServerName := nextCertToExpire.Subject.CommonName
-
-	// but if it is, use the first SubjectAlternateName field in its place
-	if nextCertToExpire.Subject.CommonName == "" {
-		if len(nextCertToExpire.DNSNames[0]) > 0 {
-			nextCertToExpireServerName = nextCertToExpire.DNSNames[0]
-		}
-	}
-
-	summaryTemplate := CertCheckOneLineSummaryTmpl
-	if hasExpiredCert := HasExpiredCert(certsStatus.CertChain); hasExpiredCert {
-		summaryTemplate = CertCheckOneLineSummaryExpiredTmpl
-	}
-
-	var summary string
-	switch {
-	case includeSummary:
-		summary = fmt.Sprintf(
-			summaryTemplate,
-			certsStatus.ServiceState().Label,
-			ChainPosition(nextCertToExpire, certsStatus.CertChain),
-			nextCertToExpireServerName,
-			FormattedExpiration(nextCertToExpire.NotAfter),
-			nextCertToExpire.NotAfter.Format(CertValidityDateLayout),
-			certsStatus.Summary,
-		)
-	default:
-		summary = fmt.Sprintf(
-			summaryTemplate,
-			certsStatus.ServiceState().Label,
-			ChainPosition(nextCertToExpire, certsStatus.CertChain),
-			nextCertToExpireServerName,
-			FormattedExpiration(nextCertToExpire.NotAfter),
-			nextCertToExpire.NotAfter.Format(CertValidityDateLayout),
-			"",
-		)
-	}
-
-	return summary
-
-}
-
-// ServiceState returns the appropriate Service Check Status label and exit
-// code for the evaluated certificate chain.
-func (cs ChainStatus) ServiceState() nagios.ServiceState {
-
-	var stateLabel string
-	var stateExitCode int
-
-	switch {
-	case cs.IsCriticalState():
-		stateLabel = nagios.StateCRITICALLabel
-		stateExitCode = nagios.StateCRITICALExitCode
-	case cs.IsWarningState():
-		stateLabel = nagios.StateWARNINGLabel
-		stateExitCode = nagios.StateWARNINGExitCode
-	case cs.IsOKState():
-		stateLabel = nagios.StateOKLabel
-		stateExitCode = nagios.StateOKExitCode
-	default:
-		stateLabel = nagios.StateUNKNOWNLabel
-		stateExitCode = nagios.StateUNKNOWNExitCode
-	}
-
-	return nagios.ServiceState{
-		Label:    stateLabel,
-		ExitCode: stateExitCode,
-	}
-
-}
-
-// IsWarningState indicates whether a ChainStatus has been determined to be in
-// a WARNING state. This returns false if the ChainStatus is in an OK or
-// CRITICAL state, true otherwise.
-func (cs ChainStatus) IsWarningState() bool {
-	for idx := range cs.CertChain {
-		if !IsExpiredCert(cs.CertChain[idx]) &&
-			cs.CertChain[idx].NotAfter.Before(cs.AgeWarningThreshold) &&
-			!cs.CertChain[idx].NotAfter.Before(cs.AgeCriticalThreshold) {
-			return true
-		}
-	}
-
-	return false
-
-}
-
-// IsCriticalState indicates whether a ChainStatus has been determined to be in
-// a CRITICAL state. This returns false if the ChainStatus is in an OK or
-// WARNING state, true otherwise.
-func (cs ChainStatus) IsCriticalState() bool {
-	for idx := range cs.CertChain {
-		if IsExpiredCert(cs.CertChain[idx]) || cs.CertChain[idx].NotAfter.Before(cs.AgeCriticalThreshold) {
-			return true
-		}
-	}
-
-	return false
-
-}
-
-// IsOKState indicates whether a ChainStatus has been determined to be in
-// an OK state, without expired or expiring certificates.
-func (cs ChainStatus) IsOKState() bool {
-	return !cs.IsWarningState() && !cs.IsCriticalState()
 
 }
