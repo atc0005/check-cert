@@ -13,10 +13,17 @@ import (
 	"strings"
 )
 
-// InList is a helper function to emulate Python's `if "x"
-// in list:` functionality
-func InList(needle string, haystack []string) bool {
+// InList is a helper function to emulate Python's `if "x" in list:`
+// functionality. The caller can optionally ignore case of compared items.
+func InList(needle string, haystack []string, ignoreCase bool) bool {
 	for _, item := range haystack {
+
+		if ignoreCase {
+			if strings.EqualFold(item, needle) {
+				return true
+			}
+		}
+
 		if item == needle {
 			return true
 		}
@@ -122,4 +129,48 @@ func BytesToDelimitedHexStr(bx []byte, delimiter string) string {
 		hexStr = append(hexStr, fmt.Sprintf("%X", v))
 	}
 	return strings.Join(hexStr, delimiter)
+}
+
+// Matches returns a list of successful matches and a list of failed matches
+// for the provided lists of expected and total values. If specified, a
+// case-insensitive comparison is used.
+func Matches(expectedList []string, searchList []string, ignoreCase bool) ([]string, []string) {
+
+	successful := make([]string, 0, len(expectedList))
+	failed := make([]string, 0, len(expectedList))
+
+	if ignoreCase {
+		searchList = LowerCaseStringSlice(searchList)
+	}
+
+	for _, expectedEntry := range expectedList {
+		switch {
+		case !InList(expectedEntry, searchList, ignoreCase):
+			failed = append(failed, expectedEntry)
+
+		default:
+			successful = append(successful, expectedEntry)
+		}
+	}
+
+	return successful, failed
+}
+
+// FailedMatches evaluates a list of values using list of expected values. A
+// list of failed matches or an empty (non-nil) list is returned. If
+// specified, a case-insensitive comparison is used.
+func FailedMatches(expectedList []string, searchList []string, ignoreCase bool) []string {
+	failed := make([]string, 0, len(expectedList))
+
+	if ignoreCase {
+		searchList = LowerCaseStringSlice(searchList)
+	}
+
+	for _, expectedEntry := range expectedList {
+		if !InList(expectedEntry, searchList, ignoreCase) {
+			failed = append(failed, expectedEntry)
+		}
+	}
+
+	return failed
 }

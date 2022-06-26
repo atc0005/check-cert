@@ -94,6 +94,14 @@ func printSummaryHighLevel(
 			name = strings.Join(certChain.Certs[0].DNSNames, ", ")
 		}
 
+		validationResults := certs.ValidateExpiration(
+			certChain.Certs,
+			ageCritical,
+			ageWarning,
+			true,
+			false,
+		)
+
 		switch {
 		case hasHostNameVal:
 			fmt.Fprintf(
@@ -104,11 +112,7 @@ func printSummaryHighLevel(
 				certChain.Port,
 				name,
 				statusIcon,
-				certs.ChainSummary(
-					certChain.Certs,
-					certsExpireAgeCritical,
-					certsExpireAgeWarning,
-				).Summary,
+				validationResults.Overview(),
 				certs.FormatCertSerialNumber(certChain.Certs[0].SerialNumber),
 			)
 		default:
@@ -119,11 +123,7 @@ func printSummaryHighLevel(
 				certChain.Port,
 				name,
 				statusIcon,
-				certs.ChainSummary(
-					certChain.Certs,
-					certsExpireAgeCritical,
-					certsExpireAgeWarning,
-				).Summary,
+				validationResults.Overview(),
 				certs.FormatCertSerialNumber(certChain.Certs[0].SerialNumber),
 			)
 		}

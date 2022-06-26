@@ -200,7 +200,7 @@ func (mvs *multiValueStringFlag) Set(value string) error {
 type Config struct {
 
 	// SANsEntries is the list of Subject Alternate Names (SANs) to verify are
-	// present on the examined certificate. This value is provided a
+	// present on the examined certificate. This value is provided as a
 	// comma-separated list.
 	SANsEntries multiValueStringFlag
 
@@ -225,7 +225,7 @@ type Config struct {
 	// Names entries associated with the certificate.
 	DNSName string
 
-	// Port is the TCP port used by the certifcate-enabled service.
+	// Port is the TCP port used by the certificate-enabled service.
 	Port int
 
 	// PortsList is the list of ports to be checked for certificates.
@@ -305,8 +305,8 @@ type Config struct {
 	ShowPortScanResults bool
 
 	// IgnoreHostnameVerificationFailureIfEmptySANsList indicates whether
-	// hostname verification should be skipped if a certificate has an empty
-	// SANs list.
+	// hostname verification failure should be ignored if a certificate has an
+	// empty SANs list.
 	//
 	// Go 1.17 removed support for the legacy behavior of treating the
 	// CommonName field on X.509 certificates as a host name when no Subject
@@ -314,10 +314,27 @@ type Config struct {
 	// re-enabling the behavior by way of adding the value x509ignoreCN=0 to
 	// the GODEBUG environment variable.
 	//
-	// We offer the option to conditionally skip hostname verification when
-	// the SANs list is empty in order to still allow validating a
-	// certificate's expiration date for older certificates.
-	DisableHostnameVerificationIfEmptySANsList bool
+	// This setting is provided in order to still allow validating a
+	// certificate's expiration date for older certificates when a SANs list
+	// is empty and would otherwise result in validation check results
+	// failure.
+	IgnoreHostnameVerificationFailureIfEmptySANsList bool
+
+	// ListIgnoredValidationCheckResultErrors indicates whether validation
+	// check result errors should be included in the final plugin report
+	// output. By default, ignored errors are not included as this may prove
+	// confusing (e.g., when all results are either successful or ignored).
+	ListIgnoredValidationCheckResultErrors bool
+
+	// ignoreValidationResults is a list of validation check results that
+	// should be explicitly ignored and not used when determining overall
+	// validation state of a certificate chain.
+	ignoreValidationResults multiValueStringFlag
+
+	// applyValidationResults is a list of validation check results that
+	// should be explicitly applied when determining overall validation state
+	// of a certificate chain.
+	applyValidationResults multiValueStringFlag
 
 	// Log is an embedded zerolog Logger initialized via config.New().
 	Log zerolog.Logger

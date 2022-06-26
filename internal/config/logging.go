@@ -41,47 +41,27 @@ const (
 	LogLevelTrace string = "trace"
 )
 
-// loggingLevels is a map of string to zerolog.Level created in an effort to
-// keep from repeating ourselves
-var loggingLevels = make(map[string]zerolog.Level)
-
-func init() {
-
-	// https://stackoverflow.com/a/59426901
-	// syntax error: non-declaration statement outside function body
-	//
-	// Workaround: Use init() to setup this map for later reference
-	loggingLevels[LogLevelDisabled] = zerolog.Disabled
-	loggingLevels[LogLevelPanic] = zerolog.PanicLevel
-	loggingLevels[LogLevelFatal] = zerolog.FatalLevel
-	loggingLevels[LogLevelError] = zerolog.ErrorLevel
-	loggingLevels[LogLevelWarn] = zerolog.WarnLevel
-	loggingLevels[LogLevelInfo] = zerolog.InfoLevel
-	loggingLevels[LogLevelDebug] = zerolog.DebugLevel
-	loggingLevels[LogLevelTrace] = zerolog.TraceLevel
-}
-
 // setLoggingLevel applies the requested logging level to filter out messages
 // with a lower level than the one configured.
 func setLoggingLevel(logLevel string) error {
 
 	switch logLevel {
 	case LogLevelDisabled:
-		zerolog.SetGlobalLevel(loggingLevels[LogLevelDisabled])
+		zerolog.SetGlobalLevel(zerolog.Disabled)
 	case LogLevelPanic:
-		zerolog.SetGlobalLevel(loggingLevels[LogLevelPanic])
+		zerolog.SetGlobalLevel(zerolog.PanicLevel)
 	case LogLevelFatal:
-		zerolog.SetGlobalLevel(loggingLevels[LogLevelFatal])
+		zerolog.SetGlobalLevel(zerolog.FatalLevel)
 	case LogLevelError:
-		zerolog.SetGlobalLevel(loggingLevels[LogLevelError])
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 	case LogLevelWarn:
-		zerolog.SetGlobalLevel(loggingLevels[LogLevelWarn])
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	case LogLevelInfo:
-		zerolog.SetGlobalLevel(loggingLevels[LogLevelInfo])
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	case LogLevelDebug:
-		zerolog.SetGlobalLevel(loggingLevels[LogLevelDebug])
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	case LogLevelTrace:
-		zerolog.SetGlobalLevel(loggingLevels[LogLevelTrace])
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	default:
 		return fmt.Errorf("invalid option provided: %v", logLevel)
 	}
@@ -132,6 +112,10 @@ func (c *Config) setupLogging(appType AppType) error {
 			Str("cert_check_timeout", c.Timeout().String()).
 			Int("age_warning", c.AgeWarning).
 			Int("age_critical", c.AgeCritical).
+			Bool("apply_hostname_validation_results", c.ApplyCertHostnameValidationResults()).
+			Bool("apply_expiration_validation_results", c.ApplyCertExpirationValidationResults()).
+			Bool("apply_sans_list_validation_results", c.ApplyCertSANsListValidationResults()).
+			// TODO: Extend with further validation check names.
 			Logger()
 
 	case appType.Scanner:

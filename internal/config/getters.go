@@ -8,9 +8,11 @@
 package config
 
 import (
+	"strings"
 	"time"
 
 	"github.com/atc0005/check-cert/internal/netutils"
+	"github.com/atc0005/check-cert/internal/textutils"
 )
 
 // Timeout converts the user-specified connection timeout value in
@@ -53,4 +55,139 @@ func (c Config) Hosts() []netutils.HostPattern {
 	}
 
 	return []netutils.HostPattern{}
+}
+
+// ApplyCertHostnameValidationResults indicates whether hostname certificate
+// hostname validation check results should be applied when performing final
+// plugin state evaluation. Precedence is given for explicit request to ignore
+// this validation result.
+func (c Config) ApplyCertHostnameValidationResults() bool {
+
+	ignoreRequested := textutils.InList(
+		ValidationKeywordHostname, c.ignoreValidationResults, true,
+	)
+
+	applyRequested := textutils.InList(
+		ValidationKeywordHostname, c.applyValidationResults, true,
+	)
+
+	switch {
+	case ignoreRequested:
+		return false
+	case applyRequested:
+		return true
+	default:
+		return defaultApplyCertHostnameValidationResults
+	}
+}
+
+// ApplyCertExpirationValidationResults indicates whether certificate
+// expiration check results should be applied when performing final plugin
+// state evaluation. Precedence is given for explicit request to ignore this
+// validation result.
+func (c Config) ApplyCertExpirationValidationResults() bool {
+
+	ignoreRequested := textutils.InList(
+		ValidationKeywordExpiration, c.ignoreValidationResults, true,
+	)
+
+	applyRequested := textutils.InList(
+		ValidationKeywordExpiration, c.applyValidationResults, true,
+	)
+
+	switch {
+	case ignoreRequested:
+		return false
+	case applyRequested:
+		return true
+	default:
+		return defaultApplyCertExpirationValidationResults
+	}
+}
+
+// ApplyCertSANsListValidationResults indicates whether certificate SANs list
+// validation check results should be applied when performing final plugin
+// state evaluation. Precedence is given for explicit request to ignore this
+// validation result.
+func (c Config) ApplyCertSANsListValidationResults() bool {
+
+	ignoreRequested := textutils.InList(
+		ValidationKeywordSANsList, c.ignoreValidationResults, true,
+	)
+
+	applyRequested := textutils.InList(
+		ValidationKeywordSANsList, c.applyValidationResults, true,
+	)
+
+	skipKeywordUsed := func() bool {
+		if len(c.SANsEntries) > 0 {
+			firstExpectedSANsEntry := strings.ToLower(strings.TrimSpace(c.SANsEntries[0]))
+			skipKeyword := strings.ToLower(strings.TrimSpace(SkipSANSCheckKeyword))
+			if firstExpectedSANsEntry == skipKeyword {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	switch {
+
+	// Handle explicit requests to ignore validation check results first.
+	case ignoreRequested:
+		return false
+
+	// If the sysadmin specified the skip keyword, SANs validation check
+	// results are ignored.
+	case skipKeywordUsed():
+		return false
+
+	// Explicit requests to apply SANs list validation check results are
+	// honored, but only after explicit ignore requests are processed first.
+	//
+	// NOTE: Config validation is expected to fail attempts to explicitly
+	// apply SANs list validation if the sysadmin did not supply a list of
+	// SANs entries to validate.
+	case applyRequested:
+		return true
+
+	// If the sysadmin didn't specify a list of SANs entries to validate,
+	// SANs validation check results are ignored.
+	//
+	// NOTE: Config validation asserts that this is not true if the sysadmin
+	// explicitly requested SANs list validation.
+	case len(c.SANsEntries) == 0:
+		return false
+
+	// Fallback to whatever the default setting if the sysadmin didn't specify
+	// a value.
+	default:
+		return defaultApplyCertSANsListValidationResults
+	}
+
+}
+
+// supportedValidationCheckResultKeywords returns a list of valid validation
+// check keywords used by plugin type applications in this project.
+func supportedValidationCheckResultKeywords() []string {
+	return []string{
+		ValidationKeywordHostname,
+		ValidationKeywordExpiration,
+		ValidationKeywordSANsList,
+	}
+}
+
+// supportedValidationCheckResultKeywords returns a list of valid log levels
+// supported by tools in this project.
+func supportedLogLevels() []string {
+	return []string{
+		LogLevelDebug,
+		LogLevelPanic,
+		LogLevelFatal,
+		LogLevelError,
+		LogLevelWarn,
+		LogLevelInfo,
+		LogLevelDebug,
+		LogLevelTrace,
+	}
 }

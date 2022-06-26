@@ -12,11 +12,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
-	"time"
 
 	"github.com/rs/zerolog"
-	zlog "github.com/rs/zerolog/log"
 
 	"github.com/grantae/certinfo"
 
@@ -38,9 +35,13 @@ func main() {
 		return
 
 	case cfgErr != nil:
-		// We're using the standalone Err function from rs/zerolog/log as we
-		// do not have a working configuration.
-		zlog.Err(cfgErr).Msg("Error initializing application")
+
+		// We make some assumptions when setting up our logger as we do not
+		// have a working configuration based on sysadmin-specified choices.
+		consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr}
+		logger := zerolog.New(consoleWriter).With().Timestamp().Caller().Logger()
+
+		logger.Err(cfgErr).Msg("Error initializing application")
 
 		return
 	}
@@ -69,7 +70,7 @@ func main() {
 		if err != nil {
 			log.Error().Err(err).Msg(
 				"Error parsing certificates file")
-			os.Exit(1)
+			os.Exit(config.ExitCodeCatchall)
 		}
 
 		certChainSource = cfg.Filename
@@ -82,22 +83,22 @@ func main() {
 		case expandErr != nil:
 			log.Error().Err(expandErr).Msg(
 				"Error expanding given host pattern")
-			os.Exit(1)
+			os.Exit(config.ExitCodeCatchall)
 
 		// Fail early for IP Ranges. While we could just grab the first
 		// expanded IP Address, this may be a potential source of confusion
 		// best avoided.
 		case expandedHost.Range:
 			log.Error().Msgf(
-				"given host pattern invalid; " +
+				"Given host pattern invalid; " +
 					"host pattern is a CIDR or partial IP range",
 			)
-			os.Exit(1)
+			os.Exit(config.ExitCodeCatchall)
 
 		case len(expandedHost.Expanded) == 0:
 			log.Error().Msg(
-				"Error expanding given host value to IP Address")
-			os.Exit(1)
+				"Failed to expand given host value to IP Address")
+			os.Exit(config.ExitCodeCatchall)
 
 		case len(expandedHost.Expanded) > 1:
 
@@ -114,17 +115,19 @@ func main() {
 
 		}
 
-		// Grab first IP Address from the resolved collection.
+		// Grab first IP Address from the resolved collection. We'll
+		// explicitly use it for cert retrieval and note it in the report
+		// output.
 		ipAddr := expandedHost.Expanded[0]
 
 		// Server Name Indication (SNI) support is used to request a specific
 		// certificate chain from a remote server.
 		//
-		// We use the value specified by the `server` flag to open a
-		// connection to the remote server. If available, we use the DNS Name
-		// value specified by the `dns-name` flag as our host value, otherwise
-		// we fallback to using the value specified by the `server` flag as
-		// our host value.
+		// We use the value specified by the server flag to open a connection
+		// to the remote server. If available, we use the DNS Name value
+		// specified by the DNS Name flag as our host value, otherwise we
+		// fallback to using the value specified by the server flag as our
+		// host value.
 		//
 		// For a service with only one certificate chain the host value is
 		// less important, but for a host with multiple certificate chains
@@ -182,137 +185,192 @@ func main() {
 		if certFetchErr != nil {
 			log.Error().Err(certFetchErr).Msg(
 				"Error fetching certificates chain")
-			os.Exit(1)
+			os.Exit(config.ExitCodeCatchall)
 		}
 
 	}
-
-	now := time.Now().UTC()
-	certsExpireAgeWarning := now.AddDate(0, 0, cfg.AgeWarning)
-	certsExpireAgeCritical := now.AddDate(0, 0, cfg.AgeCritical)
-
-	certsSummary := certs.ChainSummary(
-		certChain,
-		certsExpireAgeCritical,
-		certsExpireAgeWarning,
-	)
-
-	log.Debug().
-		Str("threshold_expires_date", certsExpireAgeWarning.Format(certs.CertValidityDateLayout)).
-		Int("threshold_expires_days", cfg.AgeWarning).
-		Msgf("%s expiration threshold", nagios.StateWARNINGLabel)
-
-	log.Debug().
-		Str("threshold_expires_date", certsExpireAgeCritical.Format(certs.CertValidityDateLayout)).
-		Int("threshold_expires_days", cfg.AgeCritical).
-		Msgf("%s expiration threshold", nagios.StateCRITICALLabel)
 
 	textutils.PrintHeader("CERTIFICATES | SUMMARY")
 
 	switch {
-	case certsSummary.TotalCertsCount == 0:
-		noCertsErr := fmt.Errorf("no certificates found")
-		log.Err(noCertsErr).Msg("")
-		os.Exit(1)
+	case len(certChain) == 0:
+		log.Err(certs.ErrNoCertsFound).Msg("")
+		os.Exit(config.ExitCodeCatchall)
 
 	default:
+		// If a certificate chain was pulled from a file, we "found" it, if it
+		// was pulled from a server we "retrieved" it.
+		var template string
+		switch {
+		case cfg.Filename != "":
+			template = "- %s: %d certs found in %s\n"
+		default:
+			template = "- %s: %d certs retrieved for %s\n"
+		}
+
 		fmt.Printf(
-			"- %s: %d certs found for %s\n",
+			template,
 			nagios.StateOKLabel,
-			certsSummary.TotalCertsCount,
+			len(certChain),
 			certChainSource,
 		)
 	}
 
-	// Apply hostname verification if a server or DNSName value has been
-	// specified.
-	if cfg.Server != "" || cfg.DNSName != "" {
+	hostnameValidationResult := certs.ValidateHostname(
+		certChain,
+		cfg.Server,
+		cfg.DNSName,
+		cfg.ApplyCertHostnameValidationResults(),
+		cfg.IgnoreHostnameVerificationFailureIfEmptySANsList,
+		config.IgnoreHostnameVerificationFailureIfEmptySANsListFlag,
+	)
 
-		// Default to using the server FQDN or IP Address used to make the
-		// connection as our hostname value.
-		hostnameValueToUse := cfg.Server
+	switch {
+	case hostnameValidationResult.IsFailed():
+		log.Debug().
+			Err(hostnameValidationResult.Err()).
+			Msgf("%s validation failure", hostnameValidationResult.CheckName())
 
-		// Allow the user to explicitly specify which hostname should be used
-		// for comparison against the leaf certificate. This works for a
-		// certificate retrieved by a server as well as a certificate
-		// retrieved from a file.
-		if cfg.DNSName != "" {
-			hostnameValueToUse = cfg.DNSName
-		}
+		fmt.Printf(
+			"- %s: %s %s\n",
+			hostnameValidationResult.ServiceState().Label,
+			hostnameValidationResult.Status(),
+			hostnameValidationResult.Overview(),
+		)
 
-		if err := certChain[0].VerifyHostname(hostnameValueToUse); err != nil {
-			fmt.Printf("- WARNING: Provided hostname %q does not match evaluated certificate: %v\n", hostnameValueToUse, err)
-		} else {
-			fmt.Printf("- OK: Provided hostname %q matches evaluated certificate\n", hostnameValueToUse)
-		}
+	case hostnameValidationResult.IsIgnored():
+		log.Debug().
+			Msgf("%s validation ignored", hostnameValidationResult.CheckName())
+
+		fmt.Printf(
+			"- %s: %s %s\n",
+			hostnameValidationResult.ServiceState().Label,
+			hostnameValidationResult.Status(),
+			hostnameValidationResult.Overview(),
+		)
+
+	default:
+		log.Debug().Msg("Hostname validation successful")
+
+		fmt.Printf(
+			"- %s: %s %s\n",
+			hostnameValidationResult.ServiceState().Label,
+			hostnameValidationResult.Status(),
+			hostnameValidationResult.Overview(),
+		)
 	}
 
-	// check SANS entries if provided via command-line
-	if len(cfg.SANsEntries) > 0 {
+	sansValidationResult := certs.ValidateSANsList(
+		certChain,
+		cfg.ApplyCertSANsListValidationResults(),
+		cfg.DNSName,
+		cfg.SANsEntries,
+	)
+	switch {
+	case sansValidationResult.IsFailed():
+		log.Debug().
+			Err(sansValidationResult.Err()).
+			Int("sans_entries_requested", sansValidationResult.NumExpected()).
+			Int("sans_entries_found", sansValidationResult.NumMatched()).
+			Int("sans_entries_mismatched", sansValidationResult.NumMismatched()).
+			Msg("SANs entries mismatch")
 
-		// Check for special keyword, skip SANs entry checks if provided
-		firstSANsEntry := strings.ToLower(strings.TrimSpace(cfg.SANsEntries[0]))
-		if firstSANsEntry != strings.ToLower(strings.TrimSpace(config.SkipSANSCheckKeyword)) {
+		fmt.Printf(
+			"- %s: %s\n",
+			sansValidationResult.ServiceState().Label,
+			sansValidationResult.String(),
+		)
 
-			mismatched, found, err := certs.CheckSANsEntries(certChain[0], certChain, cfg.SANsEntries)
-			switch {
-			case err != nil:
+	case sansValidationResult.IsIgnored():
+		log.Debug().
+			Msgf("%s validation ignored", sansValidationResult.CheckName())
 
-				log.Debug().
-					Err(err).
-					Int("sans_entries_requested", len(cfg.SANsEntries)).
-					Int("sans_entries_found", found).
-					Int("sans_entries_mismatched", mismatched).
-					Msg("SANs entries mismatch")
+		fmt.Printf(
+			"- %s: %s\n",
+			sansValidationResult.ServiceState().Label,
+			sansValidationResult.String(),
+		)
 
-				fmt.Printf(
-					"- %s: %v \n",
-					nagios.StateCRITICALLabel,
-					err,
-				)
+	default:
+		log.Debug().
+			Int("sans_entries_requested", sansValidationResult.NumExpected()).
+			Int("sans_entries_found", sansValidationResult.NumMatched()).
+			Msgf("%s validation successful", sansValidationResult.CheckName())
 
-			default:
-
-				log.Debug().
-					Int("sans_entries_requested", len(cfg.SANsEntries)).
-					Int("sans_entries_found", found).
-					Msg("SANs entries match")
-
-				fmt.Printf(
-					"- %s: Provided SANs entries match evaluated certificate\n",
-					nagios.StateOKLabel,
-				)
-			}
-
-		}
+		fmt.Printf(
+			"- %s: %s\n",
+			sansValidationResult.ServiceState().Label,
+			sansValidationResult.String(),
+		)
 	}
 
-	nextToExpire := fmt.Sprintf(
-		"- %s",
-		certs.OneLineCheckSummary(certsSummary, false),
+	expirationValidationResult := certs.ValidateExpiration(
+		certChain,
+		cfg.AgeCritical,
+		cfg.AgeWarning,
+		cfg.ApplyCertExpirationValidationResults(),
+		cfg.VerboseOutput,
 	)
-	fmt.Println(nextToExpire)
+	switch {
+	case expirationValidationResult.IsFailed():
+		log.Debug().
+			Err(expirationValidationResult.Err()).
+			Int("total_certificates", expirationValidationResult.TotalCerts()).
+			Int("expired_certificates", expirationValidationResult.NumExpiredCerts()).
+			Int("expiring_certificates", expirationValidationResult.NumExpiringCerts()).
+			Int("valid_certificates", expirationValidationResult.NumValidCerts()).
+			Str("threshold_expires_warning", expirationValidationResult.WarningDateThreshold()).
+			Str("threshold_expires_critical", expirationValidationResult.CriticalDateThreshold()).
+			Msgf("%s validation failure", expirationValidationResult.CheckName())
 
-	statusOverview := fmt.Sprintf(
-		"- %s: %s",
-		certsSummary.ServiceState().Label,
-		certsSummary.Summary,
-	)
-	fmt.Println(statusOverview)
+		fmt.Printf(
+			"- %s: %s %s\n",
+			expirationValidationResult.ServiceState().Label,
+			expirationValidationResult.Status(),
+			expirationValidationResult.Overview(),
+		)
+
+	case expirationValidationResult.IsIgnored():
+		log.Debug().
+			Msgf("%s validation ignored", expirationValidationResult.CheckName())
+
+		fmt.Printf(
+			"- %s: %s\n",
+			expirationValidationResult.ServiceState().Label,
+			expirationValidationResult.String(),
+		)
+
+	default:
+		log.Debug().
+			Int("total_certificates", expirationValidationResult.TotalCerts()).
+			Int("expired_certificates", expirationValidationResult.NumExpiredCerts()).
+			Int("expiring_certificates", expirationValidationResult.NumExpiringCerts()).
+			Int("valid_certificates", expirationValidationResult.NumValidCerts()).
+			Str("threshold_expires_warning", expirationValidationResult.WarningDateThreshold()).
+			Str("threshold_expires_critical", expirationValidationResult.CriticalDateThreshold()).
+			Msgf("%s validation successful", expirationValidationResult.CheckName())
+
+		fmt.Printf(
+			"- %s: %s %s\n",
+			expirationValidationResult.ServiceState().Label,
+			expirationValidationResult.Status(),
+			expirationValidationResult.Overview(),
+		)
+
+	}
 
 	textutils.PrintHeader("CERTIFICATES | CHAIN DETAILS")
 
-	fmt.Println(certs.GenerateCertsReport(
-		certsSummary,
-		cfg.VerboseOutput,
-	))
+	// We request these details even if the user opted to disable expiration
+	// validation since this info provides an overview of the certificate
+	// chain evaluated.
+	fmt.Println(expirationValidationResult.StatusDetail())
 
+	// Generate text version of the certificate if requested.
 	if cfg.EmitCertText {
 		textutils.PrintHeader("CERTIFICATES | OpenSSL Text Format")
 
 		for idx, certificate := range certChain {
-
-			// generate text version of the certificate
 			certText, err := certinfo.CertificateText(certificate)
 			if err != nil {
 				certText = err.Error()
@@ -321,12 +379,10 @@ func main() {
 			fmt.Printf(
 				"\nCertificate %d of %d:\n%s\n",
 				idx+1,
-				certsSummary.TotalCertsCount,
+				len(certChain),
 				certText,
 			)
-
 		}
-
 	}
 
 	if len(parseAttemptLeftovers) > 0 {

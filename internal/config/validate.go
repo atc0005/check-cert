@@ -9,8 +9,9 @@ package config
 
 import (
 	"fmt"
-	"strings"
 	"time"
+
+	"github.com/atc0005/check-cert/internal/textutils"
 )
 
 // validate verifies all Config struct fields have been provided acceptable
@@ -25,14 +26,14 @@ func (c Config) validate(appType AppType) error {
 		case c.Filename == "" && c.Server == "":
 			return fmt.Errorf(
 				"one of %q or %q flags must be specified",
-				"server",
-				"filename",
+				ServerFlagLong,
+				FilenameFlagLong,
 			)
 		case c.Filename != "" && c.Server != "":
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"server",
-				"filename",
+				ServerFlagLong,
+				FilenameFlagLong,
 			)
 		}
 
@@ -43,15 +44,90 @@ func (c Config) validate(appType AppType) error {
 		case c.Filename == "" && c.Server == "":
 			return fmt.Errorf(
 				"one of %q or %q flags must be specified",
-				"server",
-				"filename",
+				ServerFlagLong,
+				FilenameFlagLong,
 			)
 		case c.Filename != "" && c.Server != "":
 			return fmt.Errorf(
-				"only one of %q or %q flags may be specified",
-				"server",
-				"filename",
+				"only one of %q or %q flags may be specified; if evaluating"+
+					" certificate files use the %q flag instead of the %q"+
+					" flag or opt to ignore hostname validation results"+
+					" via the %q flag and %q keyword instead",
+				ServerFlagLong,
+				FilenameFlagLong,
+				DNSNameFlagLong,
+				ServerFlagLong,
+				IgnoreValidationResultFlag,
+				ValidationKeywordHostname,
 			)
+		}
+
+		supportedValidationKeywords := supportedValidationCheckResultKeywords()
+
+		// Validate the specified explicit "ignore" validation check results
+		// keywords
+		for _, specifiedKeyword := range c.ignoreValidationResults {
+			if !textutils.InList(specifiedKeyword, supportedValidationKeywords, true) {
+				return fmt.Errorf(
+					"invalid ignore validation results keyword specified;"+
+						" got %v, expected one of %v",
+					specifiedKeyword,
+					supportedValidationKeywords,
+				)
+			}
+		}
+
+		// Validate the specified explicit "apply" validation check results
+		// keywords
+		for _, specifiedKeyword := range c.applyValidationResults {
+			if !textutils.InList(specifiedKeyword, supportedValidationKeywords, true) {
+				return fmt.Errorf(
+					"invalid apply validation results keyword specified;"+
+						" got %v, expected one of %v",
+					specifiedKeyword,
+					supportedValidationKeywords,
+				)
+			}
+		}
+
+		// If we have explicit apply AND explicit ignore keywords ...
+		if len(c.applyValidationResults) > 0 && len(c.ignoreValidationResults) > 0 {
+
+			// Assert that the same keyword is not present in both explicit
+			// apply and explicit ignore flag values.
+			for _, keyword := range supportedValidationKeywords {
+				if textutils.InList(keyword, c.applyValidationResults, true) &&
+					textutils.InList(keyword, c.ignoreValidationResults, true) {
+					return fmt.Errorf(
+						"specified validation keyword %q was specified as"+
+							" value for multiple flags;"+
+							" keyword may be used with only one of %q or %q"+
+							" flags",
+						keyword,
+						IgnoreValidationResultFlag,
+						ApplyValidationResultFlag,
+					)
+				}
+			}
+		}
+
+		// If the sysadmin explicitly requested that SANs list validation
+		// check results be applied, but did not provide a SANs entries list
+		// to use for validation we can't perform SANs list validation.
+		//
+		// The default behavior is to perform SANs list validation *if* a list
+		// of SANs entries to validate is provided.
+		if textutils.InList(ValidationKeywordSANsList, c.applyValidationResults, true) {
+			if len(c.SANsEntries) == 0 {
+				return fmt.Errorf(
+					"unsupported setting for certificate SANs list validation;"+
+						" providing SANs entries via the %q flag is required"+
+						" when specifying the %q keyword via the %q flag",
+					SANsEntriesFlagLong,
+					ValidationKeywordSANsList,
+					ApplyValidationResultFlag,
+				)
+			}
 		}
 
 	case appType.Scanner:
@@ -148,9 +224,15 @@ func (c Config) validate(appType AppType) error {
 		)
 	}
 
-	requestedLoggingLevel := strings.ToLower(c.LoggingLevel)
-	if _, ok := loggingLevels[requestedLoggingLevel]; !ok {
-		return fmt.Errorf("invalid logging level %q", c.LoggingLevel)
+	// Validate the specified logging level
+	supportedLogLevels := supportedLogLevels()
+	if !textutils.InList(c.LoggingLevel, supportedLogLevels, true) {
+		return fmt.Errorf(
+			"invalid logging level;"+
+				" got %v, expected one of %v",
+			c.LoggingLevel,
+			supportedLogLevels,
+		)
 	}
 
 	// Optimist
