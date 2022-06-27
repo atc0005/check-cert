@@ -61,10 +61,12 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
       - [`hostname`](#hostname-1)
       - [`sans`](#sans-1)
       - [`expiration`, `hostname`, `sans`](#expiration-hostname-sans)
+    - [Reviewing a certificate file](#reviewing-a-certificate-file)
   - [`lscert` CLI tool](#lscert-cli-tool-1)
     - [OK results](#ok-results-1)
     - [WARNING results](#warning-results-1)
     - [CRITICAL results](#critical-results-1)
+    - [Reviewing a certificate file](#reviewing-a-certificate-file-1)
   - [`certsum` CLI tool](#certsum-cli-tool-1)
     - [Certificates Overview](#certificates-overview)
     - [CIDR range](#cidr-range)
@@ -1503,6 +1505,111 @@ SUCCESS RESULTS:
  | 'time'=408ms;;;;
 ```
 
+#### Reviewing a certificate file
+
+As with the `lscert` tool, this plugin supports evaluating a certificate chain
+contained within a file.
+
+First, we obtain a cert. It's likely that there is already an abundant local
+collection of certificates available to review, but here is how you could
+fetch a leaf certificate from a remote system and then review it locally.
+
+Until GH-171 is implemented we use `openssl s_client` to fetch the leaf
+certificate for google.com:
+
+```console
+$ echo -n | openssl s_client -connect www.google.com:443 -servername google.com | openssl x509 > google.com.cert
+depth=2 C = US, O = Google Trust Services LLC, CN = GTS Root R1
+verify return:1
+depth=1 C = US, O = Google Trust Services LLC, CN = GTS CA 1C3
+verify return:1
+depth=0 CN = *.google.com
+verify return:1
+DONE
+```
+
+We then use the `--filename` flag to review the cert:
+
+```console
+$ check_cert --filename google.com.cert
+5:55AM ERR ../../../../../t/github/check-cert/cmd/check_cert/main.go:413 > validation checks failed for certificate chain error="summary: 1 of 3 validation checks failed" age_critical=15 age_warning=30 app_type=plugin apply_expiration_validation_results=true apply_hostname_validation_results=true apply_sans_list_validation_results=false cert_check_timeout=10s checks_failed=1 checks_ignored=1 checks_successful=1 checks_total=3 expected_sans_entries= filename=google.com.cert logging_level=info port=443 server= version="check-cert x.y.z (https://github.com/atc0005/check-cert)"
+CRITICAL: Hostname validation using value "" failed for leaf certificate [checks: 1 IGNORED (SANs List), 1 FAILED (Hostname), 1 SUCCESSFUL (Expiration)]
+
+**VALIDATION ERRORS**
+
+* server or dns name values are required for hostname verification: missing expected value
+
+**VALIDATION CHECKS REPORT**
+
+1 certs found in google.com.cert
+
+
+PROBLEM RESULTS:
+
+[!!] Hostname validation using value "" failed for leaf certificate
+
+Consider updating the service check or command definition to specify the website FQDN instead of the host FQDN using the DNS Name or server flags. E.g., use 'www.example.org' instead of 'host7.example.com' in order to allow the remote server to select the correct certificate instead of using the default certificate.
+
+
+IGNORED RESULTS:
+
+[--] SANs List validation ignored: 0 SANs entries specified, 130 SANs entries on leaf cert [0 EXPECTED, 0 MISSING, 0 UNEXPECTED]
+
+
+SUCCESS RESULTS:
+
+[OK] Expiration validation successful: leaf cert "*.google.com" expires next with 62d 21h remaining (until 2022-08-29 08:29:45 +0000 UTC)
+
+Certificate 1 of 1 (leaf):
+        Name: CN=*.google.com
+        SANs entries: [*.google.com *.appengine.google.com *.bdn.dev *.cloud.google.com *.crowdsource.google.com *.datacompute.google.com *.google.ca *.google.cl *.google.co.in *.google.co.jp *.google.co.uk *.google.com.ar *.google.com.au *.google.com.br *.google.com.co *.google.com.mx *.google.com.tr *.google.com.vn *.google.de *.google.es *.google.fr *.google.hu *.google.it *.google.nl *.google.pl *.google.pt *.googleadapis.com *.googleapis.cn *.googlevideo.com *.gstatic.cn *.gstatic-cn.com googlecnapps.cn *.googlecnapps.cn googleapps-cn.com *.googleapps-cn.com gkecnapps.cn *.gkecnapps.cn googledownloads.cn *.googledownloads.cn recaptcha.net.cn *.recaptcha.net.cn recaptcha-cn.net *.recaptcha-cn.net widevine.cn *.widevine.cn ampproject.org.cn *.ampproject.org.cn ampproject.net.cn *.ampproject.net.cn google-analytics-cn.com *.google-analytics-cn.com googleadservices-cn.com *.googleadservices-cn.com googlevads-cn.com *.googlevads-cn.com googleapis-cn.com *.googleapis-cn.com googleoptimize-cn.com *.googleoptimize-cn.com doubleclick-cn.net *.doubleclick-cn.net *.fls.doubleclick-cn.net *.g.doubleclick-cn.net doubleclick.cn *.doubleclick.cn *.fls.doubleclick.cn *.g.doubleclick.cn dartsearch-cn.net *.dartsearch-cn.net googletraveladservices-cn.com *.googletraveladservices-cn.com googletagservices-cn.com *.googletagservices-cn.com googletagmanager-cn.com *.googletagmanager-cn.com googlesyndication-cn.com *.googlesyndication-cn.com *.safeframe.googlesyndication-cn.com app-measurement-cn.com *.app-measurement-cn.com gvt1-cn.com *.gvt1-cn.com gvt2-cn.com *.gvt2-cn.com 2mdn-cn.net *.2mdn-cn.net googleflights-cn.net *.googleflights-cn.net admob-cn.com *.admob-cn.com *.gstatic.com *.metric.gstatic.com *.gvt1.com *.gcpcdn.gvt1.com *.gvt2.com *.gcp.gvt2.com *.url.google.com *.youtube-nocookie.com *.ytimg.com android.com *.android.com *.flash.android.com g.cn *.g.cn g.co *.g.co goo.gl www.goo.gl google-analytics.com *.google-analytics.com google.com googlecommerce.com *.googlecommerce.com ggpht.cn *.ggpht.cn urchin.com *.urchin.com youtu.be youtube.com *.youtube.com youtubeeducation.com *.youtubeeducation.com youtubekids.com *.youtubekids.com yt.be *.yt.be android.clients.google.com developer.android.google.cn developers.android.google.cn source.android.google.cn]
+        Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
+        Serial: 58:AC:E5:94:0B:41:78:64:12:9D:53:1A:39:CB:00:67
+        Issued On: 2022-06-06 08:29:46 +0000 UTC
+        Expiration: 2022-08-29 08:29:45 +0000 UTC
+        Status: [OK] 62d 21h remaining
+
+ | 'time'=2ms;;;;
+```
+
+We received a hostname validation error, so we pick a SANs entry that the
+certificate should be valid for and specify that:
+
+```console
+$ check_cert --filename google.com.cert --dns-name android.com
+OK: Expiration validation successful: leaf cert "*.google.com" expires next with 62d 21h remaining (until 2022-08-29 08:29:45 +0000 UTC) [checks: 1 IGNORED (SANs List), 0 FAILED, 2 SUCCESSFUL (Hostname, Expiration)]
+
+1 certs found in google.com.cert
+
+
+PROBLEM RESULTS:
+
+* None
+
+
+IGNORED RESULTS:
+
+[--] SANs List validation ignored: 0 SANs entries specified, 130 SANs entries on leaf cert [0 EXPECTED, 0 MISSING, 0 UNEXPECTED]
+
+
+SUCCESS RESULTS:
+
+[OK] Expiration validation successful: leaf cert "*.google.com" expires next with 62d 21h remaining (until 2022-08-29 08:29:45 +0000 UTC)
+
+Certificate 1 of 1 (leaf):
+        Name: CN=*.google.com
+        SANs entries: [*.google.com *.appengine.google.com *.bdn.dev *.cloud.google.com *.crowdsource.google.com *.datacompute.google.com *.google.ca *.google.cl *.google.co.in *.google.co.jp *.google.co.uk *.google.com.ar *.google.com.au *.google.com.br *.google.com.co *.google.com.mx *.google.com.tr *.google.com.vn *.google.de *.google.es *.google.fr *.google.hu *.google.it *.google.nl *.google.pl *.google.pt *.googleadapis.com *.googleapis.cn *.googlevideo.com *.gstatic.cn *.gstatic-cn.com googlecnapps.cn *.googlecnapps.cn googleapps-cn.com *.googleapps-cn.com gkecnapps.cn *.gkecnapps.cn googledownloads.cn *.googledownloads.cn recaptcha.net.cn *.recaptcha.net.cn recaptcha-cn.net *.recaptcha-cn.net widevine.cn *.widevine.cn ampproject.org.cn *.ampproject.org.cn ampproject.net.cn *.ampproject.net.cn google-analytics-cn.com *.google-analytics-cn.com googleadservices-cn.com *.googleadservices-cn.com googlevads-cn.com *.googlevads-cn.com googleapis-cn.com *.googleapis-cn.com googleoptimize-cn.com *.googleoptimize-cn.com doubleclick-cn.net *.doubleclick-cn.net *.fls.doubleclick-cn.net *.g.doubleclick-cn.net doubleclick.cn *.doubleclick.cn *.fls.doubleclick.cn *.g.doubleclick.cn dartsearch-cn.net *.dartsearch-cn.net googletraveladservices-cn.com *.googletraveladservices-cn.com googletagservices-cn.com *.googletagservices-cn.com googletagmanager-cn.com *.googletagmanager-cn.com googlesyndication-cn.com *.googlesyndication-cn.com *.safeframe.googlesyndication-cn.com app-measurement-cn.com *.app-measurement-cn.com gvt1-cn.com *.gvt1-cn.com gvt2-cn.com *.gvt2-cn.com 2mdn-cn.net *.2mdn-cn.net googleflights-cn.net *.googleflights-cn.net admob-cn.com *.admob-cn.com *.gstatic.com *.metric.gstatic.com *.gvt1.com *.gcpcdn.gvt1.com *.gvt2.com *.gcp.gvt2.com *.url.google.com *.youtube-nocookie.com *.ytimg.com android.com *.android.com *.flash.android.com g.cn *.g.cn g.co *.g.co goo.gl www.goo.gl google-analytics.com *.google-analytics.com google.com googlecommerce.com *.googlecommerce.com ggpht.cn *.ggpht.cn urchin.com *.urchin.com youtu.be youtube.com *.youtube.com youtubeeducation.com *.youtubeeducation.com youtubekids.com *.youtubekids.com yt.be *.yt.be android.clients.google.com developer.android.google.cn developers.android.google.cn source.android.google.cn]
+        Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
+        Serial: 58:AC:E5:94:0B:41:78:64:12:9D:53:1A:39:CB:00:67
+        Issued On: 2022-06-06 08:29:46 +0000 UTC
+        Expiration: 2022-08-29 08:29:45 +0000 UTC
+        Status: [OK] 62d 21h remaining
+
+[OK] Hostname validation using value "android.com" successful for leaf certificate
+
+ | 'time'=2ms;;;;
+```
+
 ### `lscert` CLI tool
 
 #### OK results
@@ -1677,6 +1784,91 @@ Some items to note in the `CERTIFICATES | SUMMARY` section:
 - a quick count of the `EXPIRED`, `EXPIRING` and `OK` certificates
 - specific validation checks and actions performed are listed with a brief
   summary of the results
+
+#### Reviewing a certificate file
+
+In addition to retrieving certificates from a networked system (local or
+remote), this tool also supported retrieving a certificate chain (one or many
+certificates) from a file.
+
+First, we obtain a cert. It's likely that there is already an abundant local
+collection of certificates available to review, but here is how you could
+fetch a leaf certificate from a remote system and then review it locally.
+
+Until GH-171 is implemented we use `openssl s_client` to fetch the leaf
+certificate for google.com:
+
+```console
+$ echo -n | openssl s_client -connect www.google.com:443 -servername google.com | openssl x509 > google.com.cert
+depth=2 C = US, O = Google Trust Services LLC, CN = GTS Root R1
+verify return:1
+depth=1 C = US, O = Google Trust Services LLC, CN = GTS CA 1C3
+verify return:1
+depth=0 CN = *.google.com
+verify return:1
+DONE
+```
+
+We then use the `--filename` flag to review the cert:
+
+```console
+$ lscert --filename google.com.cert
+
+
+======================
+CERTIFICATES | SUMMARY
+======================
+
+- OK: 1 certs found in google.com.cert
+- CRITICAL: Hostname validation using value "" failed for leaf certificate
+- OK: SANs List validation ignored: 0 SANs entries specified, 130 SANs entries on leaf cert [0 EXPECTED, 0 MISSING, 0 UNEXPECTED]
+- OK: Expiration validation successful: leaf cert "*.google.com" expires next with 62d 21h remaining (until 2022-08-29 08:29:45 +0000 UTC) [EXPIRED: 0, EXPIRING: 0, OK: 1]
+
+
+============================
+CERTIFICATES | CHAIN DETAILS
+============================
+
+Certificate 1 of 1 (leaf):
+        Name: CN=*.google.com
+        SANs entries: [*.google.com *.appengine.google.com *.bdn.dev *.cloud.google.com *.crowdsource.google.com *.datacompute.google.com *.google.ca *.google.cl *.google.co.in *.google.co.jp *.google.co.uk *.google.com.ar *.google.com.au *.google.com.br *.google.com.co *.google.com.mx *.google.com.tr *.google.com.vn *.google.de *.google.es *.google.fr *.google.hu *.google.it *.google.nl *.google.pl *.google.pt *.googleadapis.com *.googleapis.cn *.googlevideo.com *.gstatic.cn *.gstatic-cn.com googlecnapps.cn *.googlecnapps.cn googleapps-cn.com *.googleapps-cn.com gkecnapps.cn *.gkecnapps.cn googledownloads.cn *.googledownloads.cn recaptcha.net.cn *.recaptcha.net.cn recaptcha-cn.net *.recaptcha-cn.net widevine.cn *.widevine.cn ampproject.org.cn *.ampproject.org.cn ampproject.net.cn *.ampproject.net.cn google-analytics-cn.com *.google-analytics-cn.com googleadservices-cn.com *.googleadservices-cn.com googlevads-cn.com *.googlevads-cn.com googleapis-cn.com *.googleapis-cn.com googleoptimize-cn.com *.googleoptimize-cn.com doubleclick-cn.net *.doubleclick-cn.net *.fls.doubleclick-cn.net *.g.doubleclick-cn.net doubleclick.cn *.doubleclick.cn *.fls.doubleclick.cn *.g.doubleclick.cn dartsearch-cn.net *.dartsearch-cn.net googletraveladservices-cn.com *.googletraveladservices-cn.com googletagservices-cn.com *.googletagservices-cn.com googletagmanager-cn.com *.googletagmanager-cn.com googlesyndication-cn.com *.googlesyndication-cn.com *.safeframe.googlesyndication-cn.com app-measurement-cn.com *.app-measurement-cn.com gvt1-cn.com *.gvt1-cn.com gvt2-cn.com *.gvt2-cn.com 2mdn-cn.net *.2mdn-cn.net googleflights-cn.net *.googleflights-cn.net admob-cn.com *.admob-cn.com *.gstatic.com *.metric.gstatic.com *.gvt1.com *.gcpcdn.gvt1.com *.gvt2.com *.gcp.gvt2.com *.url.google.com *.youtube-nocookie.com *.ytimg.com android.com *.android.com *.flash.android.com g.cn *.g.cn g.co *.g.co goo.gl www.goo.gl google-analytics.com *.google-analytics.com google.com googlecommerce.com *.googlecommerce.com ggpht.cn *.ggpht.cn urchin.com *.urchin.com youtu.be youtube.com *.youtube.com youtubeeducation.com *.youtubeeducation.com youtubekids.com *.youtubekids.com yt.be *.yt.be android.clients.google.com developer.android.google.cn developers.android.google.cn source.android.google.cn]
+        Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
+        Serial: 58:AC:E5:94:0B:41:78:64:12:9D:53:1A:39:CB:00:67
+        Issued On: 2022-06-06 08:29:46 +0000 UTC
+        Expiration: 2022-08-29 08:29:45 +0000 UTC
+        Status: [OK] 62d 21h remaining
+```
+
+We received a hostname validation error, so we pick a SANs entry that the
+certificate should be valid for and specify that:
+
+```console
+$ lscert --filename google.com.cert --dns-name youtube.com
+
+
+======================
+CERTIFICATES | SUMMARY
+======================
+
+- OK: 1 certs found in google.com.cert
+- OK: Hostname validation using value "youtube.com" successful for leaf certificate
+- OK: SANs List validation ignored: 0 SANs entries specified, 130 SANs entries on leaf cert [0 EXPECTED, 0 MISSING, 0 UNEXPECTED]
+- OK: Expiration validation successful: leaf cert "*.google.com" expires next with 62d 21h remaining (until 2022-08-29 08:29:45 +0000 UTC) [EXPIRED: 0, EXPIRING: 0, OK: 1]
+
+
+============================
+CERTIFICATES | CHAIN DETAILS
+============================
+
+Certificate 1 of 1 (leaf):
+        Name: CN=*.google.com
+        SANs entries: [*.google.com *.appengine.google.com *.bdn.dev *.cloud.google.com *.crowdsource.google.com *.datacompute.google.com *.google.ca *.google.cl *.google.co.in *.google.co.jp *.google.co.uk *.google.com.ar *.google.com.au *.google.com.br *.google.com.co *.google.com.mx *.google.com.tr *.google.com.vn *.google.de *.google.es *.google.fr *.google.hu *.google.it *.google.nl *.google.pl *.google.pt *.googleadapis.com *.googleapis.cn *.googlevideo.com *.gstatic.cn *.gstatic-cn.com googlecnapps.cn *.googlecnapps.cn googleapps-cn.com *.googleapps-cn.com gkecnapps.cn *.gkecnapps.cn googledownloads.cn *.googledownloads.cn recaptcha.net.cn *.recaptcha.net.cn recaptcha-cn.net *.recaptcha-cn.net widevine.cn *.widevine.cn ampproject.org.cn *.ampproject.org.cn ampproject.net.cn *.ampproject.net.cn google-analytics-cn.com *.google-analytics-cn.com googleadservices-cn.com *.googleadservices-cn.com googlevads-cn.com *.googlevads-cn.com googleapis-cn.com *.googleapis-cn.com googleoptimize-cn.com *.googleoptimize-cn.com doubleclick-cn.net *.doubleclick-cn.net *.fls.doubleclick-cn.net *.g.doubleclick-cn.net doubleclick.cn *.doubleclick.cn *.fls.doubleclick.cn *.g.doubleclick.cn dartsearch-cn.net *.dartsearch-cn.net googletraveladservices-cn.com *.googletraveladservices-cn.com googletagservices-cn.com *.googletagservices-cn.com googletagmanager-cn.com *.googletagmanager-cn.com googlesyndication-cn.com *.googlesyndication-cn.com *.safeframe.googlesyndication-cn.com app-measurement-cn.com *.app-measurement-cn.com gvt1-cn.com *.gvt1-cn.com gvt2-cn.com *.gvt2-cn.com 2mdn-cn.net *.2mdn-cn.net googleflights-cn.net *.googleflights-cn.net admob-cn.com *.admob-cn.com *.gstatic.com *.metric.gstatic.com *.gvt1.com *.gcpcdn.gvt1.com *.gvt2.com *.gcp.gvt2.com *.url.google.com *.youtube-nocookie.com *.ytimg.com android.com *.android.com *.flash.android.com g.cn *.g.cn g.co *.g.co goo.gl www.goo.gl google-analytics.com *.google-analytics.com google.com googlecommerce.com *.googlecommerce.com ggpht.cn *.ggpht.cn urchin.com *.urchin.com youtu.be youtube.com *.youtube.com youtubeeducation.com *.youtubeeducation.com youtubekids.com *.youtubekids.com yt.be *.yt.be android.clients.google.com developer.android.google.cn developers.android.google.cn source.android.google.cn]
+        Issuer: CN=GTS CA 1C3,O=Google Trust Services LLC,C=US
+        Serial: 58:AC:E5:94:0B:41:78:64:12:9D:53:1A:39:CB:00:67
+        Issued On: 2022-06-06 08:29:46 +0000 UTC
+        Expiration: 2022-08-29 08:29:45 +0000 UTC
+        Status: [OK] 62d 21h remaining
+```
 
 ### `certsum` CLI tool
 
