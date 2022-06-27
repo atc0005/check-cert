@@ -33,7 +33,8 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
     - [Detailed guide](#detailed-guide)
   - [Using release binaries](#using-release-binaries)
 - [Configuration options](#configuration-options)
-  - [Threshold calculations](#threshold-calculations)
+  - [Expiration threshold calculations](#expiration-threshold-calculations)
+  - [Asserting that expected Subject Alternate Names (SANs) are present](#asserting-that-expected-subject-alternate-names-sans-are-present)
   - [Skip hostname verification when leaf cert is missing SANs entries](#skip-hostname-verification-when-leaf-cert-is-missing-sans-entries)
   - [Applying or ignoring validation check results](#applying-or-ignoring-validation-check-results)
     - [`check_cert` plugin](#check_cert-plugin)
@@ -417,7 +418,7 @@ settings intended to optimize for size and to prevent dynamic linkage.
 
 ## Configuration options
 
-### Threshold calculations
+### Expiration threshold calculations
 
 This applies to all tools provided by this project.
 
@@ -444,6 +445,32 @@ and 15 days for the `CRITICAL` threshold:
 No rounding is performed.
 
 See GH-32 for additional info.
+
+### Asserting that expected Subject Alternate Names (SANs) are present
+
+Among other validation checks, the `check_cert` plugin and `lscert` CLI tool
+both support SANs list validation by accepting a CSV list of expected SANs
+entries and assert that:
+
+- all provided SANs entries are present on the leaf certificate
+- all SANs entries present on the leaf certificate are in the provided SANs
+  entries list
+
+Problem scenarios covered:
+
+- the cert provider omitted a requested/expected SANs entry
+- the monitoring configuration has not been updated to look for new SANs
+  entries present on the leaf cert
+
+As a real-world use case, applying SANs list validation helped catch an
+unapproved DNS record (CNAME) change for a public service. The DNS record
+change resulted in the service redirecting from the original (intended)
+pre-production system to a development box used by a different team in another
+business unit. While this would have likely been detected before the system
+was deployed to production, it would have caused unnecessary confusion/delays
+while the issue was worked out. Instead, the monitoring system caught the
+issue and the service owner was able to reach out immediately and coordinate
+reverting the unauthorized change.
 
 ### Skip hostname verification when leaf cert is missing SANs entries
 
@@ -1213,14 +1240,6 @@ Certificate 3 of 3 (intermediate):
 
 [OK] Hostname validation using value "badssl.com" successful for leaf certificate
 ```
-
-As a "real world" use case, applying SANs list validation helped catch an
-unapproved DNS record (CNAME) change for a public service. The DNS record
-change resulted in the service redirecting from the original pre-production
-system to a development box used by a different team in another business unit.
-While this would have likely been detected before the system was deployed to
-production, it would have caused unnecessary confusion/delays while the issue
-was worked out.
 
 #### Explicitly ignoring validation check results
 
