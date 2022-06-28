@@ -26,6 +26,69 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.8.0] - 2022-06-28
+
+### Overview
+
+- Add new flags to `check_cert` plugin
+- Documentation refresh
+- Output tweaks
+- Bugfixes
+- Dependency updates
+- built using Go 1.17.11
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- (GH-211) Add support for explicitly applying or ignoring specific validation
+  check results
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.10` to `1.17.11`
+  - `rs/zerolog`
+    - `v1.26.1` to `v1.27.0`
+  - `atc0005/go-nagios`
+    - `v0.8.2` to `v0.9.1`
+
+- (GH-285) check_cert | Improve context deadline related error message
+- (GH-324) lscert | Move age thresholds block to debug messages
+
+### Deprecated
+
+- (GH-356) Remove deprecated `disable-hostname-verification-if-empty-sans`
+  flag
+  - planned removal in v0.9.0 release
+
+### Fixed
+
+- (GH-323) lscert | Position of SANs entries mismatch summary message label is
+  incorrect
+- (GH-326) Fix misc doc comment typos
+- (GH-327) Incorrect calculation for `sans_entries_found` structured logging
+  field
+- (GH-328) Incorrect state label used for SANs entries mismatch
+- (GH-329) Incorrect exit state / status code set for SANs entries mismatch
+- (GH-336) lscert | hard-coded failure SANs list evaluation message incorrect
+- (GH-338) lscert | Fix exit handling for 0 discovered certs
+- (GH-343) If specified, DNS Name value is not used for SNI-enabled cert
+  retrieval
+- (GH-348) semicolon (`;`) character in plugin output (`ServiceOutput`)
+  changed to colon (`:`) character
+- (GH-349) README: Fix version reference for last Go 1.16 build
+- (GH-351) Fix various atc0005/go-nagios usage linting errors
+- (GH-353) Update lintinstall Makefile recipe
+- (GH-314) README missing example usage of `filename` flag
+- (GH-315) Inconsistent hostname verification applied when `filename` flag is
+  used
+- (GH-333) README missing coverage of SANs entries validation
+- (GH-354) Expiration age threshold value validation does not object to
+  specific invalid values
+
 ## [v0.7.1] - 2022-05-13
 
 ### Overview
@@ -921,7 +984,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.8.0...HEAD
+[v0.8.0]: https://github.com/atc0005/check-cert/releases/tag/v0.8.0
 [v0.7.1]: https://github.com/atc0005/check-cert/releases/tag/v0.7.1
 [v0.7.0]: https://github.com/atc0005/check-cert/releases/tag/v0.7.0
 [v0.6.0]: https://github.com/atc0005/check-cert/releases/tag/v0.6.0
