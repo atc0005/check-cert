@@ -90,7 +90,7 @@ func annotateError(logger zerolog.Logger, errs ...error) []error {
 
 		return annotatedErrors
 
-	// An empty collection was No errors were provided for evaluation
+	// No errors were provided for evaluation.
 	default:
 		return nil
 	}
