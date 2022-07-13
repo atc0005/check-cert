@@ -26,7 +26,7 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
-## [v0.8.0] - 2022-06-28
+## [v0.8.0] - 2022-07-13
 
 ### Overview
 
@@ -35,7 +35,7 @@ The following types of changes will be recorded in this file:
 - Output tweaks
 - Bugfixes
 - Dependency updates
-- built using Go 1.17.11
+- built using Go 1.17.12
   - Statically linked
   - Windows (x86, x64)
   - Linux (x86, x64)
@@ -49,7 +49,7 @@ The following types of changes will be recorded in this file:
 
 - Dependencies
   - `Go`
-    - `1.17.10` to `1.17.11`
+    - `1.17.10` to `1.17.12`
   - `rs/zerolog`
     - `v1.26.1` to `v1.27.0`
   - `atc0005/go-nagios`
