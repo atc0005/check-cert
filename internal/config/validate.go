@@ -25,7 +25,9 @@ func (c Config) validate(appType AppType) error {
 		switch {
 		case c.Filename == "" && c.Server == "":
 			return fmt.Errorf(
-				"one of %q or %q flags must be specified",
+				"one of %q or %q flags must be specified"+
+					" or one of URL, FQDN or hostname provided"+
+					" via positional argument",
 				ServerFlagLong,
 				FilenameFlagLong,
 			)
