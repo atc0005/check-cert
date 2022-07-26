@@ -342,7 +342,7 @@ type Config struct {
 
 // Usage is a custom override for the default Help text provided by the flag
 // package. Here we prepend some additional metadata to the existing output.
-var Usage = func() {
+func Usage() {
 
 	// Override default of stderr as destination for help output. This allows
 	// Nagios XI and similar monitoring systems to call plugins with the
