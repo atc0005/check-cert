@@ -382,6 +382,10 @@ func New(appType AppType) (*Config, error) {
 		return nil, ErrVersionRequested
 	}
 
+	if err := config.handlePositionalArgs(appType); err != nil {
+		return nil, fmt.Errorf("failed to process positional arguments: %w", err)
+	}
+
 	if err := config.validate(appType); err != nil {
 		return nil, fmt.Errorf("configuration validation failed: %w", err)
 	}
