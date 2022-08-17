@@ -344,10 +344,17 @@ equivalent of `go build`.
 1. [Install][go-docs-install] Go
 1. `go install github.com/atc0005/check-cert/cmd/certsum@latest`
 1. `go install github.com/atc0005/check-cert/cmd/lscert@latest`
-1. `go install github.com/atc0005/check-cert/cmd/check_cert@latest`
+1. `GOBIN="${PWD}" go install github.com/atc0005/check-cert/cmd/check_cert@latest`
 1. `sudo mv check_cert /path/to/plugins/`
    - e.g., `/usr/lib/nagios/plugins/` or `/usr/lib64/nagios/plugins/`,
      depending on what distro you are running
+
+Per `go help install`:
+
+> Executables are installed in the directory named by the GOBIN environment
+> variable, which defaults to $GOPATH/bin or $HOME/go/bin if the GOPATH
+> environment variable is not set. Executables in $GOROOT
+> are installed in $GOROOT/bin or $GOTOOLDIR instead of $GOBIN.
 
 #### Detailed guide
 
