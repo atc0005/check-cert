@@ -43,6 +43,8 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
   - [Command-line arguments](#command-line-arguments)
     - [`check_cert`](#check_cert-1)
     - [`lscert`](#lscert-2)
+      - [Flags](#flags)
+      - [Positional Argument](#positional-argument)
     - [`certsum`](#certsum-2)
   - [Configuration file](#configuration-file)
 - [Examples](#examples)
@@ -63,6 +65,9 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
       - [`expiration`, `hostname`, `sans`](#expiration-hostname-sans)
     - [Reviewing a certificate file](#reviewing-a-certificate-file)
   - [`lscert` CLI tool](#lscert-cli-tool-1)
+    - [Positional Argument](#positional-argument-1)
+      - [Simple](#simple)
+      - [Flags and Argument](#flags-and-argument)
     - [OK results](#ok-results-1)
     - [WARNING results](#warning-results-1)
     - [CRITICAL results](#critical-results-1)
@@ -583,6 +588,8 @@ validation checks and any behavior changes at that time noted.
 
 #### `lscert`
 
+##### Flags
+
 | Flag                 | Required  | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                                          |
 | -------------------- | --------- | ------- | ------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `f`, `filename`      | No        | `false` | No     | *valid file name characters*                                            | Fully-qualified path to a PEM formatted certificate file containing one or more certificates.                                                                                                                                                                                                                                                        |
@@ -598,6 +605,41 @@ validation checks and any behavior changes at that time noted.
 | `se`, `sans-entries` | No        |         | No     | *comma-separated list of values*                                        | One or many names required to be in the Subject Alternate Names (SANs) list for a leaf certificate. If provided, this list of comma-separated values is required for the certificate to pass validation. If the case-insensitive " + SkipSANSCheckKeyword + " keyword is provided the results from this validation check will be flagged as ignored. |
 | `s`, `server`        | **Maybe** |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address used for certificate chain retrieval. This value should appear in the Subject Alternate Names (SANs) list for the leaf certificate unless also using the `dns-name` flag.                                                                                                                              |
 | `dn`, `dns-name`     | **Maybe** |         | No     | *fully-qualified domain name or IP Address*                             | A fully-qualified domain name or IP Address in the Subject Alternate Names (SANs) list for the leaf certificate. If specified, this value will be used when retrieving the certificate chain (SNI support) and for hostname verification. Required when evaluating certificate files. See the `server` flag description for more information.        |
+
+##### Positional Argument
+
+As of the v0.9.0 release the `lscert` tool accepts a single positional
+argument as an alternative to the `server` and `port` flags. This positional
+argument value can be any of:
+
+- URL
+- resolvable name
+- IP Address
+
+---
+
+**NOTE**: Due to limitations in the Go standard library's support for
+command-line argument handling you *must* specify positional arguments after
+all flags.
+
+---
+
+Valid syntax:
+
+`lscert PATTERN`
+
+Invalid syntax:
+
+- `lscert --log-level debug PATTERN`
+- `lscert --dns-name one.one.one.one 1.1.1.1`
+
+Some valid examples:
+
+- `lscert google.com`
+- `lscert https://www.google.com`
+- `lscert https://www.google.com:443`
+- `lscert --log-level debug PATTERN`
+- `lscert --dns-name one.one.one.one 1.1.1.1`
 
 #### `certsum`
 
@@ -1618,6 +1660,100 @@ Certificate 1 of 1 (leaf):
 ```
 
 ### `lscert` CLI tool
+
+#### Positional Argument
+
+These short examples illustrate using the support for a positional argument to
+quickly examine a certificate chain. If flags are specified they *must* be
+specified before the positional argument (due to limitations in the Go
+standard library `flag` package).
+
+##### Simple
+
+```console
+$ lscert pkg.go.dev
+
+
+======================
+CERTIFICATES | SUMMARY
+======================
+
+- OK: 3 certs retrieved for service running on pkg.go.dev (34.149.140.181) at port 443 using host value "pkg.go.dev"
+- OK: Hostname validation using value "pkg.go.dev" successful for leaf certificate
+- OK: SANs List validation ignored: 0 SANs entries specified, 1 SANs entries on leaf cert [0 EXPECTED, 0 MISSING, 0 UNEXPECTED]
+- OK: Expiration validation successful: leaf cert "pkg.go.dev" expires next with 47d 8h remaining (until 2022-10-03 20:00:07 +0000 UTC) [EXPIRED: 0, EXPIRING: 0, OK: 3]
+
+
+============================
+CERTIFICATES | CHAIN DETAILS
+============================
+
+Certificate 1 of 3 (leaf):
+        Name: CN=pkg.go.dev
+        SANs entries: [pkg.go.dev]
+        Issuer: CN=GTS CA 1D4,O=Google Trust Services LLC,C=US
+        Serial: F6:04:26:D7:51:E6:52:62:09:AE:04:7B:9C:23:F2:86
+        Issued On: 2022-07-05 20:00:08 +0000 UTC
+        Expiration: 2022-10-03 20:00:07 +0000 UTC
+        Status: [OK] 47d 8h remaining
+
+Certificate 2 of 3 (intermediate):
+        Name: CN=GTS CA 1D4,O=Google Trust Services LLC,C=US
+        SANs entries: []
+        Issuer: CN=GTS Root R1,O=Google Trust Services LLC,C=US
+        Serial: 02:00:8E:B2:02:33:36:65:8B:64:CD:DB:9B
+        Issued On: 2020-08-13 00:00:42 +0000 UTC
+        Expiration: 2027-09-30 00:00:42 +0000 UTC
+        Status: [OK] 1869d 12h remaining
+
+Certificate 3 of 3 (intermediate):
+        Name: CN=GTS Root R1,O=Google Trust Services LLC,C=US
+        SANs entries: []
+        Issuer: CN=GlobalSign Root CA,OU=Root CA,O=GlobalSign nv-sa,C=BE
+        Serial: 77:BD:0D:6C:DB:36:F9:1A:EA:21:0F:C4:F0:58:D3:0D
+        Issued On: 2020-06-19 00:00:42 +0000 UTC
+        Expiration: 2028-01-28 00:00:42 +0000 UTC
+        Status: [OK] 1989d 12h remaining
+```
+
+##### Flags and Argument
+
+```console
+$ lscert --dns-name one.one.one.one --age-warning 60 --age-critical 30 1.1.1.1
+
+
+======================
+CERTIFICATES | SUMMARY
+======================
+
+- OK: 2 certs retrieved for service running on 1.1.1.1 at port 443
+- OK: Hostname validation using value "one.one.one.one" successful for leaf certificate
+- OK: SANs List validation ignored: 0 SANs entries specified, 3 SANs entries on leaf cert [0 EXPECTED, 0 MISSING, 0 UNEXPECTED]
+- OK: Expiration validation successful: leaf cert "cloudflare-dns.com" expires next with 69d 12h remaining (until 2022-10-25 23:59:59 +0000 UTC) [EXPIRED: 0, EXPIRING: 0, OK: 2]
+
+
+============================
+CERTIFICATES | CHAIN DETAILS
+============================
+
+Certificate 1 of 2 (leaf):
+        Name: CN=cloudflare-dns.com,O=Cloudflare\, Inc.,L=San Francisco,ST=California,C=US
+        SANs entries: [cloudflare-dns.com *.cloudflare-dns.com one.one.one.one]
+        Issuer: CN=DigiCert TLS Hybrid ECC SHA384 2020 CA1,O=DigiCert Inc,C=US
+        Serial: 0F:75:A3:6D:32:C1:6B:03:C7:CA:5F:5F:71:4A:03:70
+        Issued On: 2021-10-25 00:00:00 +0000 UTC
+        Expiration: 2022-10-25 23:59:59 +0000 UTC
+        Status: [OK] 69d 12h remaining
+
+Certificate 2 of 2 (intermediate):
+        Name: CN=DigiCert TLS Hybrid ECC SHA384 2020 CA1,O=DigiCert Inc,C=US
+        SANs entries: []
+        Issuer: CN=DigiCert Global Root CA,OU=www.digicert.com,O=DigiCert Inc,C=US
+        Serial: 07:F2:F3:5C:87:A8:77:AF:7A:EF:E9:47:99:35:25:BD
+        Issued On: 2021-04-14 00:00:00 +0000 UTC
+        Expiration: 2031-04-13 23:59:59 +0000 UTC
+        Status: [OK] 3161d 12h remaining
+```
 
 #### OK results
 
