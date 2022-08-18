@@ -25,9 +25,9 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"math/big"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -235,7 +235,7 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 	// Read in the entire PEM certificate file after first attempting to
 	// sanitize the input file variable contents.
-	pemData, err := ioutil.ReadFile(filepath.Clean(filename))
+	pemData, err := os.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		return nil, nil, err
 	}
