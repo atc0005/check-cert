@@ -10,6 +10,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"os"
 )
 
 // supportedValuesFlagHelpText is a flag package helper function that combines
@@ -29,9 +30,27 @@ func supportedValuesFlagHelpText(baseHelpText string, supportedValues []string) 
 // common to all application types.
 func (c *Config) handleFlagsConfig(appType AppType) {
 
+	// Application specific template used for generating lead-in usage/help
+	// text.
+	var usageTextHeaderTmpl string
+
+	var appDescription string
+
 	// Flags specific to one application type or the other
 	switch {
 	case appType.Plugin:
+
+		// Override the default Help output with a brief lead-in summary of
+		// the expected syntax and project version.
+		//
+		// For this specific application type, flags are *required*.
+		//
+		// https://stackoverflow.com/a/36787811/903870
+		// https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
+		usageTextHeaderTmpl = "%s\n\nUsage:  %s <flags>\n\n%s\n\nFlags:\n"
+
+		appDescription = "Nagios plugin used to monitor & perform validation checks of certificate chains."
+
 		flag.BoolVar(&c.EmitBranding, BrandingFlag, defaultBranding, brandingFlagHelp)
 		flag.BoolVar(
 			&c.IgnoreHostnameVerificationFailureIfEmptySANsList,
@@ -78,6 +97,21 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		)
 
 	case appType.Inspecter:
+
+		// Override the default Help output with a brief lead-in summary of
+		// the expected syntax and project version.
+		//
+		// For this specific application type, flags are required unless the
+		// host/url pattern is provided, at which point flags are optional.
+		// Because I'm not sure how to specify this briefly, both are listed
+		// as optional.
+		//
+		// https://stackoverflow.com/a/36787811/903870
+		// https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
+		usageTextHeaderTmpl = "%s\n\nUsage:  %s [flags] [pattern]\n\n%s\n\nFlags:\n"
+
+		appDescription = "Used to generate a summary of certificate chain metadata and validation results for quick review."
+
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
 
@@ -94,6 +128,18 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		flag.IntVar(&c.Port, PortFlagLong, defaultPort, portFlagHelp)
 
 	case appType.Scanner:
+
+		// Override the default Help output with a brief lead-in summary of
+		// the expected syntax and project version.
+		//
+		// For this specific application type, flags are *required*.
+		//
+		// https://stackoverflow.com/a/36787811/903870
+		// https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
+		usageTextHeaderTmpl = "%s\n\nUsage:  %s <flags>\n\n%s\n\nFlags:\n"
+
+		appDescription = "Scanner used for evaluating certificates in one or more given IP ranges or collection of name/FQDN values."
+
 		flag.IntVar(&c.timeoutPortScan, TimeoutPortScanFlagLong, defaultPortScanTimeout, timeoutPortScanFlagHelp)
 		flag.IntVar(&c.timeoutPortScan, TimeoutPortScanFlagShort, defaultPortScanTimeout, timeoutPortScanFlagHelp+" (shorthand)")
 
@@ -155,8 +201,33 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 
 	flag.BoolVar(&c.ShowVersion, VersionFlagLong, defaultDisplayVersionAndExit, versionFlagHelp)
 
-	// Allow our function to override the default Help output
-	flag.Usage = Usage
+	// Prepend a brief lead-in summary of the expected syntax and project
+	// version before emitting the default Help output.
+	//
+	// https://stackoverflow.com/a/36787811/903870
+	// https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
+	flag.Usage = func() {
+		headerText := fmt.Sprintf(
+			usageTextHeaderTmpl,
+			Version(),
+			os.Args[0],
+			appDescription,
+		)
+
+		footerText := fmt.Sprintf(
+			"\nSee project README at %s for examples and additional details.\n",
+			myAppURL,
+		)
+
+		// Override default of stderr as destination for help output. This
+		// allows Nagios XI and similar monitoring systems to call plugins
+		// with the `--help` flag and have it display within the Admin web UI.
+		flag.CommandLine.SetOutput(os.Stdout)
+
+		fmt.Fprintln(flag.CommandLine.Output(), headerText)
+		flag.PrintDefaults()
+		fmt.Fprintln(flag.CommandLine.Output(), footerText)
+	}
 
 	// parse flag definitions from the argument list
 	flag.Parse()
