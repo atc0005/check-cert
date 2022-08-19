@@ -30,11 +30,18 @@ func supportedValuesFlagHelpText(baseHelpText string, supportedValues []string) 
 // common to all application types.
 func (c *Config) handleFlagsConfig(appType AppType) {
 
-	// Application specific template used for generating lead-in usage/help
-	// text.
-	var usageTextHeaderTmpl string
+	var (
+		// Application specific template used for generating lead-in
+		// usage/help text.
+		usageTextHeaderTmpl string
 
-	var appDescription string
+		// Additional requirements for using positional arguments. May not
+		// apply to all application types.
+		positionalArgRequirements string
+
+		// A human readable description of the specific application.
+		appDescription string
+	)
 
 	// Flags specific to one application type or the other
 	switch {
@@ -100,6 +107,17 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		// https://stackoverflow.com/a/36787811/903870
 		// https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
 		usageTextHeaderTmpl = "%s\n\nUsage:  %s [flags] [pattern]\n\n%s\n\nFlags:\n"
+
+		positionalArgRequirements = fmt.Sprintf(
+			"\nPositional Argument (\"pattern\") Requirements:\n\n"+
+				"- if the %q or %q"+
+				" flags are specified, the URL pattern is ignored"+
+				"\n- if the %q flag is specified, its value will be"+
+				" ignored if a port is provided in the given URL pattern",
+			ServerFlagLong,
+			FilenameFlagLong,
+			PortFlagLong,
+		)
 
 		appDescription = "Used to generate a summary of certificate chain metadata and validation results for quick review."
 
@@ -217,6 +235,7 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 
 		fmt.Fprintln(flag.CommandLine.Output(), headerText)
 		flag.PrintDefaults()
+		fmt.Fprintln(flag.CommandLine.Output(), positionalArgRequirements)
 		fmt.Fprintln(flag.CommandLine.Output(), footerText)
 	}
 

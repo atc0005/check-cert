@@ -607,9 +607,8 @@ validation checks and any behavior changes at that time noted.
 
 ##### Positional Argument
 
-As of the v0.9.0 release the `lscert` tool accepts a single positional
-argument as an alternative to the `server` and `port` flags. This positional
-argument value can be any of:
+As of the v0.9.0 release the `lscert` tool accepts a URL pattern as a single
+positional argument. This positional argument value can be any of:
 
 - URL
 - resolvable name
@@ -639,6 +638,14 @@ Some valid examples:
 - `lscert https://www.google.com:443`
 - `lscert --log-level debug PATTERN`
 - `lscert --dns-name one.one.one.one 1.1.1.1`
+
+Aside from the required order of flags and positional argument noted above,
+there are additional requirements to be aware of:
+
+- if the `server` or `filename` flags are specified, the positional argument
+  is ignored
+- if the `port` flag is specified, its value will be ignored if a port is
+  provided in the given URL pattern positional argument
 
 #### `certsum`
 
