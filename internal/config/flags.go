@@ -59,15 +59,6 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 			ignoreHostnameVerificationFailureIfEmptySANsListFlagHelp,
 		)
 
-		// DEPRECATED flag support. This is an alias for a previous stable
-		// release. Slated for removal in v0.9.0 release per GH-356.
-		flag.BoolVar(
-			&c.IgnoreHostnameVerificationFailureIfEmptySANsList,
-			DisableHostnameVerificationFailureIfEmptySANsListFlag,
-			defaultIgnoreHostnameVerificationIfEmptySANsList,
-			disableHostnameVerificationFailureIfEmptySANsListFlagHelp,
-		)
-
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
 
