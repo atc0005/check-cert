@@ -60,13 +60,9 @@ const (
 	// HelpFlagShort     string = "h"
 	// VersionFlagShort  string = "v"
 
-	// DEPRECATED flag support. This is an alias for a previous stable
-	// release. Slated for removal in v0.9.0 release per GH-356.
-	DisableHostnameVerificationFailureIfEmptySANsListFlag string = "disable-hostname-verification-if-empty-sans"
-
-	// Replacement flag. This flag uses "ignore" wording to make clear that
-	// the validation check is still applied, but the results ignored when
-	// determining overall certificate chain validation state.
+	// This flag uses "ignore" wording to make clear that the validation check
+	// is still applied, but the results ignored when determining overall
+	// certificate chain validation state.
 	IgnoreHostnameVerificationFailureIfEmptySANsListFlag string = "ignore-hostname-verification-if-empty-sans"
 
 	VersionFlagLong  string = "version"
