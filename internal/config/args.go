@@ -34,6 +34,10 @@ func (c *Config) handlePositionalArgs(appType AppType) error {
 		// applied and a positional argument is available for evaluation. We
 		// evaluate Arg(0) only if specific flag values have not already been
 		// provided.
+		//
+		// This prevents overwriting any values already specified by flags in
+		// order to provide the documented behavior for specified flags and
+		// the URL pattern positional argument.
 		if flag.Arg(0) != "" && c.Server == "" && c.Filename == "" {
 			err := c.parseServerValue(flag.Arg(0))
 			if err != nil {

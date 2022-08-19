@@ -14,20 +14,32 @@ import (
 	"strings"
 )
 
-// parseServerValue evaluates a given string as a potential URL. If matched,
-// the URL is used to populate the Config.Server field. If the URL specifies a
-// port, the parsed port value is used to populate the Config.Port field. If
-// the given string is not parsed as a URL, the value is assigned directly to
-// the Config.Server field as-is.
+// parseServerValue evaluates a given string as a potential URL.
+//
+// If the given string does not fail parsing, but is not found to be a valid
+// URL the given string is assigned directly to the Config.Server field as-is
+// for later evaluation.
+//
+// If matched, the parsed host value is used to populate the Config.Server
+// field and the parsed port value (if available) is used to populate the
+// Config.Port field.
 //
 // The caller is responsible for guarding against overwriting any values
-// already specified by flags.
+// already specified by flags in order to provide the documented behavior for
+// specified flags and the URL pattern positional argument.
 func (c *Config) parseServerValue(serverVal string) error {
 
-	// url.Parse() is very forgiving. A bare string value (e.g., "tacos") is
-	// treated as a relative URL or "path" value. In other words, a parse
-	// error is sufficient reason to abort further evaluation of the given
-	// server value.
+	// url.Parse() is very forgiving. All known "valid" values are
+	// successfully parsed:
+	//
+	// - bare hostname (shortname)
+	// - bare FQDN
+	// - IP Address
+	// - valid URL pattern with scheme, but without port
+	// - valid URL pattern with scheme and port
+	//
+	// Because url.Parse() is so forgiving, a parse error of any kind is
+	// sufficient cause to abort further evaluation of a given pattern.
 	u, err := url.Parse(serverVal)
 	if err != nil {
 		return fmt.Errorf(
@@ -37,17 +49,21 @@ func (c *Config) parseServerValue(serverVal string) error {
 		)
 	}
 
-	// We're populating the Config struct *before* validation is applied. As a
-	// result, we assign directly to the Config struct fields that are
-	// normally populated by specific flags.
+	// A bare string value (e.g., "tacos") provided as a URL pattern is
+	// treated as a relative URL or "path" value, but does not result in the
+	// Host field being populated. We can use that parsing behavior to
+	// determine whether a given pattern should be further evaluated or used
+	// as-is for later validation.
 	switch {
 
-	// If the specified server value was successfully parsed as a URL with a
-	// hostname value we use that value to populate the Config.Server field
-	// and potentially the Config.Port field.
 	case u.Host != "":
 
 		switch {
+
+		// If the specified server value was successfully parsed as a URL with
+		// a host value it may contain an optional separator + port pattern.
+		// We need to remove the separator and port from the host value before
+		// we record it as the server value for later validation.
 		case strings.Contains(u.Host, ":"):
 
 			// Remove any :port pattern from u.Host by splitting on
@@ -81,8 +97,8 @@ func (c *Config) parseServerValue(serverVal string) error {
 
 	// If the specified server value was successfully parsed as a URL without
 	// a hostname value (in which case the server value is treated as a
-	// relative URL) we use the specified server value as-is and assign
-	// directly to the Config.Server field.
+	// relative URL) we record the specified server value as-is for later
+	// validation.
 	default:
 
 		c.Server = serverVal
