@@ -26,6 +26,41 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.9.0] - 2022-08-21
+
+### Overview
+
+- Add URL positional argument support to `lscert`
+- Help text tweaks
+- Bugfixes
+- Dependency updates
+- built using Go 1.17.13
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- (GH-378) lscert | Add support for setting `server` and `port` values from
+  URL pattern provided as positional argument
+- (GH-389) Update help text to reflect app-specific usage
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.12` to `1.17.13`
+
+- (GH-356) Remove deprecated `disable-hostname-verification-if-empty-sans`
+  flag
+  - previously announced in `v0.8.0` release
+
+### Fixed
+
+- (GH-392) Swap use of `io/ioutil` package for `os`
+- (GH-387) Fix `go install` steps to include valid source path
+- (GH-390) Apply Go 1.19 specific doc comments linting fixes
+
 ## [v0.8.0] - 2022-07-13
 
 ### Overview
@@ -984,7 +1019,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.9.0...HEAD
+[v0.9.0]: https://github.com/atc0005/check-cert/releases/tag/v0.9.0
 [v0.8.0]: https://github.com/atc0005/check-cert/releases/tag/v0.8.0
 [v0.7.1]: https://github.com/atc0005/check-cert/releases/tag/v0.7.1
 [v0.7.0]: https://github.com/atc0005/check-cert/releases/tag/v0.7.0
