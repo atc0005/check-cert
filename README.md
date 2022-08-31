@@ -93,11 +93,11 @@ submit improvements for review and potential inclusion into the project.
 This repo contains various tools used to review, monitor & validate
 certificates.
 
-| Tool Name     | Description                                                                                   |
-| ------------- | --------------------------------------------------------------------------------------------- |
-| `check_certs` | Nagios plugin used to monitor & validate certificate chains.                                  |
-| `lscert`      | CLI app used to generate a summary of certificate chain metadata and validation results.      |
-| `certsum`     | CLI app used to scan one or more given CIDR IP ranges for certs and provide a summary report. |
+| Tool Name     | Description                                                                                                                |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `check_certs` | Nagios plugin used to monitor & validate certificate chains.                                                               |
+| `lscert`      | CLI app used to generate a summary of certificate chain metadata and validation results.                                   |
+| `certsum`     | CLI app used to scan one or more given IP ranges or collection of name/FQDN values for certs and provide a summary report. |
 
 ### `check_certs`
 
