@@ -99,7 +99,7 @@ lintinstall:
 
 	@export PATH="${PATH}:$(go env GOPATH)/bin"
 
-	@echo "Installing latest staticcheck version ..."
+	@echo "Installing latest stable staticcheck version via go install command ..."
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 	staticcheck --version
 
