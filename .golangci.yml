@@ -25,9 +25,11 @@ linters:
     - gofmt
     - goimports
     - gosec
+    - govet
     - maligned
     - misspell
     - prealloc
     - revive
+    - staticcheck
     - stylecheck
     - unconvert
