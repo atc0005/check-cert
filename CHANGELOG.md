@@ -26,6 +26,42 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.9.1] - 2022-09-22
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- GitHub Actions Workflows updates
+- built using Go 1.19.1
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.13` to `1.19.1`
+  - `atc0005/go-nagios`
+    - `v0.9.1` to `v0.10.0`
+  - `rs/zerolog`
+    - `v1.27.0` to `v1.28.0`
+  - `github/codeql-action`
+    - `v2.1.22` to `v2.1.25`
+- (GH-404) Update project to Go 1.19
+- (GH-405) Update Makefile and GitHub Actions Workflows
+- (GH-406) Add CodeQL GitHub Actions Workflow
+- (GH-409) Add additional golangci-lint linters
+- (GH-411) Add govulncheck GitHub Actions Workflow
+- (GH-412) Combine CodeQL and Vulnerability Analysis GHAWs
+
+### Fixed
+
+- (GH-402) Add missing cmd doc files
+- (GH-403) Update certsum overview text
+- (GH-407) Makefile: Tweak staticcheck pre-install text
+
 ## [v0.9.0] - 2022-08-21
 
 ### Overview
@@ -1019,7 +1055,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.9.1...HEAD
+[v0.9.1]: https://github.com/atc0005/check-cert/releases/tag/v0.9.1
 [v0.9.0]: https://github.com/atc0005/check-cert/releases/tag/v0.9.0
 [v0.8.0]: https://github.com/atc0005/check-cert/releases/tag/v0.8.0
 [v0.7.1]: https://github.com/atc0005/check-cert/releases/tag/v0.7.1
