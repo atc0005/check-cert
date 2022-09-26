@@ -5,6 +5,7 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
 
 [![Latest Release](https://img.shields.io/github/release/atc0005/check-cert.svg?style=flat-square)](https://github.com/atc0005/check-cert/releases/latest)
 [![Go Reference](https://pkg.go.dev/badge/github.com/atc0005/check-cert.svg)](https://pkg.go.dev/github.com/atc0005/check-cert)
+[![go.mod Go version](https://img.shields.io/github/go-mod/go-version/atc0005/check-cert)](https://github.com/atc0005/check-cert)
 [![Lint and Build](https://github.com/atc0005/check-cert/actions/workflows/lint-and-build.yml/badge.svg)](https://github.com/atc0005/check-cert/actions/workflows/lint-and-build.yml)
 [![Project Analysis](https://github.com/atc0005/check-cert/actions/workflows/project-analysis.yml/badge.svg)](https://github.com/atc0005/check-cert/actions/workflows/project-analysis.yml)
 [![Push Validation](https://github.com/atc0005/check-cert/actions/workflows/push-validation.yml/badge.svg)](https://github.com/atc0005/check-cert/actions/workflows/push-validation.yml)
