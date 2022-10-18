@@ -687,7 +687,7 @@ func (ccvr CertChainValidationResults) OneLineSummary() string {
 }
 
 // Report returns a formatted report suitable for display and notification
-// purposes. If specified, additional details are provided.  The caller is
+// purposes. If specified, additional details are provided. The caller is
 // responsible for calling the Sort method first in order to arrange the
 // validation results by appropriate priority.
 func (ccvr CertChainValidationResults) Report(verbose bool) string {
