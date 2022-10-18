@@ -177,11 +177,11 @@ func supportedValidationCheckResultKeywords() []string {
 	}
 }
 
-// supportedValidationCheckResultKeywords returns a list of valid log levels
-// supported by tools in this project.
+// supportedLogLevels returns a list of valid log levels supported by tools in
+// this project.
 func supportedLogLevels() []string {
 	return []string{
-		LogLevelDebug,
+		LogLevelDisabled,
 		LogLevelPanic,
 		LogLevelFatal,
 		LogLevelError,
