@@ -26,6 +26,42 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.9.2] - 2022-12-07
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- GitHub Actions Workflows updates
+- built using Go 1.19.4
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.1` to `1.19.4`
+  - `atc0005/go-nagios`
+    - `v0.10.0` to `v0.10.2`
+  - `github.com/mattn/go-colorable`
+    - `v0.1.12` to `v0.1.13`
+  - `github.com/mattn/go-isatty`
+    - `v0.0.14` to `v0.0.16`
+  - `golang.org/x/sys`
+    - `v0.0.0-20210927094055-39ccf1dd6fa6` to `v0.3.0`
+- (GH-421) Refactor GitHub Actions workflows to import logic
+- (GH-422) GitHub Actions workflows refactor follow-up
+- (GH-423) Update README to include go.mod badge
+
+### Fixed
+
+- (GH-424) Fix project repo links
+- (GH-427) Issues with `config.supportedLogLevels()` helper function
+- (GH-429) Prune stray space in doc comment
+- (GH-432) Fix Makefile Go module base path detection
+
 ## [v0.9.1] - 2022-09-22
 
 ### Overview
@@ -1055,7 +1091,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.9.2...HEAD
+[v0.9.2]: https://github.com/atc0005/check-cert/releases/tag/v0.9.2
 [v0.9.1]: https://github.com/atc0005/check-cert/releases/tag/v0.9.1
 [v0.9.0]: https://github.com/atc0005/check-cert/releases/tag/v0.9.0
 [v0.8.0]: https://github.com/atc0005/check-cert/releases/tag/v0.8.0
