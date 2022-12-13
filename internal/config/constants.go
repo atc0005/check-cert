@@ -224,7 +224,7 @@ const (
 
 const (
 	appTypePlugin    string = "plugin"
-	appTypeInspecter string = "inspecter"
+	appTypeInspector string = "inspector"
 	appTypeScanner   string = "scanner"
 )
 

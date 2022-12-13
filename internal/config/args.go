@@ -28,7 +28,7 @@ func (c *Config) handlePositionalArgs(appType AppType) error {
 
 		// placeholder
 
-	case appType.Inspecter:
+	case appType.Inspector:
 
 		// If flag.Arg(0) is non-empty, then flag parsing has already been
 		// applied and a positional argument is available for evaluation. We
