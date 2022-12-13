@@ -19,7 +19,7 @@ import (
 func (c Config) validate(appType AppType) error {
 
 	switch {
-	case appType.Inspecter:
+	case appType.Inspector:
 		// User can specify one of filename or server, but not both (mostly in
 		// order to keep the logic simpler)
 		switch {

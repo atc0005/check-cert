@@ -94,7 +94,7 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 			supportedValuesFlagHelpText(applyValidationResultsFlagHelp, supportedValidationCheckResultKeywords()),
 		)
 
-	case appType.Inspecter:
+	case appType.Inspector:
 
 		// Override the default Help output with a brief lead-in summary of
 		// the expected syntax and project version.

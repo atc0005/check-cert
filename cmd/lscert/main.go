@@ -27,7 +27,7 @@ import (
 func main() {
 
 	// Setup configuration by parsing user-provided flags.
-	cfg, cfgErr := config.New(config.AppType{Inspecter: true})
+	cfg, cfgErr := config.New(config.AppType{Inspector: true})
 	switch {
 	case errors.Is(cfgErr, config.ErrVersionRequested):
 		fmt.Println(config.Version())
