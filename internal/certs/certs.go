@@ -862,7 +862,16 @@ func GenerateCertChainReport(
 // indicating whether already expired certificates should be excluded. If not
 // excluded, the first expired certificate is returned, otherwise the first
 // certificate out of the pool set to expire next is returned.
+//
+// If *all* certs are expired, the cert which first expired will be returned
+// regardless of the boolean flag provided. If the provided slice of x509
+// certificates is empty or nil then nil will be returned.
 func NextToExpire(certChain []*x509.Certificate, excludeExpired bool) *x509.Certificate {
+
+	// Guard against index out of range.
+	if len(certChain) == 0 {
+		return nil
+	}
 
 	// Copy method will return the minimum of length of source and destination
 	// slice which is zero for this empty slice  (regardless of what initial
@@ -882,12 +891,12 @@ func NextToExpire(certChain []*x509.Certificate, excludeExpired bool) *x509.Cert
 
 	// Grab the first cert to use as our default return value if not
 	// overridden later. This is either first expired certificate (if present)
-	// or the next certificate to expire. If *all* certs are expired, the cert
-	// which first expired will be returned.
+	// or the next certificate to expire.
 	nextToExpire := sortedChain[0]
 
 	if excludeExpired {
-		// skip expired certs and return the one set to expire next
+		// Attempt to return the first non-expired certificate set to expire
+		// next.
 		for idx := range sortedChain {
 			if !IsExpiredCert(sortedChain[idx]) {
 				nextToExpire = sortedChain[idx]
@@ -897,6 +906,8 @@ func NextToExpire(certChain []*x509.Certificate, excludeExpired bool) *x509.Cert
 		}
 	}
 
+	// If *all* certs are expired, the cert which first expired will be
+	// returned.
 	return nextToExpire
 }
 
