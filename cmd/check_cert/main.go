@@ -251,6 +251,18 @@ func main() {
 				hostVal,
 			)
 
+		// We have a valid IP Address to use for opening the connection and a
+		// sysadmin-specified DNS Name value to use for a SNI-enabled
+		// certificate retrieval attempt.
+		case cfg.DNSName != "":
+			hostVal = cfg.DNSName
+			certChainSource = fmt.Sprintf(
+				"service running on %s at port %d using host value %q",
+				ipAddr,
+				cfg.Port,
+				hostVal,
+			)
+
 		// We have a resolved IP Address, but not a sysadmin-specified DNS
 		// Name value. We'll use the resolvable name/FQDN for a SNI-enabled
 		// certificate retrieval attempt.
