@@ -388,6 +388,191 @@ func NumExpiringCerts(certChain []*x509.Certificate, ageCritical time.Time, ageW
 
 }
 
+// NumLeafCerts receives a slice of x509 certificates and returns a count of
+// leaf certificates present in the chain.
+func NumLeafCerts(certChain []*x509.Certificate) int {
+	var num int
+	for _, cert := range certChain {
+		chainPos := ChainPosition(cert, certChain)
+		switch chainPos {
+		case certChainPositionLeaf:
+			num++
+		case certChainPositionLeafSelfSigned:
+			num++
+		}
+	}
+
+	return num
+}
+
+// NumIntermediateCerts receives a slice of x509 certificates and returns a
+// count of intermediate certificates present in the chain.
+func NumIntermediateCerts(certChain []*x509.Certificate) int {
+	var num int
+	for _, cert := range certChain {
+		chainPos := ChainPosition(cert, certChain)
+		if chainPos == certChainPositionIntermediate {
+			num++
+		}
+	}
+
+	return num
+}
+
+// NumRootCerts receives a slice of x509 certificates and returns a
+// count of root certificates present in the chain.
+func NumRootCerts(certChain []*x509.Certificate) int {
+	var num int
+	for _, cert := range certChain {
+		chainPos := ChainPosition(cert, certChain)
+		if chainPos == certChainPositionRoot {
+			num++
+		}
+	}
+
+	return num
+}
+
+// NumUnknownCerts receives a slice of x509 certificates and returns a count
+// of unidentified certificates present in the chain.
+func NumUnknownCerts(certChain []*x509.Certificate) int {
+	var num int
+	for _, cert := range certChain {
+		chainPos := ChainPosition(cert, certChain)
+		if chainPos == certChainPositionUnknown {
+			num++
+		}
+	}
+
+	return num
+}
+
+// LeafCerts receives a slice of x509 certificates and returns a (potentially
+// empty) collection of leaf certificates present in the chain.
+func LeafCerts(certChain []*x509.Certificate) []*x509.Certificate {
+	numPresent := NumLeafCerts(certChain)
+	leafCerts := make([]*x509.Certificate, 0, numPresent)
+
+	for _, cert := range certChain {
+		chainPos := ChainPosition(cert, certChain)
+		switch chainPos {
+		case certChainPositionLeaf:
+			leafCerts = append(leafCerts, cert)
+		case certChainPositionLeafSelfSigned:
+			leafCerts = append(leafCerts, cert)
+		}
+
+	}
+
+	return leafCerts
+}
+
+// IntermediateCerts receives a slice of x509 certificates and returns a
+// (potentially empty) collection of intermediate certificates present in the
+// chain.
+func IntermediateCerts(certChain []*x509.Certificate) []*x509.Certificate {
+	numPresent := NumLeafCerts(certChain)
+	intermediateCerts := make([]*x509.Certificate, 0, numPresent)
+
+	for _, cert := range certChain {
+		chainPos := ChainPosition(cert, certChain)
+		if chainPos == certChainPositionIntermediate {
+			intermediateCerts = append(intermediateCerts, cert)
+		}
+	}
+
+	return intermediateCerts
+}
+
+// RootCerts receives a slice of x509 certificates and returns a (potentially
+// empty) collection of root certificates present in the chain.
+func RootCerts(certChain []*x509.Certificate) []*x509.Certificate {
+	numPresent := NumLeafCerts(certChain)
+	rootCerts := make([]*x509.Certificate, 0, numPresent)
+
+	for _, cert := range certChain {
+		chainPos := ChainPosition(cert, certChain)
+		if chainPos == certChainPositionRoot {
+			rootCerts = append(rootCerts, cert)
+		}
+	}
+
+	return rootCerts
+}
+
+// OldestLeafCert returns the oldest leaf certificate in a given certificate
+// chain. If a leaf certificate is not not present nil is returned.
+func OldestLeafCert(certChain []*x509.Certificate) *x509.Certificate {
+	leafs := LeafCerts(certChain)
+
+	return NextToExpire(leafs, false)
+}
+
+// OldestIntermediateCert returns the oldest intermediate certificate in a
+// given certificate chain. If a leaf certificate is not not present nil is
+// returned.
+func OldestIntermediateCert(certChain []*x509.Certificate) *x509.Certificate {
+	intermediates := IntermediateCerts(certChain)
+
+	return NextToExpire(intermediates, false)
+}
+
+// OldestRootCert returns the oldest root certificate in a given certificate
+// chain. If a root certificate is not not present nil is returned.
+func OldestRootCert(certChain []*x509.Certificate) *x509.Certificate {
+	roots := RootCerts(certChain)
+
+	return NextToExpire(roots, false)
+}
+
+// ExpiresInDays evaluates the given certificate and returns the number of
+// days until the certificate expires. If already expired, a negative number
+// is returned indicating how many days the certificate is past expiration.
+//
+// An error is returned if the pointer to the given certificate is nil.
+// func ExpiresInDays(cert *x509.Certificate) (int, error) {
+// 	if cert == nil {
+// 		return 0, fmt.Errorf(
+// 			"func ExpiresInDays: unable to determine expiration: %w",
+// 			ErrMissingValue,
+// 		)
+// 	}
+//
+// 	timeRemaining := time.Until(cert.NotAfter).Hours()
+//
+// 	// Toss remainder so that we only get the whole number of days
+// 	daysRemaining := int(math.Trunc(timeRemaining / 24))
+//
+// 	return daysRemaining, nil
+// }
+
+// ExpiresInDays evaluates the given certificate and returns the number of
+// days until the certificate expires. Zero is returned if the certificate is
+// expired or if the remaining certificate lifetime is shorter than one full
+// day.
+//
+// An error is returned if the pointer to the given certificate is nil.
+func ExpiresInDays(cert *x509.Certificate) (int, error) {
+	if cert == nil {
+		return 0, fmt.Errorf(
+			"func ExpiresInDays: unable to determine expiration: %w",
+			ErrMissingValue,
+		)
+	}
+
+	timeRemaining := time.Until(cert.NotAfter).Hours()
+
+	// Toss remainder so that we only get the whole number of days
+	daysRemaining := int(math.Trunc(timeRemaining / 24))
+
+	// Zero is our baseline for now.
+	if daysRemaining < 0 {
+		daysRemaining = 0
+	}
+
+	return daysRemaining, nil
+}
+
 // FormattedExpiration receives a Time value and converts it to a string
 // representing the largest useful whole units of time in days and hours. For
 // example, if a certificate has 1 year, 2 days and 3 hours remaining until
