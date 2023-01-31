@@ -40,15 +40,6 @@ func getPerfData(certChain []*x509.Certificate, ageCritical int, ageWarning int)
 		expiresIntermediate = daysToExpiration
 	}
 
-	var expiresRoot int
-	oldestRoot := certs.OldestRootCert(certChain)
-	if daysToExpiration, err := certs.ExpiresInDays(oldestRoot); err == nil {
-		expiresRoot = daysToExpiration
-	}
-
-	// TODO: Should we emit this metric?
-	_ = expiresRoot
-
 	certsPresentLeaf := strconv.Itoa(certs.NumLeafCerts(certChain))
 	certsPresentIntermediate := strconv.Itoa(certs.NumIntermediateCerts(certChain))
 	certsPresentRoot := strconv.Itoa(certs.NumRootCerts(certChain))
@@ -69,20 +60,6 @@ func getPerfData(certChain []*x509.Certificate, ageCritical int, ageWarning int)
 			Warn:              fmt.Sprintf("%d", ageWarning),
 			Crit:              fmt.Sprintf("%d", ageCritical),
 		},
-
-		// TODO: Should we even track this? If we report 0 as a default value
-		// when the cert is not found, how will that differ from when the cert
-		// is actually present and expired?
-		//
-		//
-		// NOTE: Current thinking is that I should not include root cert
-		// expiration perfdata; root cert should ideally not be in the chain
-		// per current best practice(s).
-		// {
-		// 	Label:             "expires_root",
-		// 	Value:             fmt.Sprintf("%d", expiresRoot),
-		// 	UnitOfMeasurement: "d",
-		// },
 		{
 			Label: "certs_present_leaf",
 			Value: certsPresentLeaf,
