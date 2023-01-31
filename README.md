@@ -16,6 +16,7 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
 - [Project home](#project-home)
 - [Overview](#overview)
   - [`check_certs`](#check_certs)
+    - [Performance Data](#performance-data)
   - [`lscert`](#lscert)
   - [`certsum`](#certsum)
 - [Features](#features)
@@ -135,6 +136,29 @@ For future releases, please review the release notes carefully for any
 breaking changes.
 
 ---
+
+#### Performance Data
+
+Initial support has been added for emitting Performance Data / Metrics, but
+refinement suggestions are welcome.
+
+Consult the tables below for the metrics implemented thus far.
+
+Please add to an existing
+[Discussion](https://github.com/atc0005/check-cert/discussions) thread
+(if applicable) or [open a new
+one](https://github.com/atc0005/check-cert/discussions/new) with any
+feedback that you may have. Thanks in advance!
+
+| Emitted Performance Data / Metric | Meaning                                                                                                                                                                                                                             |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `time`                            | Runtime for plugin                                                                                                                                                                                                                  |
+| `expires_leaf`                    | Days remaining before leaf (aka, "server") certificate expires. If multiple leaf certificates are present (invalid configuration), the one expiring soonest is reported.                                                            |
+| `expires_intermediate`            | Days remaining before the next to expire intermediate certificate expires.                                                                                                                                                          |
+| `certs_present_leaf`              | Number of leaf (aka, "server") certificates present in the chain.                                                                                                                                                                   |
+| `certs_present_intermediate`      | Number of intermediate certificates present in the chain.                                                                                                                                                                           |
+| `certs_present_root`              | Number of root certificates present in the chain.                                                                                                                                                                                   |
+| `certs_present_unknown`           | Number of certificates present in the chain with an unknown scope (i.e., the plugin cannot determine whether a leaf, intermediate or root). Please [report this scenario](https://github.com/atc0005/check-cert/issues/new/choose). |
 
 ### `lscert`
 

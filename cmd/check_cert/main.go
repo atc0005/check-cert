@@ -380,6 +380,29 @@ func main() {
 		)
 	}
 
+	pd, perfDataErr := getPerfData(certChain, cfg.AgeCritical, cfg.AgeWarning)
+	if perfDataErr != nil {
+		log.Error().
+			Err(perfDataErr).
+			Msg("failed to generate performance data")
+
+		// Surface the error in plugin output.
+		plugin.AddError(perfDataErr)
+
+		// TODO: Abort plugin execution with UNKNOWN status?
+	}
+
+	if err := plugin.AddPerfData(false, pd...); err != nil {
+		log.Error().
+			Err(err).
+			Msg("failed to add performance data")
+
+		// Surface the error in plugin output.
+		plugin.AddError(err)
+
+		// TODO: Abort plugin execution with UNKNOWN status?
+	}
+
 	switch {
 	case validationResults.HasFailed():
 
