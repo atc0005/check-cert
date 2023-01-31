@@ -26,6 +26,34 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.10.0] - 2023-01-31
+
+### Overview
+
+- Added performance data metrics
+- Bug fixes
+- built using Go 1.19.5
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- (GH-445) Emit "days remaining" and count of certificates type performance
+  data metrics
+  - `expires_leaf`
+  - `expires_intermediate`
+  - `certs_present_leaf`
+  - `certs_present_intermediate`
+  - `certs_present_root`
+  - `certs_present_unknown`
+
+### Fixed
+
+- (GH-460) Update `certs.NextToExpire` to add guard, clarify
+- (GH-461) SNI-required host value not set when server value is specified as
+  IP Address and DNS Name *is* set properly
+
 ## [v0.9.3] - 2023-01-31
 
 ### Overview
@@ -1123,7 +1151,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.9.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.10.0...HEAD
+[v0.10.0]: https://github.com/atc0005/check-cert/releases/tag/v0.10.0
 [v0.9.3]: https://github.com/atc0005/check-cert/releases/tag/v0.9.3
 [v0.9.2]: https://github.com/atc0005/check-cert/releases/tag/v0.9.2
 [v0.9.1]: https://github.com/atc0005/check-cert/releases/tag/v0.9.1
