@@ -26,6 +26,38 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.9.3] - 2023-01-31
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- GitHub Actions Workflows updates
+- built using Go 1.19.5
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.4` to `1.19.5`
+  - `atc0005/go-nagios`
+    - `v0.10.2` to `v0.14.0`
+  - `rs/zerolog`
+    - `v1.28.0` to `v1.29.0`
+  - `github.com/mattn/go-isatty`
+    - `v0.0.16` to `v0.0.17`
+  - `golang.org/x/sys`
+    - `v0.3.0` to `v0.4.0`
+- (GH-450) Add Go Module Validation, Dependency Updates jobs
+
+### Fixed
+
+- (GH-440) Fix mispelling of Inspector app type
+- (GH-443) Drop plugin runtime tracking, update library usage
+
 ## [v0.9.2] - 2022-12-07
 
 ### Overview
@@ -1091,7 +1123,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.9.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.9.3...HEAD
+[v0.9.3]: https://github.com/atc0005/check-cert/releases/tag/v0.9.3
 [v0.9.2]: https://github.com/atc0005/check-cert/releases/tag/v0.9.2
 [v0.9.1]: https://github.com/atc0005/check-cert/releases/tag/v0.9.1
 [v0.9.0]: https://github.com/atc0005/check-cert/releases/tag/v0.9.0
