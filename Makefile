@@ -36,6 +36,9 @@ OUTPUTDIR 				= release_assets
 # https://gist.github.com/TheHippo/7e4d9ec4b7ed4c0d7a39839e6800cc16
 VERSION 				= $(shell git describe --always --long --dirty)
 
+# Exported so that nFPM can reference it when generating packages.
+export SEMVER  = $(shell git describe --always --long)
+
 # The default `go build` process embeds debugging information. Building
 # without that debugging information reduces the binary size by around 28%.
 #
@@ -143,6 +146,8 @@ goclean:
 	@mkdir -p "$(OUTPUTDIR)"
 	@rm -vf $(wildcard ${OUTPUTDIR}/*/*-linux-*)
 	@rm -vf $(wildcard ${OUTPUTDIR}/*/*-windows-*)
+	@rm -vf $(wildcard ${OUTPUTDIR}/*.rpm)
+	@rm -vf $(wildcard ${OUTPUTDIR}/*.deb)
 
 .PHONY: clean
 ## clean: alias for goclean
@@ -203,3 +208,27 @@ linux:
 	done
 
 	@echo "Completed build tasks for linux"
+
+.PHONY: packages
+## packages: generates DEB and RPM packages
+packages: clean
+
+	@echo
+	@echo "Building release assets using static filenames ..."
+
+	@for target in $(WHAT); do \
+		mkdir -p $(OUTPUTDIR)/$$target && \
+		echo "  - $$target amd64 binary" && \
+		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-linux-amd64 ${PWD}/cmd/$$target; \
+	done
+
+	@echo
+	@echo "Building DEB package ..."
+	@nfpm package --config nfpm.yaml --packager deb --target ./release_assets/
+
+	@echo
+	@echo "Building RPM package ..."
+	@nfpm package --config nfpm.yaml --packager rpm --target ./release_assets/
+
+	@echo
+	@echo "Completed packaging build tasks"
