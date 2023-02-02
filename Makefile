@@ -165,6 +165,31 @@ gitclean:
 ## pristine: run goclean and gitclean to remove local changes
 pristine: goclean gitclean
 
+.PHONY: gogeninstall
+## gogeninstall: install tools used by go generate
+gogeninstall:
+	@echo "Installing current version of go generate dependencies"
+
+	@export PATH="${PATH}:$(go env GOPATH)/bin"
+
+	@echo "Installing latest go-winres version ..."
+	go install github.com/tc-hib/go-winres@latest
+
+	@echo "Finished installing or updating go generate dependencies"
+
+.PHONY: depsinstall
+## depsinstall: install or update common build dependencies
+depsinstall: gogeninstall
+	@echo "Installing current version of build dependencies"
+
+	@export PATH="${PATH}:$(go env GOPATH)/bin"
+
+	@echo "Installing latest nFPM version ..."
+	go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+	nfpm --version
+
+	@echo "Finished installing or updating build dependencies"
+
 .PHONY: all
 # https://stackoverflow.com/questions/3267145/makefile-execute-another-target
 ## all: generates assets for Linux distros and Windows
