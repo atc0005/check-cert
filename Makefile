@@ -21,24 +21,24 @@
 # https://stackoverflow.com/questions/38801796/makefile-set-if-variable-is-empty
 # https://stackoverflow.com/questions/1909188/define-make-variable-at-rule-execution-time
 
-SHELL = /bin/bash
+SHELL := /bin/bash
 
 # Space-separated list of cmd/BINARY_NAME directories to build
-WHAT 					= check_cert lscert certsum
+WHAT 					:= check_cert lscert certsum
 
 PROJECT_NAME			:= check-cert
 
 # What package holds the "version" variable used in branding/version output?
 # VERSION_VAR_PKG			= $(shell go list -m)
-VERSION_VAR_PKG			= $(shell go list -m)/internal/config
+VERSION_VAR_PKG			:= $(shell go list -m)/internal/config
 # VERSION_VAR_PKG			= main
 
-OUTPUTDIR 				= release_assets
+OUTPUTDIR 				:= release_assets
 
 ROOT_PATH				:= $(CURDIR)/$(OUTPUTDIR)
 
 # https://gist.github.com/TheHippo/7e4d9ec4b7ed4c0d7a39839e6800cc16
-VERSION 				= $(shell git describe --always --long --dirty)
+VERSION 				:= $(shell git describe --always --long --dirty)
 
 # Used when generating download URLs when building assets for public release
 RELEASE_TAG 			:= $(shell git describe --exact-match --tags)
@@ -52,7 +52,7 @@ ALL_DOWNLOAD_LINKS_FILE	:= $(ROOT_PATH)/$(PROJECT_NAME)-$(VERSION)-all-links.txt
 PKG_DOWNLOAD_LINKS_FILE	:= $(ROOT_PATH)/$(PROJECT_NAME)-$(VERSION)-pkgs-links.txt
 
 # Exported so that nFPM can reference it when generating packages.
-export SEMVER  = $(shell git describe --always --long)
+export SEMVER  := $(shell git describe --always --long)
 
 # The default `go build` process embeds debugging information. Building
 # without that debugging information reduces the binary size by around 28%.
@@ -90,10 +90,10 @@ export SEMVER  = $(shell git describe --always --long)
 #	https://golang.org/cmd/cgo/
 #	explicitly disable use of cgo
 #	removes potential need for linkage against local c library (e.g., glibc)
-BUILDCMD				=	CGO_ENABLED=0 go build -mod=vendor -trimpath -a -ldflags "-s -w -X $(VERSION_VAR_PKG).version=$(VERSION)"
-GOCLEANCMD				=	go clean -mod=vendor ./...
-GITCLEANCMD				= 	git clean -xfd
-CHECKSUMCMD				=	sha256sum -b
+BUILDCMD				:=	CGO_ENABLED=0 go build -mod=vendor -trimpath -a -ldflags "-s -w -X $(VERSION_VAR_PKG).version=$(VERSION)"
+GOCLEANCMD				:=	go clean -mod=vendor ./...
+GITCLEANCMD				:= 	git clean -xfd
+CHECKSUMCMD				:=	sha256sum -b
 
 .DEFAULT_GOAL := help
 
