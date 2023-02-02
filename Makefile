@@ -19,12 +19,14 @@
 # https://gist.github.com/subfuzion/0bd969d08fe0d8b5cc4b23c795854a13
 # https://stackoverflow.com/questions/10858261/abort-makefile-if-variable-not-set
 # https://stackoverflow.com/questions/38801796/makefile-set-if-variable-is-empty
+# https://stackoverflow.com/questions/1909188/define-make-variable-at-rule-execution-time
 
 SHELL = /bin/bash
 
 # Space-separated list of cmd/BINARY_NAME directories to build
 WHAT 					= check_cert lscert certsum
 
+PROJECT_NAME			:= check-cert
 
 # What package holds the "version" variable used in branding/version output?
 # VERSION_VAR_PKG			= $(shell go list -m)
@@ -37,6 +39,17 @@ ROOT_PATH				:= $(CURDIR)/$(OUTPUTDIR)
 
 # https://gist.github.com/TheHippo/7e4d9ec4b7ed4c0d7a39839e6800cc16
 VERSION 				= $(shell git describe --always --long --dirty)
+
+# Used when generating download URLs when building assets for public release
+RELEASE_TAG 			:= $(shell git describe --exact-match --tags)
+
+# TESTING purposes
+#RELEASE_TAG 			:= 0.11.0
+
+BASE_URL				:= https://github.com/atc0005/$(PROJECT_NAME)/releases/download
+
+ALL_DOWNLOAD_LINKS_FILE	:= $(ROOT_PATH)/$(PROJECT_NAME)-$(VERSION)-all-links.txt
+PKG_DOWNLOAD_LINKS_FILE	:= $(ROOT_PATH)/$(PROJECT_NAME)-$(VERSION)-pkgs-links.txt
 
 # Exported so that nFPM can reference it when generating packages.
 export SEMVER  = $(shell git describe --always --long)
@@ -149,7 +162,10 @@ goclean:
 	@rm -vf $(wildcard ${OUTPUTDIR}/*/*-linux-*)
 	@rm -vf $(wildcard ${OUTPUTDIR}/*/*-windows-*)
 	@rm -vf $(wildcard ${OUTPUTDIR}/*.rpm)
+	@rm -vf $(wildcard ${OUTPUTDIR}/*.rpm.sha256)
 	@rm -vf $(wildcard ${OUTPUTDIR}/*.deb)
+	@rm -vf $(wildcard ${OUTPUTDIR}/*.deb.sha256)
+	@rm -vf $(wildcard ${OUTPUTDIR}/*-links.txt)
 
 .PHONY: clean
 ## clean: alias for goclean
@@ -213,6 +229,19 @@ windows-x86:
 
 	@echo "Completed build tasks for windows x86"
 
+.PHONY: windows-x86-links
+## windows-x86-links: generates download URLs for Windows x86 assets
+windows-x86-links:
+	@echo "Generating download links for windows x86 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  Generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-386.exe" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-386.exe.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+	done
+
+	@echo "Completed generating download links for windows x86 assets"
+
 .PHONY: windows-x64
 ## windows-x64: generates assets for Windows x64 systems
 windows-x64:
@@ -230,10 +259,28 @@ windows-x64:
 
 	@echo "Completed build tasks for windows x64"
 
+.PHONY: windows-x64-links
+## windows-x64-links: generates download URLs for Windows x64 assets
+windows-x64-links:
+	@echo "Generating download links for windows x64 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  Generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-amd64.exe" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-amd64.exe.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+	done
+
+	@echo "Completed generating download links for windows x64 assets"
+
 .PHONY: windows
 ## windows: generates assets for Windows x86 and x64 systems
 windows: windows-x86 windows-x64
 	@echo "Completed all build tasks for windows"
+
+.PHONY: windows-links
+## windows-links: generates download URLs for Windows x86 and x64 assets
+windows-links: windows-x86-links windows-x64-links
+	@echo "Completed generating download links for windows x86 and x64 assets"
 
 .PHONY: linux-x86
 ## linux-x86: generates assets for Linux x86 distros
@@ -251,6 +298,19 @@ linux-x86:
 
 	@echo "Completed build tasks for linux x86"
 
+.PHONY: linux-x86-links
+## linux-x86-links: generates download URLs for Linux x86 assets
+linux-x86-links:
+	@echo "Generating download links for linux x86 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  Generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-386" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-386.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+	done
+
+	@echo "Completed generating download links for linux x86 assets"
+
 .PHONY: linux-x64
 ## linux-x64: generates assets for Linux x64 distros
 linux-x64:
@@ -267,14 +327,32 @@ linux-x64:
 
 	@echo "Completed build tasks for linux x64"
 
+.PHONY: linux-x64-links
+## linux-x64-links: generates download URLs for Linux x86 assets
+linux-x64-links:
+	@echo "Generating download links for linux x64 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  Generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-amd64" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-amd64.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+	done
+
+	@echo "Completed generating download links for linux x64 assets"
+
 .PHONY: linux
 ## linux: generates assets for Linux x86 and x64 distros
 linux: linux-x86 linux-x64
 	@echo "Completed all build tasks for linux"
 
+.PHONY: linux-links
+## linux-links: generates download URLs for Linux x86 and x64 assets
+linux-links: linux-x86-links linux-x64-links
+	@echo "Completed generating download links for linux x86 and x64 assets"
+
 .PHONY: packages
 ## packages: generates DEB and RPM packages
-packages: clean
+packages:
 
 	@echo
 	@echo "Building release assets using static filenames ..."
@@ -287,11 +365,66 @@ packages: clean
 
 	@echo
 	@echo "Building DEB package ..."
-	@nfpm package --config nfpm.yaml --packager deb --target ./release_assets/
+	@nfpm package --config nfpm.yaml --packager deb --target $(OUTPUTDIR)
 
 	@echo
 	@echo "Building RPM package ..."
-	@nfpm package --config nfpm.yaml --packager rpm --target ./release_assets/
+	@nfpm package --config nfpm.yaml --packager rpm --target $(OUTPUTDIR)
+
+	@echo
+	@echo "Generating checksum files ..."
+
+	@echo "  - DEB package checksum file"
+	@set -e ;\
+		DEB_PKG=$$(find $(OUTPUTDIR) -name "*.deb" -printf '%P' | head -n 1); \
+		cd $(OUTPUTDIR); \
+		$(CHECKSUMCMD) $${DEB_PKG} > $${DEB_PKG}.sha256 ;\
+
+	@echo "  - RPM package checksum file"
+	@set -e ;\
+		for file in $$(find $(OUTPUTDIR) -name "*.rpm" -printf '%P'); do \
+			cd $(OUTPUTDIR) && $(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
+		done
 
 	@echo
 	@echo "Completed packaging build tasks"
+
+.PHONY: package-links
+## package-links: generates download URLs for package assets
+package-links:
+	@echo "Generating download links for package assets ..."
+
+	@echo "  - DEB package download links"
+	@set -e ;\
+		for file in $$(find $(OUTPUTDIR) -name "*.rpm" -printf '%P'); do \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		done; \
+		for file in $$(find $(OUTPUTDIR) -name "*.rpm.sha256" -printf '%P'); do \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		done
+
+	@echo "  - RPM package download links"
+	@set -e ;\
+		for file in $$(find $(OUTPUTDIR) -name "*.deb" -printf '%P'); do \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		done; \
+		for file in $$(find $(OUTPUTDIR) -name "*.deb.sha256" -printf '%P'); do \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		done
+
+	@echo "Completed generating download links for package assets"
+
+.PHONY: links
+## links: generates download URLs for release assets
+links: windows-x86-links windows-x64-links linux-x86-links linux-x64-links package-links
+	@echo "Completed generating download links for all release assets"
+
+.PHONY: release-build
+## release-build: generates assets for public release
+release-build: clean windows linux packages links
+
+	@echo "Completed all tasks for release build"
