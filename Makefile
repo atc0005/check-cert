@@ -33,6 +33,8 @@ VERSION_VAR_PKG			= $(shell go list -m)/internal/config
 
 OUTPUTDIR 				= release_assets
 
+ROOT_PATH				:= $(CURDIR)/$(OUTPUTDIR)
+
 # https://gist.github.com/TheHippo/7e4d9ec4b7ed4c0d7a39839e6800cc16
 VERSION 				= $(shell git describe --always --long --dirty)
 
@@ -169,45 +171,81 @@ pristine: goclean gitclean
 all: clean windows linux
 	@echo "Completed all cross-platform builds ..."
 
-.PHONY: windows
-## windows: generates assets for Windows systems
-windows:
-	@echo "Building release assets for windows ..."
+.PHONY: windows-x86
+## windows-x86: generates assets for Windows x86 systems
+windows-x86:
+	@echo "Building release assets for windows x86 ..."
 
 	@for target in $(WHAT); do \
-		mkdir -p $(OUTPUTDIR)/$$target && \
-		echo "Building $$target 386 binaries" && \
-		env GOOS=windows GOARCH=386 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-$(VERSION)-windows-386.exe ${PWD}/cmd/$$target && \
-		echo "Building $$target amd64 binaries" && \
-		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-$(VERSION)-windows-amd64.exe ${PWD}/cmd/$$target && \
-		echo "Generating $$target checksum files" && \
-		cd $(OUTPUTDIR)/$$target && \
+		mkdir -p $(ROOT_PATH)/$$target && \
+		echo "  Building $$target 386 binary" && \
+		env GOOS=windows GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-windows-386.exe ${PWD}/cmd/$$target && \
+		echo "  Generating $$target checksum file" && \
+		cd $(ROOT_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-$(VERSION)-windows-386.exe > $$target-$(VERSION)-windows-386.exe.sha256 && \
+		cd $$OLDPWD; \
+	done
+
+	@echo "Completed build tasks for windows x86"
+
+.PHONY: windows-x64
+## windows-x64: generates assets for Windows x64 systems
+windows-x64:
+	@echo "Building release assets for windows x64 ..."
+
+	@for target in $(WHAT); do \
+		mkdir -p $(ROOT_PATH)/$$target && \
+		echo "  Building $$target amd64 binary" && \
+		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-windows-amd64.exe ${PWD}/cmd/$$target && \
+		echo "  Generating $$target checksum file" && \
+		cd $(ROOT_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-$(VERSION)-windows-amd64.exe > $$target-$(VERSION)-windows-amd64.exe.sha256 && \
 		cd $$OLDPWD; \
 	done
 
-	@echo "Completed build tasks for windows"
+	@echo "Completed build tasks for windows x64"
 
-.PHONY: linux
-## linux: generates assets for Linux distros
-linux:
-	@echo "Building release assets for linux ..."
+.PHONY: windows
+## windows: generates assets for Windows x86 and x64 systems
+windows: windows-x86 windows-x64
+	@echo "Completed all build tasks for windows"
+
+.PHONY: linux-x86
+## linux-x86: generates assets for Linux x86 distros
+linux-x86:
+	@echo "Building release assets for linux x86 ..."
 
 	@for target in $(WHAT); do \
-		mkdir -p $(OUTPUTDIR)/$$target && \
-		echo "Building $$target 386 binaries" && \
-		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-$(VERSION)-linux-386 ${PWD}/cmd/$$target && \
-		echo "Building $$target amd64 binaries" && \
-		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-$(VERSION)-linux-amd64 ${PWD}/cmd/$$target && \
-		echo "Generating $$target checksum files" && \
-		cd $(OUTPUTDIR)/$$target && \
-		$(CHECKSUMCMD) $$target-$(VERSION)-linux-386 > $$target-$(VERSION)-linux-386.sha256 && \
-		$(CHECKSUMCMD) $$target-$(VERSION)-linux-amd64 > $$target-$(VERSION)-linux-amd64.sha256 && \
-		cd $$OLDPWD; \
+		mkdir -p $(ROOT_PATH)/$$target && \
+		echo "  Building $$target 386 binary" && \
+		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-linux-386 ${PWD}/cmd/$$target && \
+		echo "  Generating $$target checksum file" && \
+		cd $(ROOT_PATH)/$$target && \
+		$(CHECKSUMCMD) $$target-$(VERSION)-linux-386 > $$target-$(VERSION)-linux-386.sha256; \
 	done
 
-	@echo "Completed build tasks for linux"
+	@echo "Completed build tasks for linux x86"
+
+.PHONY: linux-x64
+## linux-x64: generates assets for Linux x64 distros
+linux-x64:
+	@echo "Building release assets for linux x64 ..."
+
+	@for target in $(WHAT); do \
+		mkdir -p $(ROOT_PATH)/$$target && \
+		echo "  Building $$target amd64 binary" && \
+		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-linux-amd64 ${PWD}/cmd/$$target && \
+		echo "  Generating $$target checksum file" && \
+		cd $(ROOT_PATH)/$$target && \
+		$(CHECKSUMCMD) $$target-$(VERSION)-linux-amd64 > $$target-$(VERSION)-linux-amd64.sha256; \
+	done
+
+	@echo "Completed build tasks for linux x64"
+
+.PHONY: linux
+## linux: generates assets for Linux x86 and x64 distros
+linux: linux-x86 linux-x64
+	@echo "Completed all build tasks for linux"
 
 .PHONY: packages
 ## packages: generates DEB and RPM packages
