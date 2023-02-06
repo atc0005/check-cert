@@ -52,6 +52,7 @@ func getPerfData(certChain []*x509.Certificate, ageCritical int, ageWarning int)
 			UnitOfMeasurement: "d",
 			Warn:              fmt.Sprintf("%d", ageWarning),
 			Crit:              fmt.Sprintf("%d", ageCritical),
+			Min:               "0",
 		},
 		{
 			Label:             "expires_intermediate",
@@ -59,6 +60,7 @@ func getPerfData(certChain []*x509.Certificate, ageCritical int, ageWarning int)
 			UnitOfMeasurement: "d",
 			Warn:              fmt.Sprintf("%d", ageWarning),
 			Crit:              fmt.Sprintf("%d", ageCritical),
+			Min:               "0",
 		},
 		{
 			Label: "certs_present_leaf",
