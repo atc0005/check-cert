@@ -384,33 +384,33 @@ packages:
 	@echo "Building release assets using static filenames ..."
 
 	@for target in $(WHAT); do \
-		mkdir -p $(OUTPUTDIR)/$$target && \
+		mkdir -p $(ROOT_PATH)/$$target && \
 		echo "  - $$target amd64 binary" && \
-		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-linux-amd64 ${PWD}/cmd/$$target; \
+		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-linux-amd64 ${PWD}/cmd/$$target; \
 	done
 
 	@echo
 	@echo "Building DEB package ..."
-	@nfpm package --config nfpm.yaml --packager deb --target $(OUTPUTDIR)
+	@nfpm package --config nfpm.yaml --packager deb --target $(ROOT_PATH)
 
 	@echo
 	@echo "Building RPM package ..."
-	@nfpm package --config nfpm.yaml --packager rpm --target $(OUTPUTDIR)
+	@nfpm package --config nfpm.yaml --packager rpm --target $(ROOT_PATH)
 
 	@echo
 	@echo "Generating checksum files ..."
 
 	@echo "  - DEB package checksum file"
 	@set -e ;\
-		for file in $$(find $(ROOTPATH) -name "*.deb" -printf '%P'); do \
-			cd $(ROOTPATH); \
+		for file in $$(find $(ROOT_PATH) -name "*.deb" -printf '%P'); do \
+			cd $(ROOT_PATH); \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
 	@echo "  - RPM package checksum file"
 	@set -e ;\
-		for file in $$(find $(ROOTPATH) -name "*.rpm" -printf '%P'); do \
-			cd $(ROOTPATH); \
+		for file in $$(find $(ROOT_PATH) -name "*.rpm" -printf '%P'); do \
+			cd $(ROOT_PATH); \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
@@ -424,22 +424,22 @@ package-links:
 
 	@echo "  - DEB package download links"
 	@set -e ;\
-		for file in $$(find $(OUTPUTDIR) -name "*.rpm" -printf '%P'); do \
+		for file in $$(find $(ROOT_PATH) -name "*.deb" -printf '%P'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
-		for file in $$(find $(OUTPUTDIR) -name "*.rpm.sha256" -printf '%P'); do \
+		for file in $$(find $(ROOT_PATH) -name "*.deb.sha256" -printf '%P'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE); \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done
 
 	@echo "  - RPM package download links"
 	@set -e ;\
-		for file in $$(find $(OUTPUTDIR) -name "*.deb" -printf '%P'); do \
+		for file in $$(find $(ROOT_PATH) -name "*.rpm" -printf '%P'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
-		for file in $$(find $(OUTPUTDIR) -name "*.deb.sha256" -printf '%P'); do \
+		for file in $$(find $(ROOT_PATH) -name "*.rpm.sha256" -printf '%P'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done
