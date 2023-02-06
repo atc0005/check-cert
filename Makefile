@@ -91,6 +91,7 @@ export SEMVER  := $(shell git describe --always --long)
 #	explicitly disable use of cgo
 #	removes potential need for linkage against local c library (e.g., glibc)
 BUILDCMD				:=	CGO_ENABLED=0 go build -mod=vendor -trimpath -a -ldflags "-s -w -X $(VERSION_VAR_PKG).version=$(VERSION)"
+QUICK_BUILDCMD			:=	go build -mod=vendor
 GOCLEANCMD				:=	go clean -mod=vendor ./...
 GITCLEANCMD				:= 	git clean -xfd
 CHECKSUMCMD				:=	sha256sum -b
@@ -158,14 +159,26 @@ goclean:
 	@echo "Removing object files and cached files ..."
 	@$(GOCLEANCMD)
 	@echo "Removing any existing release assets"
-	@mkdir -p "$(OUTPUTDIR)"
-	@rm -vf $(wildcard ${OUTPUTDIR}/*/*-linux-*)
-	@rm -vf $(wildcard ${OUTPUTDIR}/*/*-windows-*)
-	@rm -vf $(wildcard ${OUTPUTDIR}/*.rpm)
-	@rm -vf $(wildcard ${OUTPUTDIR}/*.rpm.sha256)
-	@rm -vf $(wildcard ${OUTPUTDIR}/*.deb)
-	@rm -vf $(wildcard ${OUTPUTDIR}/*.deb.sha256)
-	@rm -vf $(wildcard ${OUTPUTDIR}/*-links.txt)
+	@mkdir -p "$(ROOT_PATH)"
+	@rm -vf $(wildcard $(ROOT_PATH)/*/*-linux-*)
+	@rm -vf $(wildcard $(ROOT_PATH)/*/*-windows-*)
+	@rm -vf $(wildcard $(ROOT_PATH)/*.rpm)
+	@rm -vf $(wildcard $(ROOT_PATH)/*.rpm.sha256)
+	@rm -vf $(wildcard $(ROOT_PATH)/*.deb)
+	@rm -vf $(wildcard $(ROOT_PATH)/*.deb.sha256)
+	@rm -vf $(wildcard $(ROOT_PATH)/*-links.txt)
+
+	@echo "Removing any existing quick build release assets"
+	@for target in $(WHAT); do \
+		rm -vf $(ROOT_PATH)/$${target}/$${target}; \
+	done
+
+	@echo "Removing any empty asset build paths"
+	@for target in $(WHAT); do \
+		if [ -d "$(ROOT_PATH)/$${target}" ]; then \
+			rmdir --verbose --ignore-fail-on-non-empty $(ROOT_PATH)/$${target}; \
+		fi; \
+	done
 
 .PHONY: clean
 ## clean: alias for goclean
@@ -211,6 +224,19 @@ depsinstall: gogeninstall
 ## all: generates assets for Linux distros and Windows
 all: clean windows linux
 	@echo "Completed all cross-platform builds ..."
+
+.PHONY: quick
+## quick: generates non-release binaries for current platform, arch
+quick:
+	@echo "Building non-release assets for current platform, arch ..."
+
+	@for target in $(WHAT); do \
+		mkdir -p $(ROOT_PATH)/$${target} && \
+		echo "  Building $${target} binary" && \
+		$(QUICK_BUILDCMD) -o $(ROOT_PATH)/$${target}/$${target} ${PWD}/cmd/$${target}; \
+	done
+
+	@echo "Completed tasks for quick build"
 
 .PHONY: windows-x86
 ## windows-x86: generates assets for Windows x86 systems
