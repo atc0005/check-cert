@@ -40,8 +40,10 @@ ROOT_PATH				:= $(CURDIR)/$(OUTPUTDIR)
 # https://gist.github.com/TheHippo/7e4d9ec4b7ed4c0d7a39839e6800cc16
 VERSION 				:= $(shell git describe --always --long --dirty)
 
-# Used when generating download URLs when building assets for public release
-RELEASE_TAG 			:= $(shell git describe --exact-match --tags)
+# Used when generating download URLs when building assets for public release.
+# If the current commit doesn't match an existing tag an error is emitted. We
+# toss that error and use a placeholder value.
+RELEASE_TAG 			:= $(shell git describe --exact-match --tags 2>/dev/null || echo PLACEHOLDER)
 
 # TESTING purposes
 #RELEASE_TAG 			:= 0.11.0
