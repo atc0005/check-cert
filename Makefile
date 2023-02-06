@@ -402,14 +402,16 @@ packages:
 
 	@echo "  - DEB package checksum file"
 	@set -e ;\
-		DEB_PKG=$$(find $(OUTPUTDIR) -name "*.deb" -printf '%P' | head -n 1); \
-		cd $(OUTPUTDIR); \
-		$(CHECKSUMCMD) $${DEB_PKG} > $${DEB_PKG}.sha256 ;\
+		for file in $$(find $(ROOTPATH) -name "*.deb" -printf '%P'); do \
+			cd $(ROOTPATH); \
+			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
+		done
 
 	@echo "  - RPM package checksum file"
 	@set -e ;\
-		for file in $$(find $(OUTPUTDIR) -name "*.rpm" -printf '%P'); do \
-			cd $(OUTPUTDIR) && $(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
+		for file in $$(find $(ROOTPATH) -name "*.rpm" -printf '%P'); do \
+			cd $(ROOTPATH); \
+			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
 	@echo
