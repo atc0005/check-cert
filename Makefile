@@ -97,6 +97,7 @@ QUICK_BUILDCMD			:=	go build -mod=vendor
 GOCLEANCMD				:=	go clean -mod=vendor ./...
 GITCLEANCMD				:= 	git clean -xfd
 CHECKSUMCMD				:=	sha256sum -b
+COMPRESSCMD				:= xz --compress --threads=0
 
 .DEFAULT_GOAL := help
 
@@ -234,28 +235,50 @@ quick:
 
 	@for target in $(WHAT); do \
 		mkdir -p $(ROOT_PATH)/$${target} && \
-		echo "  Building $${target} binary" && \
+		echo "  building $${target} binary" && \
 		$(QUICK_BUILDCMD) -o $(ROOT_PATH)/$${target}/$${target} ${PWD}/cmd/$${target}; \
 	done
 
 	@echo "Completed tasks for quick build"
 
-.PHONY: windows-x86
-## windows-x86: generates assets for Windows x86 systems
-windows-x86:
+.PHONY: windows-x86-build
+## windows-x86-build: builds assets for Windows x86 systems
+windows-x86-build:
 	@echo "Building release assets for windows x86 ..."
 
 	@for target in $(WHAT); do \
 		mkdir -p $(ROOT_PATH)/$$target && \
-		echo "  Building $$target 386 binary" && \
-		env GOOS=windows GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-windows-386.exe ${PWD}/cmd/$$target && \
-		echo "  Generating $$target checksum file" && \
-		cd $(ROOT_PATH)/$$target && \
-		$(CHECKSUMCMD) $$target-$(VERSION)-windows-386.exe > $$target-$(VERSION)-windows-386.exe.sha256 && \
-		cd $$OLDPWD; \
+		echo "  building $$target 386 binary" && \
+		env GOOS=windows GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-windows-386.exe ${PWD}/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for windows x86"
+
+.PHONY: windows-x86-compress
+## windows-x86-compress: compresses generated Windows x86 assets
+windows-x86-compress:
+	@echo "Compressing release assets for windows x86 ..."
+
+	@for target in $(WHAT); do \
+		echo "  compressing $$target 386 binary" && \
+		$(COMPRESSCMD) $(ROOT_PATH)/$$target/$$target-windows-386.exe; \
+	done
+
+	@echo "Completed compress tasks for windows x86"
+
+.PHONY: windows-x86-checksums
+## windows-x86-checksums: generates checksum files for Windows x86 assets
+windows-x86-checksums:
+	@echo "Generating checksum files for windows x86 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  generating $$target checksum file" && \
+		cd $(ROOT_PATH)/$$target && \
+		$(CHECKSUMCMD) $$target-windows-386.exe.xz > $$target-windows-386.exe.xz.sha256 && \
+		cd $$OLDPWD; \
+	done
+
+	@echo "Completed generation of checksum files for windows x86"
 
 .PHONY: windows-x86-links
 ## windows-x86-links: generates download URLs for Windows x86 assets
@@ -263,29 +286,51 @@ windows-x86-links:
 	@echo "Generating download links for windows x86 assets ..."
 
 	@for target in $(WHAT); do \
-		echo "  Generating $$target download links" && \
-		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-386.exe" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
-		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-386.exe.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		echo "  generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-windows-386.exe.xz" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-windows-386.exe.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 	done
 
 	@echo "Completed generating download links for windows x86 assets"
 
-.PHONY: windows-x64
-## windows-x64: generates assets for Windows x64 systems
-windows-x64:
+.PHONY: windows-x64-build
+## windows-x64-build: builds assets for Windows x64 systems
+windows-x64-build:
 	@echo "Building release assets for windows x64 ..."
 
 	@for target in $(WHAT); do \
 		mkdir -p $(ROOT_PATH)/$$target && \
-		echo "  Building $$target amd64 binary" && \
-		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-windows-amd64.exe ${PWD}/cmd/$$target && \
-		echo "  Generating $$target checksum file" && \
-		cd $(ROOT_PATH)/$$target && \
-		$(CHECKSUMCMD) $$target-$(VERSION)-windows-amd64.exe > $$target-$(VERSION)-windows-amd64.exe.sha256 && \
-		cd $$OLDPWD; \
+		echo "  building $$target amd64 binary" && \
+		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-windows-amd64.exe ${PWD}/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for windows x64"
+
+.PHONY: windows-x64-compress
+## windows-x64-compress: compresses generated Windows x64 assets
+windows-x64-compress:
+	@echo "Compressing release assets for windows x64 ..."
+
+	@for target in $(WHAT); do \
+		echo "  compressing $$target amd64 binary" && \
+		$(COMPRESSCMD) $(ROOT_PATH)/$$target/$$target-windows-amd64.exe; \
+	done
+
+	@echo "Completed compress tasks for windows x64"
+
+.PHONY: windows-x64-checksums
+## windows-x64-checksums: generates checksum files for Windows x64 assets
+windows-x64-checksums:
+	@echo "Generating checksum files for windows x64 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  generating $$target checksum file" && \
+		cd $(ROOT_PATH)/$$target && \
+		$(CHECKSUMCMD) $$target-windows-amd64.exe.xz > $$target-windows-amd64.exe.xz.sha256 && \
+		cd $$OLDPWD; \
+	done
+
+	@echo "Completed generation of checksum files for windows x64"
 
 .PHONY: windows-x64-links
 ## windows-x64-links: generates download URLs for Windows x64 assets
@@ -293,38 +338,71 @@ windows-x64-links:
 	@echo "Generating download links for windows x64 assets ..."
 
 	@for target in $(WHAT); do \
-		echo "  Generating $$target download links" && \
-		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-amd64.exe" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
-		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-amd64.exe.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		echo "  generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-windows-amd64.exe" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-windows-amd64.exe.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 	done
 
 	@echo "Completed generating download links for windows x64 assets"
 
+.PHONY: windows-x86
+## windows-x86: generates assets for Windows x86
+windows-x86: windows-x86-build windows-x86-compress windows-x86-checksums
+	@echo "Completed all tasks for windows x86"
+
+.PHONY: windows-x64
+## windows-x64: generates assets for Windows x64
+windows-x64: windows-x64-build windows-x64-compress windows-x64-checksums
+	@echo "Completed all tasks for windows x64"
+
 .PHONY: windows
 ## windows: generates assets for Windows x86 and x64 systems
 windows: windows-x86 windows-x64
-	@echo "Completed all build tasks for windows"
+	@echo "Completed all tasks for windows"
 
 .PHONY: windows-links
 ## windows-links: generates download URLs for Windows x86 and x64 assets
 windows-links: windows-x86-links windows-x64-links
 	@echo "Completed generating download links for windows x86 and x64 assets"
 
-.PHONY: linux-x86
-## linux-x86: generates assets for Linux x86 distros
-linux-x86:
+.PHONY: linux-x86-build
+## linux-x86-build: builds assets for Linux x86 distros
+linux-x86-build:
 	@echo "Building release assets for linux x86 ..."
 
 	@for target in $(WHAT); do \
 		mkdir -p $(ROOT_PATH)/$$target && \
-		echo "  Building $$target 386 binary" && \
-		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-linux-386 ${PWD}/cmd/$$target && \
-		echo "  Generating $$target checksum file" && \
-		cd $(ROOT_PATH)/$$target && \
-		$(CHECKSUMCMD) $$target-$(VERSION)-linux-386 > $$target-$(VERSION)-linux-386.sha256; \
+		echo "  building $$target 386 binary" && \
+		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-linux-386 ${PWD}/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for linux x86"
+
+.PHONY: linux-x86-compress
+## linux-x86-compress: compresses generated Linux x86 assets
+linux-x86-compress:
+	@echo "Compressing release assets for linux x86 ..."
+
+	@for target in $(WHAT); do \
+		echo "  compressing $$target 386 binary" && \
+		$(COMPRESSCMD) $(ROOT_PATH)/$$target/$$target-linux-386; \
+	done
+
+	@echo "Completed compress tasks for linux x86"
+
+.PHONY: linux-x86-checksums
+## linux-x86-checksums: generates checksum files for Linux x86 assets
+linux-x86-checksums:
+	@echo "Generating checksum files for linux x86 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  generating $$target checksum file" && \
+		cd $(ROOT_PATH)/$$target && \
+		$(CHECKSUMCMD) $$target-linux-386.xz > $$target-linux-386.xz.sha256 && \
+		cd $$OLDPWD; \
+	done
+
+	@echo "Completed generation of checksum files for linux x86"
 
 .PHONY: linux-x86-links
 ## linux-x86-links: generates download URLs for Linux x86 assets
@@ -332,46 +410,77 @@ linux-x86-links:
 	@echo "Generating download links for linux x86 assets ..."
 
 	@for target in $(WHAT); do \
-		echo "  Generating $$target download links" && \
-		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-386" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
-		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-386.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		echo "  generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-386.xz" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-386.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 	done
 
 	@echo "Completed generating download links for linux x86 assets"
 
-.PHONY: linux-x64
-## linux-x64: generates assets for Linux x64 distros
-linux-x64:
+.PHONY: linux-x64-build
+## linux-x64-build: builds assets for Linux x64 distros
+linux-x64-build:
 	@echo "Building release assets for linux x64 ..."
 
 	@for target in $(WHAT); do \
 		mkdir -p $(ROOT_PATH)/$$target && \
-		echo "  Building $$target amd64 binary" && \
-		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-linux-amd64 ${PWD}/cmd/$$target && \
-		echo "  Generating $$target checksum file" && \
-		cd $(ROOT_PATH)/$$target && \
-		$(CHECKSUMCMD) $$target-$(VERSION)-linux-amd64 > $$target-$(VERSION)-linux-amd64.sha256; \
+		echo "  building $$target amd64 binary" && \
+		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-linux-amd64 ${PWD}/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for linux x64"
 
+.PHONY: linux-x64-compress
+## linux-x64-compress: compresses generated Linux x64 assets
+linux-x64-compress:
+	@echo "Compressing release assets for linux x64 ..."
+
+	@for target in $(WHAT); do \
+		echo "  compressing $$target amd64 binary" && \
+		$(COMPRESSCMD) $(ROOT_PATH)/$$target/$$target-linux-amd64; \
+	done
+
+	@echo "Completed compress tasks for linux x64"
+
+.PHONY: linux-x64-checksums
+## linux-x64-checksums: generates checksum files for Linux x64 assets
+linux-x64-checksums:
+	@echo "Generating checksum files for linux x64 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  generating $$target checksum file" && \
+		cd $(ROOT_PATH)/$$target && \
+		$(CHECKSUMCMD) $$target-linux-amd64.xz > $$target-linux-amd64.xz.sha256 && \
+		cd $$OLDPWD; \
+	done
+
 .PHONY: linux-x64-links
-## linux-x64-links: generates download URLs for Linux x86 assets
+## linux-x64-links: generates download URLs for Linux x64 assets
 linux-x64-links:
 	@echo "Generating download links for linux x64 assets ..."
 
 	@for target in $(WHAT); do \
 		echo "  Generating $$target download links" && \
-		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-amd64" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
-		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-amd64.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-amd64.xz" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-amd64.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 	done
 
 	@echo "Completed generating download links for linux x64 assets"
 
+.PHONY: linux-x86
+## linux-x86: generates assets for Linux x86
+linux-x86: linux-x86-build linux-x86-compress linux-x86-checksums
+	@echo "Completed all tasks for linux x86"
+
+.PHONY: linux-x64
+## linux-x64: generates assets for Linux x64
+linux-x64: linux-x64-build linux-x64-compress linux-x64-checksums
+	@echo "Completed all tasks for linux x64"
+
 .PHONY: linux
 ## linux: generates assets for Linux x86 and x64 distros
 linux: linux-x86 linux-x64
-	@echo "Completed all build tasks for linux"
+	@echo "Completed all tasks for linux"
 
 .PHONY: linux-links
 ## linux-links: generates download URLs for Linux x86 and x64 assets
@@ -380,16 +489,7 @@ linux-links: linux-x86-links linux-x64-links
 
 .PHONY: packages
 ## packages: generates DEB and RPM packages
-packages:
-
-	@echo
-	@echo "Building release assets using static filenames ..."
-
-	@for target in $(WHAT); do \
-		mkdir -p $(ROOT_PATH)/$$target && \
-		echo "  - $$target amd64 binary" && \
-		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-linux-amd64 ${PWD}/cmd/$$target; \
-	done
+packages: linux-x64-build
 
 	@echo
 	@echo "Building DEB package ..."
@@ -422,6 +522,7 @@ packages:
 .PHONY: package-links
 ## package-links: generates download URLs for package assets
 package-links:
+
 	@echo "Generating download links for package assets ..."
 
 	@echo "  - DEB package download links"
@@ -455,6 +556,6 @@ links: windows-x86-links windows-x64-links linux-x86-links linux-x64-links packa
 
 .PHONY: release-build
 ## release-build: generates assets for public release
-release-build: clean windows linux packages links
+release-build: clean windows linux-x86 packages linux-x64-compress linux-x64-checksums links
 
 	@echo "Completed all tasks for release build"
