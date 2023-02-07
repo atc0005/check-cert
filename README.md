@@ -431,9 +431,9 @@ settings intended to optimize for size and to prevent dynamic linkage.
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
-      - `make windows`
+      - `make windows-x64-build`
    - for use on Linux
-     - `make linux`
+     - `make linux-x64-build`
 1. Copy the newly compiled binary from the applicable `/tmp` subdirectory path
    (based on the clone instructions in this section) below and deploy where
    needed.
@@ -444,15 +444,28 @@ settings intended to optimize for size and to prevent dynamic linkage.
    - if using `go build`
      - look in `/tmp/check-cert/`
 
+**NOTE**: Depending on which `Makefile` recipe you use the generated binary
+may be compressed and have an `xz` extension. If so, you should decompress the
+binary first before deploying it (e.g., `xz -d check_cert-linux-amd64.xz`).
+
 ### Using release binaries
 
 1. Download the [latest
    release](https://github.com/atc0005/check-cert/releases/latest) binaries
+1. Decompress binaries
+   - e.g., `xz -d check_cert-linux-amd64.xz`
+1. Rename binaries
+   - e.g., `mv check_cert-linux-amd64 check_cert`
 1. Deploy
    - Place `check_cert` alongside your other Nagios plugins
      - e.g., `/usr/lib/nagios/plugins/` or `/usr/lib64/nagios/plugins/`
    - Place `lscert`, `certsum` in a location of your choice
      - e.g., `/usr/local/bin/`
+
+**NOTE**:
+
+As of the v0.11.0 release, DEB and RPM packages are provided as an alternative
+to manually deploying binaries.
 
 ## Configuration options
 
