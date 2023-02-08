@@ -35,7 +35,7 @@ VERSION_VAR_PKG			:= $(shell go list -m)/internal/config
 
 OUTPUTDIR 				:= release_assets
 
-ROOT_PATH				:= $(CURDIR)/$(OUTPUTDIR)
+ASSETS_PATH				:= $(CURDIR)/$(OUTPUTDIR)
 
 PROJECT_DIR				:= $(CURDIR)
 
@@ -52,8 +52,8 @@ RELEASE_TAG 			:= $(shell git describe --exact-match --tags 2>/dev/null || echo 
 
 BASE_URL				:= https://github.com/atc0005/$(PROJECT_NAME)/releases/download
 
-ALL_DOWNLOAD_LINKS_FILE	:= $(ROOT_PATH)/$(PROJECT_NAME)-$(VERSION)-all-links.txt
-PKG_DOWNLOAD_LINKS_FILE	:= $(ROOT_PATH)/$(PROJECT_NAME)-$(VERSION)-pkgs-links.txt
+ALL_DOWNLOAD_LINKS_FILE	:= $(ASSETS_PATH)/$(PROJECT_NAME)-$(VERSION)-all-links.txt
+PKG_DOWNLOAD_LINKS_FILE	:= $(ASSETS_PATH)/$(PROJECT_NAME)-$(VERSION)-pkgs-links.txt
 
 # Exported so that nFPM can reference it when generating packages.
 export SEMVER  := $(shell git describe --always --long)
@@ -164,27 +164,23 @@ goclean:
 	@echo "Removing object files and cached files ..."
 	@$(GOCLEANCMD)
 	@echo "Removing any existing release assets"
-	@mkdir -p "$(ROOT_PATH)"
-	@rm -vf $(wildcard $(ROOT_PATH)/*/*-linux-*)
-	@rm -vf $(wildcard $(ROOT_PATH)/*/*-windows-*)
-	@rm -vf $(wildcard $(ROOT_PATH)/*.rpm)
-	@rm -vf $(wildcard $(ROOT_PATH)/*.rpm.sha256)
-	@rm -vf $(wildcard $(ROOT_PATH)/*.deb)
-	@rm -vf $(wildcard $(ROOT_PATH)/*.deb.sha256)
-	@rm -vf $(wildcard $(ROOT_PATH)/*-links.txt)
+	@mkdir -p "$(ASSETS_PATH)"
+	@rm -vf $(wildcard $(ASSETS_PATH)/*/*-linux-*)
+	@rm -vf $(wildcard $(ASSETS_PATH)/*/*-windows-*)
+	@rm -vf $(wildcard $(ASSETS_PATH)/*.rpm)
+	@rm -vf $(wildcard $(ASSETS_PATH)/*.rpm.sha256)
+	@rm -vf $(wildcard $(ASSETS_PATH)/*.deb)
+	@rm -vf $(wildcard $(ASSETS_PATH)/*.deb.sha256)
+	@rm -vf $(wildcard $(ASSETS_PATH)/*-links.txt)
 	@rm -vf $(wildcard $(PROJECT_DIR)/cmd/*/*.syso)
 
 	@echo "Removing any existing quick build release assets"
 	@for target in $(WHAT); do \
-		rm -vf $(ROOT_PATH)/$${target}/$${target}; \
+		rm -vf $(ASSETS_PATH)/$${target}/$${target}; \
 	done
 
 	@echo "Removing any empty asset build paths"
-	@for target in $(WHAT); do \
-		if [ -d "$(ROOT_PATH)/$${target}" ]; then \
-			rmdir --verbose --ignore-fail-on-non-empty $(ROOT_PATH)/$${target}; \
-		fi; \
-	done
+	@find ${ASSETS_PATH} -mindepth 1 -type d -empty -delete
 
 .PHONY: clean
 ## clean: alias for goclean
@@ -237,9 +233,9 @@ quick:
 	@echo "Building non-release assets for current platform, arch ..."
 
 	@for target in $(WHAT); do \
-		mkdir -p $(ROOT_PATH)/$${target} && \
+		mkdir -p $(ASSETS_PATH)/$${target} && \
 		echo "  building $${target} binary" && \
-		$(QUICK_BUILDCMD) -o $(ROOT_PATH)/$${target}/$${target} ${PWD}/cmd/$${target}; \
+		$(QUICK_BUILDCMD) -o $(ASSETS_PATH)/$${target}/$${target} ${PWD}/cmd/$${target}; \
 	done
 
 	@echo "Completed tasks for quick build"
@@ -250,13 +246,13 @@ windows-x86-build:
 	@echo "Building release assets for windows x86 ..."
 
 	@for target in $(WHAT); do \
-		mkdir -p $(ROOT_PATH)/$$target && \
+		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  running go generate for $$target 386 binary ..." && \
 		cd $(PROJECT_DIR)/cmd/$$target && \
 		env GOOS=windows GOARCH=386 go generate && \
 		cd $(PROJECT_DIR) && \
 		echo "  building $$target 386 binary" && \
-		env GOOS=windows GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-windows-386.exe $(PROJECT_DIR)/cmd/$$target; \
+		env GOOS=windows GOARCH=386 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-windows-386.exe $(PROJECT_DIR)/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for windows x86"
@@ -268,7 +264,7 @@ windows-x86-compress:
 
 	@for target in $(WHAT); do \
 		echo "  compressing $$target 386 binary" && \
-		$(COMPRESSCMD) $(ROOT_PATH)/$$target/$$target-windows-386.exe; \
+		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-windows-386.exe; \
 	done
 
 	@echo "Completed compress tasks for windows x86"
@@ -280,7 +276,7 @@ windows-x86-checksums:
 
 	@for target in $(WHAT); do \
 		echo "  generating $$target checksum file" && \
-		cd $(ROOT_PATH)/$$target && \
+		cd $(ASSETS_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-windows-386.exe.xz > $$target-windows-386.exe.xz.sha256 && \
 		cd $$OLDPWD; \
 	done
@@ -306,13 +302,13 @@ windows-x64-build:
 	@echo "Building release assets for windows x64 ..."
 
 	@for target in $(WHAT); do \
-		mkdir -p $(ROOT_PATH)/$$target && \
+		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  running go generate for $$target amd64 binary ..." && \
 		cd $(PROJECT_DIR)/cmd/$$target && \
 		env GOOS=windows GOARCH=amd64 go generate && \
 		cd $(PROJECT_DIR) && \
 		echo "  building $$target amd64 binary" && \
-		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-windows-amd64.exe $(PROJECT_DIR)/cmd/$$target; \
+		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-windows-amd64.exe $(PROJECT_DIR)/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for windows x64"
@@ -324,7 +320,7 @@ windows-x64-compress:
 
 	@for target in $(WHAT); do \
 		echo "  compressing $$target amd64 binary" && \
-		$(COMPRESSCMD) $(ROOT_PATH)/$$target/$$target-windows-amd64.exe; \
+		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-windows-amd64.exe; \
 	done
 
 	@echo "Completed compress tasks for windows x64"
@@ -336,7 +332,7 @@ windows-x64-checksums:
 
 	@for target in $(WHAT); do \
 		echo "  generating $$target checksum file" && \
-		cd $(ROOT_PATH)/$$target && \
+		cd $(ASSETS_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-windows-amd64.exe.xz > $$target-windows-amd64.exe.xz.sha256 && \
 		cd $$OLDPWD; \
 	done
@@ -382,9 +378,9 @@ linux-x86-build:
 	@echo "Building release assets for linux x86 ..."
 
 	@for target in $(WHAT); do \
-		mkdir -p $(ROOT_PATH)/$$target && \
+		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  building $$target 386 binary" && \
-		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-linux-386 ${PWD}/cmd/$$target; \
+		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-386 ${PWD}/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for linux x86"
@@ -396,7 +392,7 @@ linux-x86-compress:
 
 	@for target in $(WHAT); do \
 		echo "  compressing $$target 386 binary" && \
-		$(COMPRESSCMD) $(ROOT_PATH)/$$target/$$target-linux-386; \
+		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-linux-386; \
 	done
 
 	@echo "Completed compress tasks for linux x86"
@@ -408,7 +404,7 @@ linux-x86-checksums:
 
 	@for target in $(WHAT); do \
 		echo "  generating $$target checksum file" && \
-		cd $(ROOT_PATH)/$$target && \
+		cd $(ASSETS_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-linux-386.xz > $$target-linux-386.xz.sha256 && \
 		cd $$OLDPWD; \
 	done
@@ -434,9 +430,9 @@ linux-x64-build:
 	@echo "Building release assets for linux x64 ..."
 
 	@for target in $(WHAT); do \
-		mkdir -p $(ROOT_PATH)/$$target && \
+		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  building $$target amd64 binary" && \
-		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-linux-amd64 ${PWD}/cmd/$$target; \
+		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-amd64 ${PWD}/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for linux x64"
@@ -448,7 +444,7 @@ linux-x64-compress:
 
 	@for target in $(WHAT); do \
 		echo "  compressing $$target amd64 binary" && \
-		$(COMPRESSCMD) $(ROOT_PATH)/$$target/$$target-linux-amd64; \
+		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-linux-amd64; \
 	done
 
 	@echo "Completed compress tasks for linux x64"
@@ -460,7 +456,7 @@ linux-x64-checksums:
 
 	@for target in $(WHAT); do \
 		echo "  generating $$target checksum file" && \
-		cd $(ROOT_PATH)/$$target && \
+		cd $(ASSETS_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-linux-amd64.xz > $$target-linux-amd64.xz.sha256 && \
 		cd $$OLDPWD; \
 	done
@@ -498,37 +494,85 @@ linux: linux-x86 linux-x64
 linux-links: linux-x86-links linux-x64-links
 	@echo "Completed generating download links for linux x86 and x64 assets"
 
-.PHONY: packages
-## packages: generates DEB and RPM packages
-packages: linux-x64-build
+.PHONY: packages-stable
+## packages-stable: generates "stable" release DEB and RPM packages
+packages-stable: linux-x64-build
+
+	@echo
+	@echo Generating stable release series packages ...
 
 	@echo
 	@echo "Building DEB package ..."
-	@nfpm package --config nfpm.yaml --packager deb --target $(ROOT_PATH)
+	@cd $(PROJECT_DIR)/packages/stable && \
+		nfpm package --config nfpm.yaml --packager deb --target $(ASSETS_PATH)
 
 	@echo
 	@echo "Building RPM package ..."
-	@nfpm package --config nfpm.yaml --packager rpm --target $(ROOT_PATH)
+	@cd $(PROJECT_DIR)/packages/stable && \
+		nfpm package --config nfpm.yaml --packager rpm --target $(ASSETS_PATH)
 
 	@echo
 	@echo "Generating checksum files ..."
 
 	@echo "  - DEB package checksum file"
 	@set -e ;\
-		for file in $$(find $(ROOT_PATH) -name "*.deb" -printf '%P'); do \
-			cd $(ROOT_PATH); \
+		for file in $$(find $(ASSETS_PATH) -name "*.deb" -printf '%P'); do \
+			cd $(ASSETS_PATH); \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
 	@echo "  - RPM package checksum file"
 	@set -e ;\
-		for file in $$(find $(ROOT_PATH) -name "*.rpm" -printf '%P'); do \
-			cd $(ROOT_PATH); \
+		for file in $$(find $(ASSETS_PATH) -name "*.rpm" -printf '%P'); do \
+			cd $(ASSETS_PATH); \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
 	@echo
 	@echo "Completed packaging build tasks"
+
+.PHONY: packages-dev
+## packages-dev: generates "dev" release DEB and RPM packages
+packages-dev: clean
+
+	@echo
+	@echo Generating dev release series packages ...
+
+	@for target in $(WHAT); do \
+		mkdir -p $(ASSETS_PATH)/$$target && \
+		echo "  building $$target amd64 binary" && \
+		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-amd64-dev ${PWD}/cmd/$$target; \
+	done
+
+	@echo
+	@echo "Building DEB package ..."
+	@cd $(PROJECT_DIR)/packages/dev && \
+		nfpm package --config nfpm.yaml --packager deb --target $(ASSETS_PATH)
+
+	@echo
+	@echo "Building RPM package ..."
+	@cd $(PROJECT_DIR)/packages/dev && \
+		nfpm package --config nfpm.yaml --packager rpm --target $(ASSETS_PATH)
+
+	@echo
+	@echo "Generating checksum files ..."
+
+	@echo "  - DEB package checksum file"
+	@set -e ;\
+		for file in $$(find $(ASSETS_PATH) -name "*.deb" -printf '%P'); do \
+			cd $(ASSETS_PATH); \
+			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
+		done
+
+	@echo "  - RPM package checksum file"
+	@set -e ;\
+		for file in $$(find $(ASSETS_PATH) -name "*.rpm" -printf '%P'); do \
+			cd $(ASSETS_PATH); \
+			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
+		done
+
+	@echo
+	@echo "Completed dev release packaging build tasks"
 
 .PHONY: package-links
 ## package-links: generates download URLs for package assets
@@ -538,22 +582,22 @@ package-links:
 
 	@echo "  - DEB package download links"
 	@set -e ;\
-		for file in $$(find $(ROOT_PATH) -name "*.deb" -printf '%P'); do \
+		for file in $$(find $(ASSETS_PATH) -name "*.deb" -printf '%P'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
-		for file in $$(find $(ROOT_PATH) -name "*.deb.sha256" -printf '%P'); do \
+		for file in $$(find $(ASSETS_PATH) -name "*.deb.sha256" -printf '%P'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE); \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done
 
 	@echo "  - RPM package download links"
 	@set -e ;\
-		for file in $$(find $(ROOT_PATH) -name "*.rpm" -printf '%P'); do \
+		for file in $$(find $(ASSETS_PATH) -name "*.rpm" -printf '%P'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
-		for file in $$(find $(ROOT_PATH) -name "*.rpm.sha256" -printf '%P'); do \
+		for file in $$(find $(ASSETS_PATH) -name "*.rpm.sha256" -printf '%P'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done
@@ -567,6 +611,6 @@ links: windows-x86-links windows-x64-links linux-x86-links linux-x64-links packa
 
 .PHONY: release-build
 ## release-build: generates assets for public release
-release-build: clean windows linux-x86 packages linux-x64-compress linux-x64-checksums links
+release-build: clean windows linux-x86 packages-stable linux-x64-compress linux-x64-checksums links
 
 	@echo "Completed all tasks for release build"
