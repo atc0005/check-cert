@@ -21,6 +21,9 @@
 # Ignore Visual Studio Code workspace-level settings
 /.vscode
 
+# Ignore go generate produced Windows executable resource files
+*.syso
+
 # Ignore local "scratch" directory of temporary files
 scratch/
 
