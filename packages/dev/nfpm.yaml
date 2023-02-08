@@ -15,20 +15,20 @@
 #
 # Auto-generate package filenames:
 #
-# nfpm package --config nfpm.yaml --packager deb --target ./release_assets/
-# nfpm package --config nfpm.yaml --packager rpm --target ./release_assets/
+# nfpm package --config packages/dev/nfpm.yaml --packager deb --target ./release_assets/
+# nfpm package --config packages/dev/nfpm.yaml --packager rpm --target ./release_assets/
 #
 # Use explicit short package names:
 #
-# nfpm package --config nfpm.yaml --packager deb --target ./release_assets/check-cert_amd64.deb
-# nfpm package --config nfpm.yaml --packager rpm --target ./release_assets/check-cert.x86_64.rpm
+# nfpm package --config packages/dev/nfpm.yaml --packager deb --target ./release_assets/check-cert-dev_amd64.deb
+# nfpm package --config packages/dev/nfpm.yaml --packager rpm --target ./release_assets/check-cert-dev.x86_64.rpm
 
 #
-# dpkg-deb -I release_assets/check-cert*.deb
-# sudo dpkg -i release_assets/check-cert*.deb
+# dpkg-deb -I release_assets/check-cert-dev*.deb
+# sudo dpkg -i release_assets/check-cert-dev*.deb
 # dpkg -s check-cert
 
-name: "check-cert"
+name: "check-cert-dev"
 arch: "amd64"
 platform: "linux"
 
@@ -39,30 +39,30 @@ version: ${SEMVER}
 section: "default"
 priority: "extra"
 maintainer: "Adam Chalkley <atc0005@users.noreply.github.com>"
-description: Various tools used to review, monitor & validate certificates.
+description: Various tools used to review, monitor & validate certificates (dev build).
 vendor: "atc0005"
 homepage: "https://github.com/atc0005/check-cert"
 license: "MIT"
 # changelog: "changelog.yaml"
 contents:
-  - src: ./release_assets/certsum/certsum-linux-amd64
-    dst: /usr/bin/certsum
+  - src: ../../release_assets/certsum/certsum-linux-amd64-dev
+    dst: /usr/bin/certsum_dev
     file_info:
       mode: 0755
 
-  - src: ./release_assets/lscert/lscert-linux-amd64
-    dst: /usr/bin/lscert
+  - src: ../../release_assets/lscert/lscert-linux-amd64-dev
+    dst: /usr/bin/lscert_dev
     file_info:
       mode: 0755
 
-  - src: ./release_assets/check_cert/check_cert-linux-amd64
-    dst: /usr/lib64/nagios/plugins/check_cert
+  - src: ../../release_assets/check_cert/check_cert-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_cert_dev
     file_info:
       mode: 0755
     packager: rpm
 
-  - src: ./release_assets/check_cert/check_cert-linux-amd64
-    dst: /usr/lib/nagios/plugins/check_cert
+  - src: ../../release_assets/check_cert/check_cert-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_cert_dev
     file_info:
       mode: 0755
     packager: deb
