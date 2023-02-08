@@ -37,6 +37,8 @@ OUTPUTDIR 				:= release_assets
 
 ROOT_PATH				:= $(CURDIR)/$(OUTPUTDIR)
 
+PROJECT_DIR				:= $(CURDIR)
+
 # https://gist.github.com/TheHippo/7e4d9ec4b7ed4c0d7a39839e6800cc16
 VERSION 				:= $(shell git describe --always --long --dirty)
 
@@ -170,6 +172,7 @@ goclean:
 	@rm -vf $(wildcard $(ROOT_PATH)/*.deb)
 	@rm -vf $(wildcard $(ROOT_PATH)/*.deb.sha256)
 	@rm -vf $(wildcard $(ROOT_PATH)/*-links.txt)
+	@rm -vf $(wildcard $(PROJECT_DIR)/cmd/*/*.syso)
 
 	@echo "Removing any existing quick build release assets"
 	@for target in $(WHAT); do \
@@ -248,8 +251,12 @@ windows-x86-build:
 
 	@for target in $(WHAT); do \
 		mkdir -p $(ROOT_PATH)/$$target && \
+		echo "  running go generate for $$target 386 binary ..." && \
+		cd $(PROJECT_DIR)/cmd/$$target && \
+		env GOOS=windows GOARCH=386 go generate && \
+		cd $(PROJECT_DIR) && \
 		echo "  building $$target 386 binary" && \
-		env GOOS=windows GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-windows-386.exe ${PWD}/cmd/$$target; \
+		env GOOS=windows GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-windows-386.exe $(PROJECT_DIR)/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for windows x86"
@@ -300,8 +307,12 @@ windows-x64-build:
 
 	@for target in $(WHAT); do \
 		mkdir -p $(ROOT_PATH)/$$target && \
+		echo "  running go generate for $$target amd64 binary ..." && \
+		cd $(PROJECT_DIR)/cmd/$$target && \
+		env GOOS=windows GOARCH=amd64 go generate && \
+		cd $(PROJECT_DIR) && \
 		echo "  building $$target amd64 binary" && \
-		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-windows-amd64.exe ${PWD}/cmd/$$target; \
+		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-windows-amd64.exe $(PROJECT_DIR)/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for windows x64"
