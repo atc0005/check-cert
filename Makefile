@@ -167,10 +167,10 @@ goclean:
 	@mkdir -p "$(ASSETS_PATH)"
 	@rm -vf $(wildcard $(ASSETS_PATH)/*/*-linux-*)
 	@rm -vf $(wildcard $(ASSETS_PATH)/*/*-windows-*)
-	@rm -vf $(wildcard $(ASSETS_PATH)/*.rpm)
-	@rm -vf $(wildcard $(ASSETS_PATH)/*.rpm.sha256)
-	@rm -vf $(wildcard $(ASSETS_PATH)/*.deb)
-	@rm -vf $(wildcard $(ASSETS_PATH)/*.deb.sha256)
+	@rm -vf $(wildcard $(ASSETS_PATH)/packages/*/*.rpm)
+	@rm -vf $(wildcard $(ASSETS_PATH)/packages/*/*.rpm.sha256)
+	@rm -vf $(wildcard $(ASSETS_PATH)/packages/*/*.deb)
+	@rm -vf $(wildcard $(ASSETS_PATH)/packages/*/*.deb.sha256)
 	@rm -vf $(wildcard $(ASSETS_PATH)/*-links.txt)
 	@rm -vf $(wildcard $(PROJECT_DIR)/cmd/*/*.syso)
 
@@ -232,7 +232,7 @@ all: clean windows linux
 quick:
 	@echo "Building non-release assets for current platform, arch ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		mkdir -p $(ASSETS_PATH)/$${target} && \
 		echo "  building $${target} binary" && \
 		$(QUICK_BUILDCMD) -o $(ASSETS_PATH)/$${target}/$${target} ${PWD}/cmd/$${target}; \
@@ -245,7 +245,7 @@ quick:
 windows-x86-build:
 	@echo "Building release assets for windows x86 ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  running go generate for $$target 386 binary ..." && \
 		cd $(PROJECT_DIR)/cmd/$$target && \
@@ -262,7 +262,7 @@ windows-x86-build:
 windows-x86-compress:
 	@echo "Compressing release assets for windows x86 ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  compressing $$target 386 binary" && \
 		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-windows-386.exe; \
 	done
@@ -274,7 +274,7 @@ windows-x86-compress:
 windows-x86-checksums:
 	@echo "Generating checksum files for windows x86 assets ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  generating $$target checksum file" && \
 		cd $(ASSETS_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-windows-386.exe.xz > $$target-windows-386.exe.xz.sha256 && \
@@ -288,7 +288,7 @@ windows-x86-checksums:
 windows-x86-links:
 	@echo "Generating download links for windows x86 assets ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  generating $$target download links" && \
 		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-windows-386.exe.xz" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
 		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-windows-386.exe.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
@@ -301,7 +301,7 @@ windows-x86-links:
 windows-x64-build:
 	@echo "Building release assets for windows x64 ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  running go generate for $$target amd64 binary ..." && \
 		cd $(PROJECT_DIR)/cmd/$$target && \
@@ -318,7 +318,7 @@ windows-x64-build:
 windows-x64-compress:
 	@echo "Compressing release assets for windows x64 ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  compressing $$target amd64 binary" && \
 		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-windows-amd64.exe; \
 	done
@@ -330,7 +330,7 @@ windows-x64-compress:
 windows-x64-checksums:
 	@echo "Generating checksum files for windows x64 assets ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  generating $$target checksum file" && \
 		cd $(ASSETS_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-windows-amd64.exe.xz > $$target-windows-amd64.exe.xz.sha256 && \
@@ -344,7 +344,7 @@ windows-x64-checksums:
 windows-x64-links:
 	@echo "Generating download links for windows x64 assets ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  generating $$target download links" && \
 		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-windows-amd64.exe" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
 		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-windows-amd64.exe.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
@@ -377,7 +377,7 @@ windows-links: windows-x86-links windows-x64-links
 linux-x86-build:
 	@echo "Building release assets for linux x86 ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  building $$target 386 binary" && \
 		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-386 ${PWD}/cmd/$$target; \
@@ -390,7 +390,7 @@ linux-x86-build:
 linux-x86-compress:
 	@echo "Compressing release assets for linux x86 ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  compressing $$target 386 binary" && \
 		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-linux-386; \
 	done
@@ -402,7 +402,7 @@ linux-x86-compress:
 linux-x86-checksums:
 	@echo "Generating checksum files for linux x86 assets ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  generating $$target checksum file" && \
 		cd $(ASSETS_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-linux-386.xz > $$target-linux-386.xz.sha256 && \
@@ -416,7 +416,7 @@ linux-x86-checksums:
 linux-x86-links:
 	@echo "Generating download links for linux x86 assets ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  generating $$target download links" && \
 		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-386.xz" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
 		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-386.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
@@ -429,7 +429,7 @@ linux-x86-links:
 linux-x64-build:
 	@echo "Building release assets for linux x64 ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  building $$target amd64 binary" && \
 		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-amd64 ${PWD}/cmd/$$target; \
@@ -442,7 +442,7 @@ linux-x64-build:
 linux-x64-compress:
 	@echo "Compressing release assets for linux x64 ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  compressing $$target amd64 binary" && \
 		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-linux-amd64; \
 	done
@@ -454,7 +454,7 @@ linux-x64-compress:
 linux-x64-checksums:
 	@echo "Generating checksum files for linux x64 assets ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  generating $$target checksum file" && \
 		cd $(ASSETS_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-linux-amd64.xz > $$target-linux-amd64.xz.sha256 && \
@@ -466,7 +466,7 @@ linux-x64-checksums:
 linux-x64-links:
 	@echo "Generating download links for linux x64 assets ..."
 
-	@for target in $(WHAT); do \
+	@set -e; for target in $(WHAT); do \
 		echo "  Generating $$target download links" && \
 		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-amd64.xz" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
 		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-amd64.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
@@ -495,49 +495,54 @@ linux-links: linux-x86-links linux-x64-links
 	@echo "Completed generating download links for linux x86 and x64 assets"
 
 .PHONY: packages-stable
-## packages-stable: generates "stable" release DEB and RPM packages
+## packages-stable: generates "stable" release series DEB and RPM packages
 packages-stable: linux-x64-build
 
 	@echo
 	@echo Generating stable release series packages ...
 
-	@echo
-	@echo "Building DEB package ..."
-	@cd $(PROJECT_DIR)/packages/stable && \
-		nfpm package --config nfpm.yaml --packager deb --target $(ASSETS_PATH)
+	@mkdir -p $(ASSETS_PATH)/packages/stable
 
 	@echo
-	@echo "Building RPM package ..."
+	@echo "  - stable DEB package ..."
 	@cd $(PROJECT_DIR)/packages/stable && \
-		nfpm package --config nfpm.yaml --packager rpm --target $(ASSETS_PATH)
+		nfpm package --config nfpm.yaml --packager deb --target $(ASSETS_PATH)/packages/stable
+
+	@echo
+	@echo "  - stable RPM package ..."
+	@cd $(PROJECT_DIR)/packages/stable && \
+		nfpm package --config nfpm.yaml --packager rpm --target $(ASSETS_PATH)/packages/stable
 
 	@echo
 	@echo "Generating checksum files ..."
 
-	@echo "  - DEB package checksum file"
+	@echo "  - stable DEB package checksum file"
 	@set -e ;\
-		for file in $$(find $(ASSETS_PATH) -name "*.deb" -printf '%P'); do \
-			cd $(ASSETS_PATH); \
+		cd $(ASSETS_PATH)/packages/stable && \
+		for file in $$(find . -name "*.deb" -printf '%P'); do \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
-	@echo "  - RPM package checksum file"
+	@echo "  - stable RPM package checksum file"
 	@set -e ;\
-		for file in $$(find $(ASSETS_PATH) -name "*.rpm" -printf '%P'); do \
-			cd $(ASSETS_PATH); \
+		cd $(ASSETS_PATH)/packages/stable && \
+		for file in $$(find . -name "*.rpm" -printf '%P'); do \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
 	@echo
-	@echo "Completed packaging build tasks"
+	@echo "Completed package build tasks"
 
 .PHONY: packages-dev
-## packages-dev: generates "dev" release DEB and RPM packages
-packages-dev: clean
+## packages-dev: generates "dev" release series DEB and RPM packages
+packages-dev:
 
 	@echo
 	@echo Generating dev release series packages ...
 
+	@mkdir -p $(ASSETS_PATH)/packages/dev
+
+	@echo Building dev release assets for linux x64 ...
 	@for target in $(WHAT); do \
 		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  building $$target amd64 binary" && \
@@ -545,34 +550,39 @@ packages-dev: clean
 	done
 
 	@echo
-	@echo "Building DEB package ..."
+	@echo "  - dev DEB package ..."
 	@cd $(PROJECT_DIR)/packages/dev && \
-		nfpm package --config nfpm.yaml --packager deb --target $(ASSETS_PATH)
+		nfpm package --config nfpm.yaml --packager deb --target $(ASSETS_PATH)/packages/dev
 
 	@echo
-	@echo "Building RPM package ..."
+	@echo "  - dev RPM package ..."
 	@cd $(PROJECT_DIR)/packages/dev && \
-		nfpm package --config nfpm.yaml --packager rpm --target $(ASSETS_PATH)
+		nfpm package --config nfpm.yaml --packager rpm --target $(ASSETS_PATH)/packages/dev
 
 	@echo
 	@echo "Generating checksum files ..."
 
-	@echo "  - DEB package checksum file"
+	@echo "  - dev DEB package checksum file"
 	@set -e ;\
-		for file in $$(find $(ASSETS_PATH) -name "*.deb" -printf '%P'); do \
-			cd $(ASSETS_PATH); \
+		cd $(ASSETS_PATH)/packages/dev && \
+		for file in $$(find . -name "*.deb" -printf '%P'); do \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
-	@echo "  - RPM package checksum file"
+	@echo "  - dev RPM package checksum file"
 	@set -e ;\
-		for file in $$(find $(ASSETS_PATH) -name "*.rpm" -printf '%P'); do \
-			cd $(ASSETS_PATH); \
+		cd $(ASSETS_PATH)/packages/dev && \
+		for file in $$(find . -name "*.rpm" -printf '%P'); do \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
 	@echo
-	@echo "Completed dev release packaging build tasks"
+	@echo "Completed dev release package build tasks"
+
+.PHONY: packages
+## packages: generates "dev" and "stable" release series DEB and RPM packages
+packages: packages-dev packages-stable
+	@echo "Completed all package build tasks"
 
 .PHONY: package-links
 ## package-links: generates download URLs for package assets
@@ -581,26 +591,68 @@ package-links:
 	@echo "Generating download links for package assets ..."
 
 	@echo "  - DEB package download links"
-	@set -e ;\
-		for file in $$(find $(ASSETS_PATH) -name "*.deb" -printf '%P'); do \
+	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
+		cd $(ASSETS_PATH)/packages/dev && \
+		for file in $$(find . -name "*.deb" -printf '%P'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
-		for file in $$(find $(ASSETS_PATH) -name "*.deb.sha256" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE); \
+	fi
+	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
+		cd $(ASSETS_PATH)/packages/dev && \
+		for file in $$(find . -name "*.deb.sha256" -printf '%P'); do \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
-		done
+		done; \
+	fi
+
+	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
+		cd $(ASSETS_PATH)/packages/stable && \
+		for file in $$(find . -name "*.deb" -printf '%P'); do \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		done; \
+	fi
+
+	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
+		cd $(ASSETS_PATH)/packages/stable && \
+		for file in $$(find . -name "*.deb.sha256" -printf '%P'); do \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		done; \
+	fi
 
 	@echo "  - RPM package download links"
-	@set -e ;\
-		for file in $$(find $(ASSETS_PATH) -name "*.rpm" -printf '%P'); do \
+	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
+		cd $(ASSETS_PATH)/packages/dev && \
+		for file in $$(find . -name "*.rpm" -printf '%P'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
-		for file in $$(find $(ASSETS_PATH) -name "*.rpm.sha256" -printf '%P'); do \
+	fi
+	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
+		cd $(ASSETS_PATH)/packages/dev && \
+		for file in $$(find . -name "*.rpm.sha256" -printf '%P'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
-		done
+		done; \
+	fi
+
+	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
+		cd $(ASSETS_PATH)/packages/stable && \
+		for file in $$(find . -name "*.rpm" -printf '%P'); do \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		done; \
+	fi
+
+	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
+		cd $(ASSETS_PATH)/packages/stable && \
+		for file in $$(find . -name "*.rpm.sha256" -printf '%P'); do \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+		done; \
+	fi
 
 	@echo "Completed generating download links for package assets"
 
@@ -609,8 +661,12 @@ package-links:
 links: windows-x86-links windows-x64-links linux-x86-links linux-x64-links package-links
 	@echo "Completed generating download links for all release assets"
 
-.PHONY: release-build
-## release-build: generates assets for public release
-release-build: clean windows linux-x86 packages-stable linux-x64-compress linux-x64-checksums links
+.PHONY: dev-build
+## dev-build: generates dev build assets for public release
+dev-build: clean packages-dev package-links
+	@echo "Completed all tasks for dev release build"
 
-	@echo "Completed all tasks for release build"
+.PHONY: release-build
+## release-build: generates stable build assets for public release
+release-build: clean windows linux-x86 packages-stable linux-x64-compress linux-x64-checksums links
+	@echo "Completed all tasks for stable release build"
