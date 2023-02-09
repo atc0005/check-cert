@@ -42,6 +42,12 @@ PROJECT_DIR				:= $(CURDIR)
 # https://gist.github.com/TheHippo/7e4d9ec4b7ed4c0d7a39839e6800cc16
 VERSION 				:= $(shell git describe --always --long --dirty)
 
+DEB_X64_STABLE_PKG_FILE	:= $(PROJECT_NAME)-$(VERSION)_amd64.deb
+RPM_X64_STABLE_PKG_FILE	:= $(PROJECT_NAME)-$(VERSION).x86_64.rpm
+
+DEB_X64_DEV_PKG_FILE	:= $(PROJECT_NAME)-dev-$(VERSION)_amd64.deb
+RPM_X64_DEV_PKG_FILE	:= $(PROJECT_NAME)-dev-$(VERSION).x86_64.rpm
+
 # Used when generating download URLs when building assets for public release.
 # If the current commit doesn't match an existing tag an error is emitted. We
 # toss that error and use a placeholder value.
@@ -556,12 +562,12 @@ packages-stable: linux-x64-build
 	@echo
 	@echo "  - stable DEB package ..."
 	@cd $(PROJECT_DIR)/packages/stable && \
-		nfpm package --config nfpm.yaml --packager deb --target $(ASSETS_PATH)/packages/stable
+		nfpm package --config nfpm.yaml --packager deb --target $(ASSETS_PATH)/packages/stable/$(DEB_X64_STABLE_PKG_FILE)
 
 	@echo
 	@echo "  - stable RPM package ..."
 	@cd $(PROJECT_DIR)/packages/stable && \
-		nfpm package --config nfpm.yaml --packager rpm --target $(ASSETS_PATH)/packages/stable
+		nfpm package --config nfpm.yaml --packager rpm --target $(ASSETS_PATH)/packages/stable/$(RPM_X64_STABLE_PKG_FILE)
 
 	@echo
 	@echo "Generating checksum files ..."
@@ -595,12 +601,12 @@ packages-dev: linux-x64-dev-build
 	@echo
 	@echo "  - dev DEB package ..."
 	@cd $(PROJECT_DIR)/packages/dev && \
-		nfpm package --config nfpm.yaml --packager deb --target $(ASSETS_PATH)/packages/dev
+		nfpm package --config nfpm.yaml --packager deb --target $(ASSETS_PATH)/packages/dev/$(DEB_X64_DEV_PKG_FILE)
 
 	@echo
 	@echo "  - dev RPM package ..."
 	@cd $(PROJECT_DIR)/packages/dev && \
-		nfpm package --config nfpm.yaml --packager rpm --target $(ASSETS_PATH)/packages/dev
+		nfpm package --config nfpm.yaml --packager rpm --target $(ASSETS_PATH)/packages/dev/$(RPM_X64_DEV_PKG_FILE)
 
 	@echo
 	@echo "Generating checksum files ..."
@@ -637,31 +643,31 @@ package-links:
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
 		for file in $$(find . -name "*.deb" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
 		for file in $$(find . -name "*.deb.sha256" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
 		for file in $$(find . -name "*.deb" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
 		for file in $$(find . -name "*.deb.sha256" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
@@ -669,31 +675,31 @@ package-links:
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
 		for file in $$(find . -name "*.rpm" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
 		for file in $$(find . -name "*.rpm.sha256" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
 		for file in $$(find . -name "*.rpm" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
 		for file in $$(find . -name "*.rpm.sha256" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
