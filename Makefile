@@ -346,7 +346,7 @@ windows-x64-links:
 
 	@set -e; for target in $(WHAT); do \
 		echo "  generating $$target download links" && \
-		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-windows-amd64.exe" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-windows-amd64.exe.xz" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
 		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-windows-amd64.exe.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 	done
 
