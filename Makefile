@@ -637,31 +637,31 @@ package-links:
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
 		for file in $$(find . -name "*.deb" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
 		for file in $$(find . -name "*.deb.sha256" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
 		for file in $$(find . -name "*.deb" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
 		for file in $$(find . -name "*.deb.sha256" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
@@ -669,31 +669,31 @@ package-links:
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
 		for file in $$(find . -name "*.rpm" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
 		for file in $$(find . -name "*.rpm.sha256" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
 		for file in $$(find . -name "*.rpm" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
 		for file in $$(find . -name "*.rpm.sha256" -printf '%P'); do \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
-			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
+			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file/\~/\.}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 
