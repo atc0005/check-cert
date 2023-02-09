@@ -26,6 +26,38 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.11.0] - 2023-02-09
+
+### Overview
+
+- Added support for generating DEB, RPM packages
+- Binaries are compressed (~ 66% smaller)
+- Overall Makefile improvements
+- Performance data tweaks
+- built using Go 1.19.5
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- (GH-439) Generate RPM/DEB packages using nFPM
+- (GH-475) Add `min` expiration lifetime value to `expires_leaf`,
+  `expires_intermediate` performance data metrics
+- (GH-470) Makefile: Compress binaries & use static filenames
+- (GH-471) Makefile: Add missing "standard" recipes
+- (GH-473) Add version details to Windows executables
+- (GH-477) Makefile: Add recipe to generate "dev" packages
+
+### Changed
+
+- Dependencies
+  - `golang.org/x/sys`
+    - `v0.4.0` to `v0.5.0`
+- (GH-476) Makefile: Replace (unneeded) `recursively expanded` variables with
+  `simply expanded` variables
+- (GH-489) Update Makefile recipes for dev/stable releases
+
 ## [v0.10.0] - 2023-01-31
 
 ### Overview
@@ -1151,7 +1183,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.11.0...HEAD
+[v0.11.0]: https://github.com/atc0005/check-cert/releases/tag/v0.11.0
 [v0.10.0]: https://github.com/atc0005/check-cert/releases/tag/v0.10.0
 [v0.9.3]: https://github.com/atc0005/check-cert/releases/tag/v0.9.3
 [v0.9.2]: https://github.com/atc0005/check-cert/releases/tag/v0.9.2
