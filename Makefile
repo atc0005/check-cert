@@ -474,6 +474,56 @@ linux-x64-links:
 
 	@echo "Completed generating download links for linux x64 assets"
 
+.PHONY: linux-x64-dev-build
+## linux-x64-dev-build: builds dev assets for Linux x64 distros
+linux-x64-dev-build:
+	@echo "Building dev assets for linux x64 ..."
+
+	@set -e; for target in $(WHAT); do \
+		mkdir -p $(ASSETS_PATH)/$$target && \
+		echo "  building $$target amd64 binary" && \
+		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-amd64-dev ${PWD}/cmd/$$target; \
+	done
+
+	@echo "Completed dev build tasks for linux x64"
+
+.PHONY: linux-x64-dev-compress
+## linux-x64-dev-compress: compresses generated dev Linux x64 assets
+linux-x64-dev-compress:
+	@echo "Compressing dev assets for linux x64 ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  compressing $$target amd64 binary" && \
+		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-linux-amd64-dev; \
+	done
+
+	@echo "Completed dev compress tasks for linux x64"
+
+.PHONY: linux-x64-dev-checksums
+## linux-x64-dev-checksums: generates checksum files for dev Linux x64 assets
+linux-x64-dev-checksums:
+	@echo "Generating checksum files for dev linux x64 assets ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  generating $$target checksum file" && \
+		cd $(ASSETS_PATH)/$$target && \
+		$(CHECKSUMCMD) $$target-linux-amd64-dev.xz > $$target-linux-amd64-dev.xz.sha256 && \
+		cd $$OLDPWD; \
+	done
+
+.PHONY: linux-x64-dev-links
+## linux-x64-dev-links: generates download URLs for dev Linux x64 assets
+linux-x64-dev-links:
+	@echo "Generating download links for dev linux x64 assets ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  Generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-amd64-dev.xz" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-amd64-dev.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+	done
+
+	@echo "Completed generating download links for dev linux x64 assets"
+
 .PHONY: linux-x86
 ## linux-x86: generates assets for Linux x86
 linux-x86: linux-x86-build linux-x86-compress linux-x86-checksums
@@ -535,19 +585,12 @@ packages-stable: linux-x64-build
 
 .PHONY: packages-dev
 ## packages-dev: generates "dev" release series DEB and RPM packages
-packages-dev:
+packages-dev: linux-x64-dev-build
 
 	@echo
 	@echo Generating dev release series packages ...
 
 	@mkdir -p $(ASSETS_PATH)/packages/dev
-
-	@echo Building dev release assets for linux x64 ...
-	@for target in $(WHAT); do \
-		mkdir -p $(ASSETS_PATH)/$$target && \
-		echo "  building $$target amd64 binary" && \
-		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-amd64-dev ${PWD}/cmd/$$target; \
-	done
 
 	@echo
 	@echo "  - dev DEB package ..."
@@ -663,7 +706,7 @@ links: windows-x86-links windows-x64-links linux-x86-links linux-x64-links packa
 
 .PHONY: dev-build
 ## dev-build: generates dev build assets for public release
-dev-build: clean packages-dev package-links
+dev-build: clean linux-x64-dev-build packages-dev package-links linux-x64-dev-compress linux-x64-dev-checksums linux-x64-dev-links
 	@echo "Completed all tasks for dev release build"
 
 .PHONY: release-build
