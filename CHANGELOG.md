@@ -26,6 +26,29 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.11.1] - 2023-02-10
+
+### Overview
+
+- Bugfixes
+- Build improvements
+- built using Go 1.19.5
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- (GH-496) Update package generation to use `W.X.Y-Z` naming pattern
+
+### Fixed
+
+- (GH-493) `ERROR 404: Not Found` when attempting to download DEB, RPM
+  packages using links files
+- (GH-495) `sha256sum: WARNING: 1 listed file could not be read` error when
+  attempting to validate package checksums
+- (GH-497) Fix windows-x64 binary download links
+
 ## [v0.11.0] - 2023-02-09
 
 ### Overview
@@ -1183,7 +1206,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.11.1...HEAD
+[v0.11.1]: https://github.com/atc0005/check-cert/releases/tag/v0.11.1
 [v0.11.0]: https://github.com/atc0005/check-cert/releases/tag/v0.11.0
 [v0.10.0]: https://github.com/atc0005/check-cert/releases/tag/v0.10.0
 [v0.9.3]: https://github.com/atc0005/check-cert/releases/tag/v0.9.3
