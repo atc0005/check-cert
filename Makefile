@@ -241,7 +241,7 @@ quick:
 	@set -e; for target in $(WHAT); do \
 		mkdir -p $(ASSETS_PATH)/$${target} && \
 		echo "  building $${target} binary" && \
-		$(QUICK_BUILDCMD) -o $(ASSETS_PATH)/$${target}/$${target} ${PWD}/cmd/$${target}; \
+		$(QUICK_BUILDCMD) -o $(ASSETS_PATH)/$${target}/$${target} $(PROJECT_DIR)/cmd/$${target}; \
 	done
 
 	@echo "Completed tasks for quick build"
@@ -386,7 +386,7 @@ linux-x86-build:
 	@set -e; for target in $(WHAT); do \
 		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  building $$target 386 binary" && \
-		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-386 ${PWD}/cmd/$$target; \
+		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-386 $(PROJECT_DIR)/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for linux x86"
@@ -438,7 +438,7 @@ linux-x64-build:
 	@set -e; for target in $(WHAT); do \
 		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  building $$target amd64 binary" && \
-		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-amd64 ${PWD}/cmd/$$target; \
+		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-amd64 $(PROJECT_DIR)/cmd/$$target; \
 	done
 
 	@echo "Completed build tasks for linux x64"
@@ -488,7 +488,7 @@ linux-x64-dev-build:
 	@set -e; for target in $(WHAT); do \
 		mkdir -p $(ASSETS_PATH)/$$target && \
 		echo "  building $$target amd64 binary" && \
-		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-amd64-dev ${PWD}/cmd/$$target; \
+		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-amd64-dev $(PROJECT_DIR)/cmd/$$target; \
 	done
 
 	@echo "Completed dev build tasks for linux x64"
@@ -719,3 +719,74 @@ dev-build: clean linux-x64-dev-build packages-dev package-links linux-x64-dev-co
 ## release-build: generates stable build assets for public release
 release-build: clean windows linux-x86 packages-stable linux-x64-compress linux-x64-checksums links
 	@echo "Completed all tasks for stable release build"
+
+.PHONY: docker-release-build
+## docker-release-build: generates stable build assets for public release using Docker
+docker-release-build: clean
+
+	@echo "Beginning release build using Docker"
+	@echo "Removing any previous build image"
+	@sudo docker image prune --all --force --filter "label=atc0005_projects_builder_image"
+
+	@echo "Generating release builder image"
+	@docker version
+	@docker image build \
+		--pull \
+		--no-cache \
+		--force-rm \
+		dependabot/docker/builds/ \
+		-t builder_image \
+		--label="atc0005_projects_builder_image"
+	@echo "Completed generation of release builder image"
+
+	@echo
+	@echo "Using release builder image to generate project release assets"
+	@docker container run \
+		--user $${UID:-1000} \
+		--rm \
+		-i \
+		-v $$PWD:$$PWD \
+		-w $$PWD \
+		builder_image \
+		env GOCACHE=/tmp/ make release-build
+
+	@echo "Completed release build using Docker"
+
+.PHONY: docker-dev-build
+## docker-dev-build: generates dev build assets for public release using Docker
+docker-dev-build: clean
+
+	@echo "Beginning dev build using Docker"
+	@echo "Removing any previous build image"
+	@sudo docker image prune --all --force --filter "label=atc0005_projects_builder_image"
+
+	@echo "Gathering Docker build environment details"
+	@docker version
+
+	@echo
+	@echo "Generating release builder image"
+	@docker image build \
+		--pull \
+		--no-cache \
+		--force-rm \
+		dependabot/docker/builds/ \
+		-t builder_image \
+		--label="atc0005_projects_builder_image"
+	@echo "Completed generation of release builder image"
+
+	@echo
+	@echo "Inspecting release builder image environment"
+	@docker inspect --format "{{range .Config.Env}}{{println .}}{{end}}" builder_image
+
+	@echo
+	@echo "Using release builder image to generate project release assets"
+	@docker container run \
+		--user $${UID:-1000} \
+		--rm \
+		-i \
+		-v $$PWD:$$PWD \
+		-w $$PWD \
+		builder_image \
+		env GOCACHE=/tmp/ make dev-build
+
+	@echo "Completed dev build using Docker"
