@@ -13,4 +13,4 @@
 
 # https://github.com/atc0005/go-ci/releases
 # https://github.com/atc0005/go-ci/pkgs/container/go-ci
-FROM ghcr.io/atc0005/go-ci:go-ci-oldstable-build-v0.8.0-2-g87114607
+FROM ghcr.io/atc0005/go-ci:go-ci-oldstable-build-v0.8.0
