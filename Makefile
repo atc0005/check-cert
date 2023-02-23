@@ -726,7 +726,7 @@ docker-release-build: clean
 
 	@echo "Beginning release build using Docker"
 	@echo "Removing any previous build image"
-	@sudo docker image prune --all --force --filter "label=atc0005_projects_builder_image"
+	@docker image prune --all --force --filter "label=atc0005_projects_builder_image"
 
 	@echo "Generating release builder image"
 	@docker version
@@ -758,7 +758,7 @@ docker-dev-build: clean
 
 	@echo "Beginning dev build using Docker"
 	@echo "Removing any previous build image"
-	@sudo docker image prune --all --force --filter "label=atc0005_projects_builder_image"
+	@docker image prune --all --force --filter "label=atc0005_projects_builder_image"
 
 	@echo "Gathering Docker build environment details"
 	@docker version
