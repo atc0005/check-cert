@@ -40,13 +40,43 @@ ASSETS_PATH				:= $(CURDIR)/$(OUTPUTDIR)
 PROJECT_DIR				:= $(CURDIR)
 
 # https://gist.github.com/TheHippo/7e4d9ec4b7ed4c0d7a39839e6800cc16
-VERSION 				:= $(shell git describe --always --long --dirty)
+# VERSION 				:= $(shell git describe --always --long --dirty)
 
-DEB_X64_STABLE_PKG_FILE	:= $(PROJECT_NAME)-$(VERSION)_amd64.deb
-RPM_X64_STABLE_PKG_FILE	:= $(PROJECT_NAME)-$(VERSION).x86_64.rpm
+# Use https://github.com/choffmeister/git-describe-semver to generate
+# semantic version compatible tag values for use as image suffix.
+#
+# Attempt to use environment variable. This is set within GitHub Actions
+# Workflows, but not via local Makefile use. If environment variable is not
+# set, attempt to use local installation of choffmeister/git-describe-semver
+# tool.
+#
+# The build image used by this project for release builds includes this tool,
+# so we are covered there.
+#
+# If this tool is not already installed locally and someone runs this Makefile
+# we use a "YOU_NEED_TO_*" placeholder string as a breadcrumb indicating what
+# needs to be done to resolve the issue.
+#
+# This is a VERY expensive operation as it is expanded on every use (due to
+# the ?= assignment operator)
+# REPO_VERSION              ?= $(shell git-describe-semver --fallback 'v0.0.0' 2>/dev/null || echo YOU_NEED_TO_RUN_depsinstall_makefile_recipe)
+#
+ifeq ($(origin REPO_VERSION), undefined)
+# This is an expensive operation on systems where tools like Cisco AMP are
+# present/active.
+REPO_VERSION 				:= $(shell git-describe-semver --fallback 'v0.0.0' 2>/dev/null || echo YOU_NEED_TO_RUN_depsinstall_makefile_recipe)
 
-DEB_X64_DEV_PKG_FILE	:= $(PROJECT_NAME)-dev-$(VERSION)_amd64.deb
-RPM_X64_DEV_PKG_FILE	:= $(PROJECT_NAME)-dev-$(VERSION).x86_64.rpm
+# https://make.mad-scientist.net/deferred-simple-variable-expansion/
+# https://stackoverflow.com/questions/50771834/how-to-get-at-most-once-semantics-in-variable-assignments
+# REPO_VERSION = $(eval REPO_VERSION := $$(shell git-describe-semver --fallback 'v0.0.0' 2>/dev/null || echo YOU_NEED_TO_RUN_depsinstall_makefile_recipe))$(REPO_VERSION)
+
+endif
+
+DEB_X64_STABLE_PKG_FILE	:= $(PROJECT_NAME)-$(REPO_VERSION)_amd64.deb
+RPM_X64_STABLE_PKG_FILE	:= $(PROJECT_NAME)-$(REPO_VERSION).x86_64.rpm
+
+DEB_X64_DEV_PKG_FILE	:= $(PROJECT_NAME)-dev-$(REPO_VERSION)_amd64.deb
+RPM_X64_DEV_PKG_FILE	:= $(PROJECT_NAME)-dev-$(REPO_VERSION).x86_64.rpm
 
 # Used when generating download URLs when building assets for public release.
 # If the current commit doesn't match an existing tag an error is emitted. We
@@ -58,11 +88,11 @@ RELEASE_TAG 			:= $(shell git describe --exact-match --tags 2>/dev/null || echo 
 
 BASE_URL				:= https://github.com/atc0005/$(PROJECT_NAME)/releases/download
 
-ALL_DOWNLOAD_LINKS_FILE	:= $(ASSETS_PATH)/$(PROJECT_NAME)-$(VERSION)-all-links.txt
-PKG_DOWNLOAD_LINKS_FILE	:= $(ASSETS_PATH)/$(PROJECT_NAME)-$(VERSION)-pkgs-links.txt
+ALL_DOWNLOAD_LINKS_FILE	:= $(ASSETS_PATH)/$(PROJECT_NAME)-$(RELEASE_TAG)-all-links.txt
+PKG_DOWNLOAD_LINKS_FILE	:= $(ASSETS_PATH)/$(PROJECT_NAME)-$(RELEASE_TAG)-pkgs-links.txt
 
 # Exported so that nFPM can reference it when generating packages.
-export SEMVER  := $(shell git describe --always --long)
+export SEMVER  := $(REPO_VERSION)
 
 # The default `go build` process embeds debugging information. Building
 # without that debugging information reduces the binary size by around 28%.
@@ -100,7 +130,7 @@ export SEMVER  := $(shell git describe --always --long)
 #	https://golang.org/cmd/cgo/
 #	explicitly disable use of cgo
 #	removes potential need for linkage against local c library (e.g., glibc)
-BUILDCMD				:=	CGO_ENABLED=0 go build -mod=vendor -trimpath -a -ldflags "-s -w -X $(VERSION_VAR_PKG).version=$(VERSION)"
+BUILDCMD				:=	CGO_ENABLED=0 go build -mod=vendor -trimpath -a -ldflags "-s -w -X $(VERSION_VAR_PKG).version=$(REPO_VERSION)"
 QUICK_BUILDCMD			:=	go build -mod=vendor
 GOCLEANCMD				:=	go clean -mod=vendor ./...
 GITCLEANCMD				:= 	git clean -xfd
@@ -215,6 +245,9 @@ depsinstall:
 	@echo "Installing latest nFPM version ..."
 	go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
 	nfpm --version
+
+	@echo "Installing latest git-describe-semver version ..."
+	go install github.com/choffmeister/git-describe-semver@latest
 
 	@echo "Finished installing or updating build dependencies"
 
