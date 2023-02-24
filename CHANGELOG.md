@@ -26,6 +26,43 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.11.2] - 2023-02-24
+
+### Overview
+
+- Build improvements
+- GitHub Actions Workflows updates
+- built using Go 1.19.6
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.5` to `1.19.6`
+  - `ghcr.io/atc0005/go-ci` build image
+    - `go-ci-oldstable-build-v0.9.0`
+  - (GH-516) Remove `dependabot/tools` monitoring
+
+- Builds
+  - (GH-506) Build dev/stable releases using go-ci Docker image
+    - using an `oldstable` `atc0005/go-ci` variant for now
+    - via `docker-release-build` recipe
+    - via `docker-dev-build` recipe
+  - (GH-512) Replace gogeninstall recipe with depsinstall
+  - (GH-514) Use git-describe-semver for generating release ver
+    - this results in a version pattern change
+      - packages (name, internal)
+      - binaries (internal)
+  - (GH-515) Add `docker-packages` recipe
+
+- GitHub Actions
+  - (GH-502) Drop `Push Validation` workflow
+  - (GH-503) Rework workflow scheduling
+  - (GH-518) Remove `Push Validation` workflow status badge
+
 ## [v0.11.1] - 2023-02-10
 
 ### Overview
@@ -1206,7 +1243,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.11.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.11.2...HEAD
+[v0.11.2]: https://github.com/atc0005/check-cert/releases/tag/v0.11.2
 [v0.11.1]: https://github.com/atc0005/check-cert/releases/tag/v0.11.1
 [v0.11.0]: https://github.com/atc0005/check-cert/releases/tag/v0.11.0
 [v0.10.0]: https://github.com/atc0005/check-cert/releases/tag/v0.10.0
