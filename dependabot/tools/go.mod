@@ -12,5 +12,5 @@ require (
 	github.com/tc-hib/winres v0.1.6 // indirect
 	github.com/urfave/cli/v2 v2.23.7 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
-	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
+	golang.org/x/image v0.5.0 // indirect
 )
