@@ -744,43 +744,11 @@ dev-build: clean linux-x64-dev-build packages-dev package-links linux-x64-dev-co
 release-build: clean windows linux-x86 packages-stable linux-x64-compress linux-x64-checksums links
 	@echo "Completed all tasks for stable release build"
 
-.PHONY: docker-release-build
-## docker-release-build: generates stable build assets for public release using Docker
-docker-release-build: clean
+.PHONY: helper-docker-builder-setup
+## helper-docker-builder-setup: refreshes builder image for Docker-based tasks
+helper-docker-builder-setup:
 
-	@echo "Beginning release build using Docker"
-	@echo "Removing any previous build image"
-	@docker image prune --all --force --filter "label=atc0005_projects_builder_image"
-
-	@echo "Generating release builder image"
-	@docker version
-	@docker image build \
-		--pull \
-		--no-cache \
-		--force-rm \
-		dependabot/docker/builds/ \
-		-t builder_image \
-		--label="atc0005_projects_builder_image"
-	@echo "Completed generation of release builder image"
-
-	@echo
-	@echo "Using release builder image to generate project release assets"
-	@docker container run \
-		--user $${UID:-1000} \
-		--rm \
-		-i \
-		-v $$PWD:$$PWD \
-		-w $$PWD \
-		builder_image \
-		env GOCACHE=/tmp/ make release-build
-
-	@echo "Completed release build using Docker"
-
-.PHONY: docker-dev-build
-## docker-dev-build: generates dev build assets for public release using Docker
-docker-dev-build: clean
-
-	@echo "Beginning dev build using Docker"
+	@echo "Beginning regeneration of Docker builder image"
 	@echo "Removing any previous build image"
 	@docker image prune --all --force --filter "label=atc0005_projects_builder_image"
 
@@ -802,6 +770,33 @@ docker-dev-build: clean
 	@echo "Inspecting release builder image environment"
 	@docker inspect --format "{{range .Config.Env}}{{println .}}{{end}}" builder_image
 
+	@echo "Completed regeneration of Docker builder image"
+
+.PHONY: docker-release-build
+## docker-release-build: generates stable build assets for public release using Docker
+docker-release-build: clean helper-docker-builder-setup
+
+	@echo "Beginning release build using Docker"
+
+	@echo
+	@echo "Using release builder image to generate project release assets"
+	@docker container run \
+		--user $${UID:-1000} \
+		--rm \
+		-i \
+		-v $$PWD:$$PWD \
+		-w $$PWD \
+		builder_image \
+		env GOCACHE=/tmp/ make release-build
+
+	@echo "Completed release build using Docker"
+
+.PHONY: docker-dev-build
+## docker-dev-build: generates dev build assets for public release using Docker
+docker-dev-build: clean helper-docker-builder-setup
+
+	@echo "Beginning dev build using Docker"
+
 	@echo
 	@echo "Using release builder image to generate project release assets"
 	@docker container run \
@@ -814,3 +809,24 @@ docker-dev-build: clean
 		env GOCACHE=/tmp/ make dev-build
 
 	@echo "Completed dev build using Docker"
+
+
+
+.PHONY: docker-packages
+## docker-packages: generates dev and stable packages using Docker
+docker-packages: helper-docker-builder-setup
+
+	@echo "Beginning package generation using Docker"
+
+	@echo
+	@echo "Using release builder image to generate packages"
+	@docker container run \
+		--user $${UID:-1000} \
+		--rm \
+		-i \
+		-v $$PWD:$$PWD \
+		-w $$PWD \
+		builder_image \
+		env GOCACHE=/tmp/ make packages
+
+	@echo "Completed package generation using Docker"
