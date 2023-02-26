@@ -27,9 +27,11 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 		certChain,
 		cfg.Server,
 		cfg.DNSName,
-		cfg.ApplyCertHostnameValidationResults(),
-		cfg.IgnoreHostnameVerificationFailureIfEmptySANsList,
 		config.IgnoreHostnameVerificationFailureIfEmptySANsListFlag,
+		certs.CertChainValidationOptions{
+			IgnoreHostnameVerificationFailureIfEmptySANsList: cfg.IgnoreHostnameVerificationFailureIfEmptySANsList,
+			IgnoreValidationResultSANs:                       !cfg.ApplyCertHostnameValidationResults(),
+		},
 	)
 	validationResults.Add(hostnameValidationResult)
 
@@ -50,9 +52,11 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 
 	sansValidationResult := certs.ValidateSANsList(
 		certChain,
-		cfg.ApplyCertSANsListValidationResults(),
 		cfg.DNSName,
 		cfg.SANsEntries,
+		certs.CertChainValidationOptions{
+			IgnoreValidationResultSANs: !cfg.ApplyCertSANsListValidationResults(),
+		},
 	)
 	validationResults.Add(sansValidationResult)
 
@@ -80,8 +84,10 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 		certChain,
 		cfg.AgeCritical,
 		cfg.AgeWarning,
-		cfg.ApplyCertExpirationValidationResults(),
 		cfg.VerboseOutput,
+		certs.CertChainValidationOptions{
+			IgnoreValidationResultExpiration: !cfg.ApplyCertExpirationValidationResults(),
+		},
 	)
 
 	validationResults.Add(expirationValidationResult)

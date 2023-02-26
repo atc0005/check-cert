@@ -105,6 +105,46 @@ type ServiceStater interface {
 	IsOKState() bool
 }
 
+// CertChainValidationOptions is a collection of validation options shared by
+// all validation functions for types implementing the
+// CertChainValidationResult interface.
+//
+// Not all options are used by each validation function.
+type CertChainValidationOptions struct {
+
+	// IgnoreHostnameVerificationFailureIfEmptySANsList tracks whether a
+	// request was made to ignore validation check results for the hostname
+	// when the leaf certificate's Subject Alternate Names (SANs) list is
+	// found to be empty.
+	IgnoreHostnameVerificationFailureIfEmptySANsList bool
+
+	// IgnoreValidationResultExpiration tracks whether a request was made to
+	// ignore validation check results for certificate expiration. This is a
+	// broad/blanket request that ignores expiration validation issues for ALL
+	// certificates in a chain, not just the leaf/server certificate.
+	IgnoreValidationResultExpiration bool
+
+	// IgnoreValidationResultHostname tracks whether a request was made to
+	// ignore validation check results from verifying a given hostname against
+	// the leaf certificate in a certificate chain.
+	IgnoreValidationResultHostname bool
+
+	// IgnoreValidationResultSANs tracks whether a request was made to ignore
+	// validation check results result from performing a Subject Alternate
+	// Names (SANs) validation against a leaf certificate in a chain.
+	IgnoreValidationResultSANs bool
+
+	// IgnoreExpiredIntermediateCertificates tracks whether a request was made
+	// to ignore validation check results for certificate expiration against
+	// intermediate certificates in a certificate chain.
+	IgnoreExpiredIntermediateCertificates bool
+
+	// IgnoreExpiredRootCertificates tracks whether a request was made to
+	// ignore validation check results for certificate expiration against root
+	// certificates in a certificate chain.
+	IgnoreExpiredRootCertificates bool
+}
+
 // DiscoveredCertChain represents the certificate chain found on a specific
 // host along with that host's IP/Name and port.
 type DiscoveredCertChain struct {

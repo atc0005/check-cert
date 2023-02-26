@@ -234,9 +234,11 @@ func main() {
 		certChain,
 		cfg.Server,
 		cfg.DNSName,
-		cfg.ApplyCertHostnameValidationResults(),
-		cfg.IgnoreHostnameVerificationFailureIfEmptySANsList,
 		config.IgnoreHostnameVerificationFailureIfEmptySANsListFlag,
+		certs.CertChainValidationOptions{
+			IgnoreHostnameVerificationFailureIfEmptySANsList: cfg.IgnoreHostnameVerificationFailureIfEmptySANsList,
+			IgnoreValidationResultHostname:                   !cfg.ApplyCertHostnameValidationResults(),
+		},
 	)
 
 	switch {
@@ -276,9 +278,11 @@ func main() {
 
 	sansValidationResult := certs.ValidateSANsList(
 		certChain,
-		cfg.ApplyCertSANsListValidationResults(),
 		cfg.DNSName,
 		cfg.SANsEntries,
+		certs.CertChainValidationOptions{
+			IgnoreValidationResultSANs: !cfg.ApplyCertSANsListValidationResults(),
+		},
 	)
 	switch {
 	case sansValidationResult.IsFailed():
@@ -322,8 +326,10 @@ func main() {
 		certChain,
 		cfg.AgeCritical,
 		cfg.AgeWarning,
-		cfg.ApplyCertExpirationValidationResults(),
 		cfg.VerboseOutput,
+		certs.CertChainValidationOptions{
+			IgnoreValidationResultExpiration: !cfg.ApplyCertExpirationValidationResults(),
+		},
 	)
 	switch {
 	case expirationValidationResult.IsFailed():

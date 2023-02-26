@@ -53,10 +53,9 @@ type HostnameValidationResult struct {
 	// certificate chain.
 	ignored bool
 
-	// ignoreWhenEmptySANsList tracks whether a request was made to ignore
-	// validation check results for the hostname when the leaf certificate's
-	// Subject Alternate Names (SANs) list is found to be empty.
-	ignoreWhenEmptySANsList bool
+	// validationOptions tracks what validation options were chosen by the
+	// sysadmin.
+	validationOptions CertChainValidationOptions
 
 	// ignoreIfSANsEmptyFlagName records the flag name used to indicate
 	// whether a request was made to ignore validation check results for the
@@ -81,18 +80,12 @@ func ValidateHostname(
 	certChain []*x509.Certificate,
 	server string,
 	dnsName string,
-	shouldApply bool,
-	ignoreIfSANsEmpty bool,
 	ignoreIfSANsEmptyFlagName string,
+	validationOptions CertChainValidationOptions,
 ) HostnameValidationResult {
 
 	// TODO: Assert that first cert really is a leaf cert?
 	leafCert := certChain[0]
-
-	// Ignore validation requests if explicitly requested.
-	isResultIgnored := func() bool {
-		return !shouldApply
-	}
 
 	// Default to using the server FQDN or IP Address used to make the
 	// connection as our hostname value.
@@ -114,13 +107,14 @@ func ValidateHostname(
 			certChain:                 certChain,
 			leafCert:                  leafCert,
 			hostnameValue:             hostnameValue,
+			validationOptions:         validationOptions,
 			ignoreIfSANsEmptyFlagName: ignoreIfSANsEmptyFlagName,
 			err: fmt.Errorf(
 				"server or dns name values are required"+
 					" for hostname verification: %w",
 				ErrMissingValue,
 			),
-			ignored:          isResultIgnored(),
+			ignored:          validationOptions.IgnoreValidationResultHostname,
 			priorityModifier: priorityModifierMaximum,
 		}
 
@@ -129,12 +123,13 @@ func ValidateHostname(
 			certChain:                 certChain,
 			leafCert:                  leafCert,
 			hostnameValue:             hostnameValue,
+			validationOptions:         validationOptions,
 			ignoreIfSANsEmptyFlagName: ignoreIfSANsEmptyFlagName,
 			err: fmt.Errorf(
 				"required certificate chain is empty: %w",
 				ErrMissingValue,
 			),
-			ignored:          isResultIgnored(),
+			ignored:          validationOptions.IgnoreValidationResultHostname,
 			priorityModifier: priorityModifierMaximum,
 		}
 	}
@@ -154,15 +149,18 @@ func ValidateHostname(
 	// can surface it as an issue for the sysadmin to be aware of.
 	case verifyErr != nil &&
 		len(certChain[0].DNSNames) == 0 &&
-		ignoreIfSANsEmpty:
+		validationOptions.IgnoreHostnameVerificationFailureIfEmptySANsList:
 
 		return HostnameValidationResult{
-			certChain:                 certChain,
-			leafCert:                  leafCert,
-			hostnameValue:             hostnameValue,
-			err:                       verifyErr,
+			certChain:         certChain,
+			leafCert:          leafCert,
+			hostnameValue:     hostnameValue,
+			validationOptions: validationOptions,
+			err:               verifyErr,
+
+			// We explicitly mark this scenario as ignored based on the
+			// requested behavior when the SANs list is found to be empty.
 			ignored:                   true,
-			ignoreWhenEmptySANsList:   ignoreIfSANsEmpty,
 			ignoreIfSANsEmptyFlagName: ignoreIfSANsEmptyFlagName,
 
 			// Minimal priority bump since this is an issue that the
@@ -189,18 +187,18 @@ func ValidateHostname(
 			len(certChain[0].DNSNames) == 0):
 
 		return HostnameValidationResult{
-			certChain:     certChain,
-			leafCert:      leafCert,
-			hostnameValue: hostnameValue,
-			err:           ErrX509CertReliesOnCommonName,
-			// We intentionally do not mark this validation check result as ignored as
-			// the sysadmin did not opt to explicitly do so.
+			certChain:         certChain,
+			leafCert:          leafCert,
+			hostnameValue:     hostnameValue,
+			validationOptions: validationOptions,
+			err:               ErrX509CertReliesOnCommonName,
+			// We intentionally do not mark this validation check result as
+			// ignored as the sysadmin did not opt to explicitly do so.
 			// ignored:                   false,
 
 			// Mark result as ignored *if* the sysadmin explicitly requested
 			// that we do so.
-			ignored:                   isResultIgnored(),
-			ignoreWhenEmptySANsList:   ignoreIfSANsEmpty,
+			ignored:                   validationOptions.IgnoreValidationResultHostname,
 			ignoreIfSANsEmptyFlagName: ignoreIfSANsEmptyFlagName,
 
 			// Medium priority bump since this is an issue that the sysadmin
@@ -215,12 +213,13 @@ func ValidateHostname(
 			certChain:                 certChain,
 			leafCert:                  leafCert,
 			hostnameValue:             hostnameValue,
+			validationOptions:         validationOptions,
 			ignoreIfSANsEmptyFlagName: ignoreIfSANsEmptyFlagName,
 			err: fmt.Errorf(
 				"hostname verification failed: %w",
 				verifyErr,
 			),
-			ignored:          isResultIgnored(),
+			ignored:          validationOptions.IgnoreValidationResultHostname,
 			priorityModifier: priorityModifierMinimum,
 		}
 
@@ -230,6 +229,7 @@ func ValidateHostname(
 			certChain:                 certChain,
 			leafCert:                  leafCert,
 			hostnameValue:             hostnameValue,
+			validationOptions:         validationOptions,
 			ignoreIfSANsEmptyFlagName: ignoreIfSANsEmptyFlagName,
 
 			// Q: Should an explicitly ignored result be ignored if the
@@ -237,7 +237,7 @@ func ValidateHostname(
 			//
 			// A: Yes, *if* the sysadmin explicitly requested that the result
 			// be ignored.
-			ignored: isResultIgnored(),
+			ignored: validationOptions.IgnoreValidationResultHostname,
 		}
 
 	}
@@ -359,7 +359,8 @@ func (hnvr HostnameValidationResult) Status() string {
 			ChainPosition(hnvr.leafCert, hnvr.certChain),
 		)
 
-		if len(hnvr.certChain[0].DNSNames) == 0 && hnvr.ignoreWhenEmptySANsList {
+		if len(hnvr.certChain[0].DNSNames) == 0 &&
+			hnvr.validationOptions.IgnoreHostnameVerificationFailureIfEmptySANsList {
 			status += " as requested for empty SANs list"
 		}
 
@@ -429,7 +430,7 @@ func (hnvr HostnameValidationResult) StatusDetail() string {
 
 		// Add a specific warning or FYI message for sysadmin when the flag to
 		// ignore hostname validation when a leaf cet has an empty SANs list.
-		if hnvr.ignoreWhenEmptySANsList {
+		if hnvr.validationOptions.IgnoreHostnameVerificationFailureIfEmptySANsList {
 			detail.WriteString("NOTE: The option to ignore hostname verification when" +
 				" certificate Subject Alternate Names (SANs) list is empty" +
 				" has been specified." +

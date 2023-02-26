@@ -94,12 +94,17 @@ func printSummaryHighLevel(
 			name = strings.Join(certChain.Certs[0].DNSNames, ", ")
 		}
 
+		// Explicitly enable expiration validation.
+		validationOptions := certs.CertChainValidationOptions{
+			IgnoreValidationResultExpiration: false,
+		}
+
 		validationResults := certs.ValidateExpiration(
 			certChain.Certs,
 			ageCritical,
 			ageWarning,
 			true,
-			false,
+			validationOptions,
 		)
 
 		switch {
