@@ -88,6 +88,11 @@ func ValidateExpiration(
 	verboseOutput bool,
 ) ExpirationValidationResult {
 
+	// Ignore validation requests if explicitly requested.
+	isResultIgnored := func() bool {
+		return !shouldApply
+	}
+
 	// Perform basic validation of given values.
 	switch {
 
@@ -98,7 +103,7 @@ func ValidateExpiration(
 				"required certificate chain is empty: %w",
 				ErrMissingValue,
 			),
-			ignored:          !shouldApply,
+			ignored:          isResultIgnored(),
 			priorityModifier: priorityModifierMaximum,
 		}
 
@@ -110,7 +115,7 @@ func ValidateExpiration(
 					" for expiration validation: %w",
 				ErrMissingValue,
 			),
-			ignored:          !shouldApply,
+			ignored:          isResultIgnored(),
 			priorityModifier: priorityModifierMaximum,
 		}
 
@@ -122,7 +127,7 @@ func ValidateExpiration(
 					" for expiration validation: %w",
 				ErrMissingValue,
 			),
-			ignored:          !shouldApply,
+			ignored:          isResultIgnored(),
 			priorityModifier: priorityModifierMaximum,
 		}
 
@@ -171,7 +176,7 @@ func ValidateExpiration(
 	return ExpirationValidationResult{
 		certChain:            certChain,
 		err:                  err,
-		ignored:              !shouldApply,
+		ignored:              isResultIgnored(),
 		verboseOutput:        verboseOutput,
 		ageWarningThreshold:  certsExpireAgeWarning,
 		ageCriticalThreshold: certsExpireAgeCritical,
