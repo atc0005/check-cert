@@ -57,10 +57,10 @@ func (c Config) Hosts() []netutils.HostPattern {
 	return []netutils.HostPattern{}
 }
 
-// ApplyCertHostnameValidationResults indicates whether hostname certificate
-// hostname validation check results should be applied when performing final
-// plugin state evaluation. Precedence is given for explicit request to ignore
-// this validation result.
+// ApplyCertHostnameValidationResults indicates whether certificate hostname
+// validation check results should be applied when performing final plugin
+// state evaluation. Precedence is given for explicit request to ignore this
+// validation result.
 func (c Config) ApplyCertHostnameValidationResults() bool {
 
 	ignoreRequested := textutils.InList(

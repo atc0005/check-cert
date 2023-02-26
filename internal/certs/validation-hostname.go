@@ -71,11 +71,12 @@ type HostnameValidationResult struct {
 // is made to use the given server value.
 //
 // Validation check results are ignored when the SANs list is found to be
-// empty if the caller requests this.
+// empty if the caller requests this. This option may be needed where the
+// sysadmin wishes to perform expiration validation for certificates missing
+// SANs entries (and does not wish to fail the overall plugin status due to
+// the certificate lacking SANs entries).
 //
-// This option may be needed where the sysadmin wishes to perform expiration
-// validation for certificates missing SANs entries (and does not wish to fail
-// the overall plugin status due to the certificate lacking SANs entries).
+// Validation check results are *also* ignored if explicitly requested.
 func ValidateHostname(
 	certChain []*x509.Certificate,
 	server string,
@@ -87,6 +88,11 @@ func ValidateHostname(
 
 	// TODO: Assert that first cert really is a leaf cert?
 	leafCert := certChain[0]
+
+	// Ignore validation requests if explicitly requested.
+	isResultIgnored := func() bool {
+		return !shouldApply
+	}
 
 	// Default to using the server FQDN or IP Address used to make the
 	// connection as our hostname value.
@@ -114,7 +120,7 @@ func ValidateHostname(
 					" for hostname verification: %w",
 				ErrMissingValue,
 			),
-			ignored:          !shouldApply,
+			ignored:          isResultIgnored(),
 			priorityModifier: priorityModifierMaximum,
 		}
 
@@ -128,7 +134,7 @@ func ValidateHostname(
 				"required certificate chain is empty: %w",
 				ErrMissingValue,
 			),
-			ignored:          !shouldApply,
+			ignored:          isResultIgnored(),
 			priorityModifier: priorityModifierMaximum,
 		}
 	}
@@ -183,11 +189,17 @@ func ValidateHostname(
 			len(certChain[0].DNSNames) == 0):
 
 		return HostnameValidationResult{
-			certChain:                 certChain,
-			leafCert:                  leafCert,
-			hostnameValue:             hostnameValue,
-			err:                       ErrX509CertReliesOnCommonName,
-			ignored:                   false,
+			certChain:     certChain,
+			leafCert:      leafCert,
+			hostnameValue: hostnameValue,
+			err:           ErrX509CertReliesOnCommonName,
+			// We intentionally do not mark this validation check result as ignored as
+			// the sysadmin did not opt to explicitly do so.
+			// ignored:                   false,
+
+			// Mark result as ignored *if* the sysadmin explicitly requested
+			// that we do so.
+			ignored:                   isResultIgnored(),
 			ignoreWhenEmptySANsList:   ignoreIfSANsEmpty,
 			ignoreIfSANsEmptyFlagName: ignoreIfSANsEmptyFlagName,
 
@@ -208,7 +220,7 @@ func ValidateHostname(
 				"hostname verification failed: %w",
 				verifyErr,
 			),
-			ignored:          !shouldApply,
+			ignored:          isResultIgnored(),
 			priorityModifier: priorityModifierMinimum,
 		}
 
@@ -219,7 +231,13 @@ func ValidateHostname(
 			leafCert:                  leafCert,
 			hostnameValue:             hostnameValue,
 			ignoreIfSANsEmptyFlagName: ignoreIfSANsEmptyFlagName,
-			ignored:                   !shouldApply,
+
+			// Q: Should an explicitly ignored result be ignored if the
+			// validation was successful?
+			//
+			// A: Yes, *if* the sysadmin explicitly requested that the result
+			// be ignored.
+			ignored: isResultIgnored(),
 		}
 
 	}
