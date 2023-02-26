@@ -83,6 +83,11 @@ func ValidateSANsList(
 	// TODO: Assert that first cert really is a leaf cert?
 	leafCert := certChain[0]
 
+	// Ignore validation requests if explicitly requested.
+	isResultIgnored := func() bool {
+		return !shouldApply
+	}
+
 	// Early exit logic.
 	switch {
 	case len(certChain) == 0:
@@ -93,7 +98,7 @@ func ValidateSANsList(
 				"required certificate chain is empty: %w",
 				ErrMissingValue,
 			),
-			ignored:          !shouldApply,
+			ignored:          isResultIgnored(),
 			priorityModifier: priorityModifierMaximum,
 		}
 
@@ -110,7 +115,7 @@ func ValidateSANsList(
 				"required SANs entries list is empty: %w",
 				ErrMissingValue,
 			),
-			ignored:          !shouldApply,
+			ignored:          isResultIgnored(),
 			priorityModifier: priorityModifierMaximum,
 		}
 
@@ -134,7 +139,7 @@ func ValidateSANsList(
 			certChain:                    certChain,
 			leafCert:                     leafCert,
 			err:                          ErrCertHasMissingAndUnexpectedSANsEntries,
-			ignored:                      !shouldApply,
+			ignored:                      isResultIgnored(),
 			requiredSANsList:             requiredEntries,
 			unmatchedSANsEntriesFromList: unmatchedSANsEntriesFromList,
 			unmatchedSANsEntriesFromCert: unmatchedSANsEntriesFromCert,
@@ -147,7 +152,7 @@ func ValidateSANsList(
 			certChain:                    certChain,
 			leafCert:                     leafCert,
 			err:                          ErrCertMissingSANsEntries,
-			ignored:                      !shouldApply,
+			ignored:                      isResultIgnored(),
 			requiredSANsList:             requiredEntries,
 			unmatchedSANsEntriesFromList: unmatchedSANsEntriesFromList,
 			priorityModifier:             priorityModifierMaximum,
@@ -168,9 +173,15 @@ func ValidateSANsList(
 	// No failed matches, so SANs list is as expected.
 	default:
 		return SANsListValidationResult{
-			certChain:        certChain,
-			leafCert:         leafCert,
-			ignored:          !shouldApply,
+			certChain: certChain,
+			leafCert:  leafCert,
+
+			// Q: Should an explicitly ignored result be ignored if the
+			// validation was successful?
+			//
+			// A: Yes, *if* the sysadmin explicitly requested that the result
+			// be ignored.
+			ignored:          isResultIgnored(),
 			requiredSANsList: requiredEntries,
 		}
 	}
