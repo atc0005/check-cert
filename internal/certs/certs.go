@@ -77,9 +77,17 @@ var (
 	// ErrX509CertReliesOnCommonName mirrors the unexported error string
 	// emitted by the HostnameError.Error() method from the x509 package.
 	//
+	// https://cs.opensource.google/go/go/+/refs/tags/go1.20.1:src/crypto/x509/verify.go;l=104
+	//
 	// This error string is emitted when a certificate is missing Subject
 	// Alternate Names (SANs) AND a specified hostname matches the Common Name
 	// field.
+	//
+	// TODO: Open RFE in Go project asking that this be made an exportable
+	// error value so that we can drop this hard-coded version (which is bound
+	// to become a problem at some point).
+	// https://github.com/atc0005/check-cert/issues/520
+	//
 	ErrX509CertReliesOnCommonName = errors.New("x509: certificate relies on legacy Common Name field, use SANs instead")
 
 	// ErrNoCertValidationResults indicates that the cert chain validation
