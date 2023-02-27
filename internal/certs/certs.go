@@ -242,6 +242,12 @@ const (
 	// validation result. This modifier is usually applied for minor check
 	// failures (e.g., "expiring soon").
 	priorityModifierMinimum int = 1
+
+	// priorityModifierBaseline represents the baseline priority modifier for
+	// a validation result. This modifier is usually applied in order to
+	// explicitly communicate that the default or baseline value for a
+	// validation check is used (NOOP; e.g., for an OK result).
+	priorityModifierBaseline int = 0
 )
 
 // ServiceState accepts a type capable of evaluating its status and uses those
@@ -436,6 +442,36 @@ func NumExpiringCerts(certChain []*x509.Certificate, ageCritical time.Time, ageW
 
 }
 
+// IsLeafCert indicates whether a given certificate from a certificate chain
+// is a leaf or server certificate.
+func IsLeafCert(cert *x509.Certificate, certChain []*x509.Certificate) bool {
+	chainPos := ChainPosition(cert, certChain)
+	switch chainPos {
+	case certChainPositionLeaf:
+		return true
+	case certChainPositionLeafSelfSigned:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsIntermediateCert indicates whether a given certificate from a certificate
+// chain is an intermediate certificate.
+func IsIntermediateCert(cert *x509.Certificate, certChain []*x509.Certificate) bool {
+	chainPos := ChainPosition(cert, certChain)
+
+	return chainPos == certChainPositionIntermediate
+}
+
+// IsRootCert indicates whether a given certificate from a certificate chain
+// is a root certificate.
+func IsRootCert(cert *x509.Certificate, certChain []*x509.Certificate) bool {
+	chainPos := ChainPosition(cert, certChain)
+
+	return chainPos == certChainPositionRoot
+}
+
 // NumLeafCerts receives a slice of x509 certificates and returns a count of
 // leaf certificates present in the chain.
 func NumLeafCerts(certChain []*x509.Certificate) int {
@@ -519,7 +555,7 @@ func LeafCerts(certChain []*x509.Certificate) []*x509.Certificate {
 // (potentially empty) collection of intermediate certificates present in the
 // chain.
 func IntermediateCerts(certChain []*x509.Certificate) []*x509.Certificate {
-	numPresent := NumLeafCerts(certChain)
+	numPresent := NumIntermediateCerts(certChain)
 	intermediateCerts := make([]*x509.Certificate, 0, numPresent)
 
 	for _, cert := range certChain {
@@ -535,7 +571,7 @@ func IntermediateCerts(certChain []*x509.Certificate) []*x509.Certificate {
 // RootCerts receives a slice of x509 certificates and returns a (potentially
 // empty) collection of root certificates present in the chain.
 func RootCerts(certChain []*x509.Certificate) []*x509.Certificate {
-	numPresent := NumLeafCerts(certChain)
+	numPresent := NumRootCerts(certChain)
 	rootCerts := make([]*x509.Certificate, 0, numPresent)
 
 	for _, cert := range certChain {
@@ -709,12 +745,17 @@ func FormatCertSerialNumber(sn *big.Int) string {
 
 // ExpirationStatus receives a certificate and the expiration threshold values
 // for CRITICAL and WARNING states and returns a human-readable string
-// indicating the overall status at a glance.
-func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning time.Time) string {
-
+// indicating the overall status at a glance. If requested, an expired
+// certificate is marked as ignored.
+func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning time.Time, ignoreExpired bool) string {
 	var expiresText string
 	certExpiration := cert.NotAfter
 	switch {
+	case certExpiration.Before(time.Now()) && ignoreExpired:
+		expiresText = fmt.Sprintf(
+			"[EXPIRED, IGNORED] %s",
+			FormattedExpiration(certExpiration),
+		)
 	case certExpiration.Before(time.Now()):
 		expiresText = fmt.Sprintf(
 			"[EXPIRED] %s",
@@ -743,6 +784,35 @@ func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning 
 
 	return expiresText
 
+}
+
+// ShouldCertExpirationBeIgnored evaluates a given certificate, its
+// certificate chain and the validation options specified and indicates
+// whether the certificate should be ignored.
+func ShouldCertExpirationBeIgnored(
+	cert *x509.Certificate,
+	certChain []*x509.Certificate,
+	validationOptions CertChainValidationOptions,
+) bool {
+
+	if validationOptions.IgnoreValidationResultExpiration {
+		return true
+	}
+
+	if IsRootCert(cert, certChain) {
+		if IsExpiredCert(cert) &&
+			validationOptions.IgnoreExpiredRootCertificates {
+			return true
+		}
+	}
+	if IsIntermediateCert(cert, certChain) {
+		if IsExpiredCert(cert) &&
+			validationOptions.IgnoreExpiredIntermediateCertificates {
+			return true
+		}
+	}
+
+	return false
 }
 
 // isSelfSigned is a helper function that attempts to validate whether a given
@@ -951,6 +1021,7 @@ func GenerateCertChainReport(
 	ageCriticalThreshold time.Time,
 	ageWarningThreshold time.Time,
 	verboseDetails bool,
+	validationOptions CertChainValidationOptions,
 ) string {
 
 	var certsReport string
@@ -965,6 +1036,7 @@ func GenerateCertChainReport(
 			certificate,
 			ageCriticalThreshold,
 			ageWarningThreshold,
+			ShouldCertExpirationBeIgnored(certificate, certChain, validationOptions),
 		)
 
 		fingerprints := struct {

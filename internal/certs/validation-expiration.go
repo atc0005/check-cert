@@ -50,6 +50,14 @@ type ExpirationValidationResult struct {
 	// expiring soon.
 	hasExpiringCerts bool
 
+	// hasExpiredIntermediateCerts indicates whether any intermediate
+	// certificates in the chain have expired.
+	hasExpiredIntermediateCerts bool
+
+	// hasExpiredRootCerts indicates whether any root certificates in the
+	// chain have expired.
+	hasExpiredRootCerts bool
+
 	// numExpiredCerts indicates how many certificates in the chain have
 	// expired.
 	numExpiredCerts int
@@ -84,6 +92,12 @@ type ExpirationValidationResult struct {
 // CRITICAL and WARNING thresholds (specified in number of days from this
 // moment) for previously expired or "expiring soon" certificates. If
 // specified, a flag is set to generate verbose validation output.
+//
+// If requested, expired intermediate or root certificates are ignored.
+//
+// NOTE: This validation type does not object to incorrect certificate entries
+// (e.g., duplicate leaf certs) or incorrect chain order (e.g., intermediates
+// before leaf cert).
 func ValidateExpiration(
 	certChain []*x509.Certificate,
 	expireDaysCritical int,
@@ -153,41 +167,120 @@ func ValidateExpiration(
 		certsExpireAgeWarning,
 	)
 
-	// Determine if any certs are expired.
+	hasExpiringLeafCerts := HasExpiringCert(
+		LeafCerts(certChain),
+		certsExpireAgeCritical,
+		certsExpireAgeWarning,
+	)
+
+	hasExpiredLeafCerts := HasExpiredCert(
+		LeafCerts(certChain),
+	)
+
+	hasExpiredIntermediateCerts := HasExpiredCert(
+		IntermediateCerts(certChain),
+	)
+
+	hasExpiredRootCerts := HasExpiredCert(
+		RootCerts(certChain),
+	)
+
+	// Process certificates expiration status checks, exit early where viable.
 	var err error
-	var priorityModifier int
+	priorityModifier := priorityModifierBaseline
+	ignored := validationOptions.IgnoreValidationResultExpiration
+
 	switch {
-	case hasExpiredCerts:
+
+	case hasExpiredLeafCerts:
 		err = fmt.Errorf(
 			"expiration validation failed: %w",
 			ErrExpiredCertsFound,
 		)
-		priorityModifier = priorityModifierMaximum
 
-	case hasExpiringCerts:
+		if !validationOptions.IgnoreValidationResultExpiration {
+			priorityModifier = priorityModifierMaximum
+		}
+
+	case hasExpiringLeafCerts:
 		err = fmt.Errorf(
 			"expiration validation failed: %w",
 			ErrExpiringCertsFound,
 		)
-		priorityModifier = priorityModifierMinimum
+
+		if !validationOptions.IgnoreValidationResultExpiration {
+			priorityModifier = priorityModifierMinimum
+		}
+
+	case hasExpiredIntermediateCerts &&
+		!validationOptions.IgnoreExpiredIntermediateCertificates:
+
+		err = fmt.Errorf(
+			"expiration validation failed: %w",
+			ErrExpiredCertsFound,
+		)
+
+		if !validationOptions.IgnoreValidationResultExpiration {
+			priorityModifier = priorityModifierMaximum
+		}
+
+	case hasExpiredRootCerts &&
+		!validationOptions.IgnoreExpiredRootCertificates:
+
+		err = fmt.Errorf(
+			"expiration validation failed: %w",
+			ErrExpiredCertsFound,
+		)
+
+		if !validationOptions.IgnoreValidationResultExpiration {
+			priorityModifier = priorityModifierMinimum
+		}
+
+	case hasExpiredIntermediateCerts &&
+		validationOptions.IgnoreExpiredIntermediateCertificates:
+
+		// Even if we're opting to ignore this validation result, we still
+		// note that expired certificates were found in the chain.
+		err = fmt.Errorf(
+			"expiration validation failed: %w",
+			ErrExpiredCertsFound,
+		)
+
+		ignored = validationOptions.IgnoreExpiredIntermediateCertificates
+		priorityModifier = priorityModifierBaseline
+
+	case hasExpiredRootCerts &&
+		validationOptions.IgnoreExpiredRootCertificates:
+
+		// Even if we're opting to ignore this validation result, we still
+		// note that expired certificates were found in the chain.
+		err = fmt.Errorf(
+			"expiration validation failed: %w",
+			ErrExpiredCertsFound,
+		)
+
+		ignored = validationOptions.IgnoreExpiredRootCertificates
+		priorityModifier = priorityModifierBaseline
 
 	default:
-		// Neither expired nor expiring certificates, so baseline priority.
+		// Neither expired nor expiring certificates.
 	}
 
 	return ExpirationValidationResult{
-		certChain:            certChain,
-		err:                  err,
-		validationOptions:    validationOptions,
-		ignored:              validationOptions.IgnoreValidationResultExpiration,
-		verboseOutput:        verboseOutput,
-		ageWarningThreshold:  certsExpireAgeWarning,
-		ageCriticalThreshold: certsExpireAgeCritical,
-		hasExpiredCerts:      hasExpiredCerts,
-		hasExpiringCerts:     hasExpiringCerts,
-		numExpiredCerts:      numExpiredCerts,
-		numExpiringCerts:     numExpiringCerts,
-		priorityModifier:     priorityModifier,
+		certChain:                   certChain,
+		err:                         err,
+		validationOptions:           validationOptions,
+		ignored:                     ignored,
+		verboseOutput:               verboseOutput,
+		ageWarningThreshold:         certsExpireAgeWarning,
+		ageCriticalThreshold:        certsExpireAgeCritical,
+		hasExpiredCerts:             hasExpiredCerts,
+		hasExpiringCerts:            hasExpiringCerts,
+		hasExpiredIntermediateCerts: hasExpiredIntermediateCerts,
+		hasExpiredRootCerts:         hasExpiredRootCerts,
+		numExpiredCerts:             numExpiredCerts,
+		numExpiringCerts:            numExpiringCerts,
+		priorityModifier:            priorityModifier,
 	}
 
 }
@@ -217,7 +310,8 @@ func (evr ExpirationValidationResult) IsWarningState() bool {
 		return false
 	}
 
-	for _, cert := range evr.certChain {
+	// for _, cert := range evr.certChain {
+	for _, cert := range evr.FilteredCertificateChain() {
 		if IsExpiringCert(cert, evr.ageCriticalThreshold, evr.ageWarningThreshold) {
 			return true
 		}
@@ -235,7 +329,8 @@ func (evr ExpirationValidationResult) IsCriticalState() bool {
 		return false
 	}
 
-	for _, cert := range evr.certChain {
+	// for _, cert := range evr.certChain {
+	for _, cert := range evr.FilteredCertificateChain() {
 		if IsExpiredCert(cert) || cert.NotAfter.Before(evr.ageCriticalThreshold) {
 			return true
 		}
@@ -321,7 +416,11 @@ func (evr ExpirationValidationResult) Overview() string {
 // can be used as initial lead-in text.
 func (evr ExpirationValidationResult) Status() string {
 
-	nextCertToExpire := NextToExpire(evr.certChain, false)
+	// Provide a modified certificate chain that excludes any certificates
+	// that a sysadmin has requested we ignore.
+	certChainFiltered := evr.FilteredCertificateChain()
+
+	nextCertToExpire := NextToExpire(certChainFiltered, false)
 
 	// Start by assuming that the CommonName is *not* blank
 	nextCertToExpireServerName := nextCertToExpire.Subject.CommonName
@@ -334,22 +433,17 @@ func (evr ExpirationValidationResult) Status() string {
 	}
 
 	var summaryTemplate string
-	var validationStatus string
+
+	// We evaluate the filtered certificate chain instead of the original in
+	// case the sysadmin opted to exclude expired intermediate or root
+	// certificates.
 	switch {
-	case evr.hasExpiredCerts:
+	case HasExpiredCert(certChainFiltered):
 		summaryTemplate = ExpirationValidationOneLineSummaryExpiredTmpl
-		validationStatus = "failed"
-	case evr.hasExpiringCerts:
+	case HasExpiringCert(certChainFiltered, evr.ageCriticalThreshold, evr.ageWarningThreshold):
 		summaryTemplate = ExpirationValidationOneLineSummaryExpiresNextTmpl
-		validationStatus = "failed"
 	default:
 		summaryTemplate = ExpirationValidationOneLineSummaryExpiresNextTmpl
-		validationStatus = "successful"
-	}
-
-	// Override status if this validation check result is ignored.
-	if evr.ignored {
-		validationStatus = "ignored"
 	}
 
 	chainPosition := ChainPosition(nextCertToExpire, evr.certChain)
@@ -367,7 +461,7 @@ func (evr ExpirationValidationResult) Status() string {
 	return fmt.Sprintf(
 		summaryTemplate,
 		evr.CheckName(),
-		validationStatus,
+		evr.ValidationStatus(certChainFiltered),
 		chainPosition,
 		nextCertToExpireServerName,
 		FormattedExpiration(nextCertToExpire.NotAfter),
@@ -410,6 +504,7 @@ func (evr ExpirationValidationResult) StatusDetail() string {
 		evr.ageCriticalThreshold,
 		evr.ageWarningThreshold,
 		evr.verboseOutput,
+		evr.validationOptions,
 	))
 
 	return detail.String()
@@ -429,13 +524,43 @@ func (evr ExpirationValidationResult) String() string {
 // Report provides the validation check result in verbose human-readable
 // format.
 func (evr ExpirationValidationResult) Report() string {
-	return fmt.Sprintf(
-		"%s %s%s%s",
-		evr.Status(),
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		evr.StatusDetail(),
-	)
+
+	// Provide a modified certificate chain that excludes any certificates
+	// that a sysadmin has requested we ignore.
+	certChainFiltered := evr.FilteredCertificateChain()
+
+	switch {
+	case evr.ignored:
+
+		// provide overview only
+		statusSummary := fmt.Sprintf(
+			"%d expired certificates, %d expiring certificates",
+			evr.numExpiredCerts,
+			evr.numExpiringCerts,
+		)
+
+		return fmt.Sprintf(
+			"%s validation %s: %s%s%s%s",
+			evr.CheckName(),
+			evr.ValidationStatus(certChainFiltered),
+			statusSummary,
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+			evr.StatusDetail(),
+		)
+
+	default:
+
+		// provide detailed listing
+		return fmt.Sprintf(
+			"%s %s%s%s",
+			evr.Status(),
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+			evr.StatusDetail(),
+		)
+	}
+
 }
 
 // HasExpiredCerts indicates whether any certificates in the chain have
@@ -490,4 +615,58 @@ func (evr ExpirationValidationResult) WarningDateThreshold() string {
 // threshold used when calculating this validation check result.
 func (evr ExpirationValidationResult) CriticalDateThreshold() string {
 	return evr.ageWarningThreshold.Format(CertValidityDateLayout)
+}
+
+// FilteredCertificateChain returns the original certificate chain minus any
+// expired intermediate or root certificates that the sysadmin has opted to
+// ignore. If the sysadmin did not opt to exclude expired intermediate or root
+// certificates then the returned certificate chain is a duplicate of the
+// original.
+func (evr ExpirationValidationResult) FilteredCertificateChain() []*x509.Certificate {
+
+	certChainFiltered := make([]*x509.Certificate, 0, len(evr.certChain))
+	for _, cert := range evr.certChain {
+		if IsIntermediateCert(cert, evr.certChain) {
+			if IsExpiredCert(cert) &&
+				evr.validationOptions.IgnoreExpiredIntermediateCertificates {
+				continue
+			}
+		}
+
+		if IsRootCert(cert, evr.certChain) {
+			if IsExpiredCert(cert) &&
+				evr.validationOptions.IgnoreExpiredRootCertificates {
+				continue
+			}
+		}
+
+		certChainFiltered = append(certChainFiltered, cert)
+	}
+
+	return certChainFiltered
+}
+
+// ValidationStatus provides a one word status value for a given certificate
+// chain based on previous expiration validation check results of the original
+// certificate chain.
+//
+// The intent is to allow providing a validation status value based on a
+// subset of the original chain. If the given chain is empty, nil or a copy of
+// the original certificate chain then the status value will reflect the
+// original certificate chain.
+func (evr ExpirationValidationResult) ValidationStatus(certChain []*x509.Certificate) string {
+	if len(certChain) == 0 {
+		certChain = evr.certChain
+	}
+
+	switch {
+	case HasExpiredCert(certChain):
+		return "failed"
+	case HasExpiringCert(certChain, evr.ageCriticalThreshold, evr.ageWarningThreshold):
+		return "failed"
+	case evr.ignored:
+		return "ignored"
+	default:
+		return "successful"
+	}
 }

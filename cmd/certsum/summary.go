@@ -239,7 +239,7 @@ func printSummaryDetailedLevel(
 					name,
 					statusIcon,
 					certs.ChainPosition(cert, certChain.Certs),
-					certs.ExpirationStatus(cert, certsExpireAgeCritical, certsExpireAgeWarning),
+					certs.ExpirationStatus(cert, certsExpireAgeCritical, certsExpireAgeWarning, false),
 					certs.FormatCertSerialNumber(cert.SerialNumber),
 				)
 			default:
@@ -251,7 +251,7 @@ func printSummaryDetailedLevel(
 					name,
 					statusIcon,
 					certs.ChainPosition(cert, certChain.Certs),
-					certs.ExpirationStatus(cert, certsExpireAgeCritical, certsExpireAgeWarning),
+					certs.ExpirationStatus(cert, certsExpireAgeCritical, certsExpireAgeWarning, false),
 					certs.FormatCertSerialNumber(cert.SerialNumber),
 				)
 			}
