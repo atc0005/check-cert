@@ -34,6 +34,10 @@ type ExpirationValidationResult struct {
 	// certificate chain.
 	ignored bool
 
+	// validationOptions tracks what validation options were chosen by the
+	// sysadmin.
+	validationOptions CertChainValidationOptions
+
 	// verboseOutput indicates whether user has requested verbose validation
 	// results output.
 	verboseOutput bool
@@ -84,50 +88,48 @@ func ValidateExpiration(
 	certChain []*x509.Certificate,
 	expireDaysCritical int,
 	expireDaysWarning int,
-	shouldApply bool,
 	verboseOutput bool,
+	validationOptions CertChainValidationOptions,
 ) ExpirationValidationResult {
-
-	// Ignore validation requests if explicitly requested.
-	isResultIgnored := func() bool {
-		return !shouldApply
-	}
 
 	// Perform basic validation of given values.
 	switch {
 
 	case len(certChain) == 0:
 		return ExpirationValidationResult{
-			certChain: certChain,
+			certChain:         certChain,
+			validationOptions: validationOptions,
 			err: fmt.Errorf(
 				"required certificate chain is empty: %w",
 				ErrMissingValue,
 			),
-			ignored:          isResultIgnored(),
+			ignored:          validationOptions.IgnoreValidationResultExpiration,
 			priorityModifier: priorityModifierMaximum,
 		}
 
 	case expireDaysCritical == 0:
 		return ExpirationValidationResult{
-			certChain: certChain,
+			certChain:         certChain,
+			validationOptions: validationOptions,
 			err: fmt.Errorf(
 				"required CRITICAL certificate age threshold (in days) is required"+
 					" for expiration validation: %w",
 				ErrMissingValue,
 			),
-			ignored:          isResultIgnored(),
+			ignored:          validationOptions.IgnoreValidationResultExpiration,
 			priorityModifier: priorityModifierMaximum,
 		}
 
 	case expireDaysWarning == 0:
 		return ExpirationValidationResult{
-			certChain: certChain,
+			certChain:         certChain,
+			validationOptions: validationOptions,
 			err: fmt.Errorf(
 				"required WARNING certificate age threshold (in days) is required"+
 					" for expiration validation: %w",
 				ErrMissingValue,
 			),
-			ignored:          isResultIgnored(),
+			ignored:          validationOptions.IgnoreValidationResultExpiration,
 			priorityModifier: priorityModifierMaximum,
 		}
 
@@ -176,7 +178,8 @@ func ValidateExpiration(
 	return ExpirationValidationResult{
 		certChain:            certChain,
 		err:                  err,
-		ignored:              isResultIgnored(),
+		validationOptions:    validationOptions,
+		ignored:              validationOptions.IgnoreValidationResultExpiration,
 		verboseOutput:        verboseOutput,
 		ageWarningThreshold:  certsExpireAgeWarning,
 		ageCriticalThreshold: certsExpireAgeCritical,

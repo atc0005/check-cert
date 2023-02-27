@@ -48,6 +48,10 @@ type SANsListValidationResult struct {
 	// certificate chain.
 	ignored bool
 
+	// validationOptions tracks what validation options were chosen by the
+	// sysadmin.
+	validationOptions CertChainValidationOptions
+
 	// requiredSANsList represents the Subject Alternate Names that the
 	// sysadmin has stated is required to be present for the evaluated leaf
 	// certificate.
@@ -75,30 +79,26 @@ type SANsListValidationResult struct {
 // config package.
 func ValidateSANsList(
 	certChain []*x509.Certificate,
-	shouldApply bool,
 	dnsName string,
 	requiredEntries []string,
+	validationOptions CertChainValidationOptions,
 ) SANsListValidationResult {
 
 	// TODO: Assert that first cert really is a leaf cert?
 	leafCert := certChain[0]
 
-	// Ignore validation requests if explicitly requested.
-	isResultIgnored := func() bool {
-		return !shouldApply
-	}
-
 	// Early exit logic.
 	switch {
 	case len(certChain) == 0:
 		return SANsListValidationResult{
-			certChain: certChain,
-			leafCert:  leafCert,
+			certChain:         certChain,
+			leafCert:          leafCert,
+			validationOptions: validationOptions,
 			err: fmt.Errorf(
 				"required certificate chain is empty: %w",
 				ErrMissingValue,
 			),
-			ignored:          isResultIgnored(),
+			ignored:          validationOptions.IgnoreValidationResultSANs,
 			priorityModifier: priorityModifierMaximum,
 		}
 
@@ -109,13 +109,14 @@ func ValidateSANsList(
 	// scenario we explicitly guard against it.
 	case len(requiredEntries) == 0:
 		return SANsListValidationResult{
-			certChain: certChain,
-			leafCert:  leafCert,
+			certChain:         certChain,
+			leafCert:          leafCert,
+			validationOptions: validationOptions,
 			err: fmt.Errorf(
 				"required SANs entries list is empty: %w",
 				ErrMissingValue,
 			),
-			ignored:          isResultIgnored(),
+			ignored:          validationOptions.IgnoreValidationResultSANs,
 			priorityModifier: priorityModifierMaximum,
 		}
 
@@ -138,8 +139,9 @@ func ValidateSANsList(
 		return SANsListValidationResult{
 			certChain:                    certChain,
 			leafCert:                     leafCert,
+			validationOptions:            validationOptions,
 			err:                          ErrCertHasMissingAndUnexpectedSANsEntries,
-			ignored:                      isResultIgnored(),
+			ignored:                      validationOptions.IgnoreValidationResultSANs,
 			requiredSANsList:             requiredEntries,
 			unmatchedSANsEntriesFromList: unmatchedSANsEntriesFromList,
 			unmatchedSANsEntriesFromCert: unmatchedSANsEntriesFromCert,
@@ -151,8 +153,9 @@ func ValidateSANsList(
 		return SANsListValidationResult{
 			certChain:                    certChain,
 			leafCert:                     leafCert,
+			validationOptions:            validationOptions,
 			err:                          ErrCertMissingSANsEntries,
-			ignored:                      isResultIgnored(),
+			ignored:                      validationOptions.IgnoreValidationResultSANs,
 			requiredSANsList:             requiredEntries,
 			unmatchedSANsEntriesFromList: unmatchedSANsEntriesFromList,
 			priorityModifier:             priorityModifierMaximum,
@@ -163,8 +166,9 @@ func ValidateSANsList(
 		return SANsListValidationResult{
 			certChain:                    certChain,
 			leafCert:                     leafCert,
+			validationOptions:            validationOptions,
 			err:                          ErrCertHasUnexpectedSANsEntries,
-			ignored:                      !shouldApply,
+			ignored:                      validationOptions.IgnoreValidationResultSANs,
 			requiredSANsList:             requiredEntries,
 			unmatchedSANsEntriesFromCert: unmatchedSANsEntriesFromCert,
 			priorityModifier:             priorityModifierMinimum,
@@ -173,15 +177,16 @@ func ValidateSANsList(
 	// No failed matches, so SANs list is as expected.
 	default:
 		return SANsListValidationResult{
-			certChain: certChain,
-			leafCert:  leafCert,
+			certChain:         certChain,
+			leafCert:          leafCert,
+			validationOptions: validationOptions,
 
 			// Q: Should an explicitly ignored result be ignored if the
 			// validation was successful?
 			//
 			// A: Yes, *if* the sysadmin explicitly requested that the result
 			// be ignored.
-			ignored:          isResultIgnored(),
+			ignored:          validationOptions.IgnoreValidationResultSANs,
 			requiredSANsList: requiredEntries,
 		}
 	}
