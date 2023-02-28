@@ -618,14 +618,37 @@ func (evr ExpirationValidationResult) CriticalDateThreshold() string {
 }
 
 // FilteredCertificateChain returns the original certificate chain minus any
-// expired intermediate or root certificates that the sysadmin has opted to
-// ignore. If the sysadmin did not opt to exclude expired intermediate or root
-// certificates then the returned certificate chain is a duplicate of the
-// original.
+// certificates that the sysadmin has opted to ignore. The first leaf
+// certificate encountered that is expired or expiring is returned by itself
+// in order to give it the highest precedence.
+//
+// If the sysadmin did not opt to ignore any certificates then the returned
+// certificate chain is unchanged from the original.
 func (evr ExpirationValidationResult) FilteredCertificateChain() []*x509.Certificate {
 
 	certChainFiltered := make([]*x509.Certificate, 0, len(evr.certChain))
 	for _, cert := range evr.certChain {
+
+		// Leaf certs with issues get the highest priority. Add the first leaf
+		// cert in the chain with issues to our list and skip processing any
+		// further certificates in the chain.
+		if IsLeafCert(cert, evr.certChain) {
+			isExpiringCert := IsExpiringCert(cert, evr.ageCriticalThreshold, evr.ageWarningThreshold)
+			isExpiredCert := IsExpiredCert(cert)
+
+			if isExpiredCert || isExpiringCert {
+				// Instead of building a collection we need to return just
+				// this one certificate (the certificate chain elements could
+				// be in the wrong order and expired/expiring
+				// intermediates/roots could be listed before the leaf).
+				//
+				// certChainFiltered = append(certChainFiltered, cert)
+				// break
+
+				return []*x509.Certificate{cert}
+			}
+		}
+
 		if IsIntermediateCert(cert, evr.certChain) {
 			if IsExpiredCert(cert) &&
 				evr.validationOptions.IgnoreExpiredIntermediateCertificates {
