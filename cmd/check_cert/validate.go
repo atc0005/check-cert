@@ -30,7 +30,7 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 		config.IgnoreHostnameVerificationFailureIfEmptySANsListFlag,
 		certs.CertChainValidationOptions{
 			IgnoreHostnameVerificationFailureIfEmptySANsList: cfg.IgnoreHostnameVerificationFailureIfEmptySANsList,
-			IgnoreValidationResultSANs:                       !cfg.ApplyCertHostnameValidationResults(),
+			IgnoreValidationResultHostname:                   !cfg.ApplyCertHostnameValidationResults(),
 		},
 	)
 	validationResults.Add(hostnameValidationResult)
