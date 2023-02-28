@@ -51,6 +51,8 @@ const (
 	ignoreValidationResultsFlagHelp                          string = "List of keywords for certificate chain validation check result that should be explicitly ignored and not used to determine final validation state."
 	applyValidationResultsFlagHelp                           string = "List of keywords for certificate chain validation check results that should be explicitly applied and used to determine final validation state."
 	listIgnoredErrorsFlagHelp                                string = "Toggles emission of ignored validation check result errors. Disabled by default to reduce confusion."
+	ignoreExpiredIntermediateCertificatesFlagHelp            string = "Whether expired intermediate certificates should be ignored."
+	ignoreExpiredRootCertificatesFlagHelp                    string = "Whether expired root certificates should be ignored."
 )
 
 // Flag names for consistent references. Exported so that they're available
@@ -64,6 +66,9 @@ const (
 	// is still applied, but the results ignored when determining overall
 	// certificate chain validation state.
 	IgnoreHostnameVerificationFailureIfEmptySANsListFlag string = "ignore-hostname-verification-if-empty-sans"
+
+	IgnoreExpiredIntermediateCertificatesFlag string = "ignore-expired-intermediate-certs"
+	IgnoreExpiredRootCertificatesFlag         string = "ignore-expired-root-certs"
 
 	VersionFlagLong  string = "version"
 	VerboseFlagLong  string = "verbose"
@@ -152,6 +157,13 @@ const (
 	// verification for empty SANs list should be ignored (NOTE: only applies
 	// when the SANs list for a certificate is completely empty).
 	defaultIgnoreHostnameVerificationIfEmptySANsList bool = false
+
+	// Default choice of whether expired intermediate certificates should be
+	// ignored.
+	defaultIgnoreExpiredIntermediateCertificates bool = false
+
+	// Default choice of whether expired root certificates should be ignored.
+	defaultIgnoreExpiredRootCertificates bool = false
 
 	// Whether validation check result errors should be included in the final
 	// plugin report output. By default, ignored errors are not included as

@@ -86,7 +86,9 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 		cfg.AgeWarning,
 		cfg.VerboseOutput,
 		certs.CertChainValidationOptions{
-			IgnoreValidationResultExpiration: !cfg.ApplyCertExpirationValidationResults(),
+			IgnoreExpiredIntermediateCertificates: cfg.IgnoreExpiredIntermediateCertificates,
+			IgnoreExpiredRootCertificates:         cfg.IgnoreExpiredRootCertificates,
+			IgnoreValidationResultExpiration:      !cfg.ApplyCertExpirationValidationResults(),
 		},
 	)
 

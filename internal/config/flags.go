@@ -66,6 +66,20 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 			ignoreHostnameVerificationFailureIfEmptySANsListFlagHelp,
 		)
 
+		flag.BoolVar(
+			&c.IgnoreExpiredIntermediateCertificates,
+			IgnoreExpiredIntermediateCertificatesFlag,
+			defaultIgnoreExpiredIntermediateCertificates,
+			ignoreExpiredIntermediateCertificatesFlagHelp,
+		)
+
+		flag.BoolVar(
+			&c.IgnoreExpiredRootCertificates,
+			IgnoreExpiredRootCertificatesFlag,
+			defaultIgnoreExpiredRootCertificates,
+			ignoreExpiredRootCertificatesFlagHelp,
+		)
+
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
 

@@ -318,6 +318,14 @@ type Config struct {
 	// failure.
 	IgnoreHostnameVerificationFailureIfEmptySANsList bool
 
+	// IgnoreExpiredIntermediateCertificates indicates whether expired
+	// intermediate certificates should be ignored.
+	IgnoreExpiredIntermediateCertificates bool
+
+	// IgnoreExpiredRootCertificates indicates whether expired root
+	// certificates should be ignored.
+	IgnoreExpiredRootCertificates bool
+
 	// ListIgnoredValidationCheckResultErrors indicates whether validation
 	// check result errors should be included in the final plugin report
 	// output. By default, ignored errors are not included as this may prove

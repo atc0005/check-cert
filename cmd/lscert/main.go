@@ -328,7 +328,9 @@ func main() {
 		cfg.AgeWarning,
 		cfg.VerboseOutput,
 		certs.CertChainValidationOptions{
-			IgnoreValidationResultExpiration: !cfg.ApplyCertExpirationValidationResults(),
+			IgnoreExpiredIntermediateCertificates: cfg.IgnoreExpiredIntermediateCertificates,
+			IgnoreExpiredRootCertificates:         cfg.IgnoreExpiredRootCertificates,
+			IgnoreValidationResultExpiration:      !cfg.ApplyCertExpirationValidationResults(),
 		},
 	)
 	switch {
