@@ -23,15 +23,21 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 	// close to the number of planned validation checks.
 	validationResults := make(certs.CertChainValidationResults, 0, 5)
 
+	hostnameValidationOptions := certs.CertChainValidationOptions{
+		IgnoreHostnameVerificationFailureIfEmptySANsList: cfg.IgnoreHostnameVerificationFailureIfEmptySANsList,
+		IgnoreValidationResultHostname:                   !cfg.ApplyCertHostnameValidationResults(),
+	}
+
+	log.Debug().
+		Interface("validation_options", hostnameValidationOptions).
+		Msg("Hostname Validation Options")
+
 	hostnameValidationResult := certs.ValidateHostname(
 		certChain,
 		cfg.Server,
 		cfg.DNSName,
 		config.IgnoreHostnameVerificationFailureIfEmptySANsListFlag,
-		certs.CertChainValidationOptions{
-			IgnoreHostnameVerificationFailureIfEmptySANsList: cfg.IgnoreHostnameVerificationFailureIfEmptySANsList,
-			IgnoreValidationResultHostname:                   !cfg.ApplyCertHostnameValidationResults(),
-		},
+		hostnameValidationOptions,
 	)
 	validationResults.Add(hostnameValidationResult)
 
@@ -50,13 +56,19 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 			Msgf("%s validation successful", hostnameValidationResult.CheckName())
 	}
 
+	sansValidationOptions := certs.CertChainValidationOptions{
+		IgnoreValidationResultSANs: !cfg.ApplyCertSANsListValidationResults(),
+	}
+
+	log.Debug().
+		Interface("validation_options", sansValidationOptions).
+		Msg("SANs Validation Options")
+
 	sansValidationResult := certs.ValidateSANsList(
 		certChain,
 		cfg.DNSName,
 		cfg.SANsEntries,
-		certs.CertChainValidationOptions{
-			IgnoreValidationResultSANs: !cfg.ApplyCertSANsListValidationResults(),
-		},
+		sansValidationOptions,
 	)
 	validationResults.Add(sansValidationResult)
 
@@ -80,16 +92,22 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 			Msgf("%s validation successful", sansValidationResult.CheckName())
 	}
 
+	expirationValidationOptions := certs.CertChainValidationOptions{
+		IgnoreExpiredIntermediateCertificates: cfg.IgnoreExpiredIntermediateCertificates,
+		IgnoreExpiredRootCertificates:         cfg.IgnoreExpiredRootCertificates,
+		IgnoreValidationResultExpiration:      !cfg.ApplyCertExpirationValidationResults(),
+	}
+
+	log.Debug().
+		Interface("validation_options", expirationValidationOptions).
+		Msg("Expiration Validation Options")
+
 	expirationValidationResult := certs.ValidateExpiration(
 		certChain,
 		cfg.AgeCritical,
 		cfg.AgeWarning,
 		cfg.VerboseOutput,
-		certs.CertChainValidationOptions{
-			IgnoreExpiredIntermediateCertificates: cfg.IgnoreExpiredIntermediateCertificates,
-			IgnoreExpiredRootCertificates:         cfg.IgnoreExpiredRootCertificates,
-			IgnoreValidationResultExpiration:      !cfg.ApplyCertExpirationValidationResults(),
-		},
+		expirationValidationOptions,
 	)
 
 	validationResults.Add(expirationValidationResult)
