@@ -288,7 +288,9 @@ func GetCerts(host string, ipAddr string, port int, timeout time.Duration, logge
 
 	// grab certificate chain as presented by remote peer
 	certChain = conn.ConnectionState().PeerCertificates
-	logger.Debug().Msg("Retrieved certificate chain")
+	logger.Debug().
+		Int("certs", len(certChain)).
+		Msg("Retrieved certificate chain")
 
 	// close connection once we're finished with it
 	if err := conn.Close(); err != nil {
