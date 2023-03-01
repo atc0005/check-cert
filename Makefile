@@ -599,14 +599,14 @@ packages-stable: linux-x64-build
 	@echo "  - stable DEB package checksum file"
 	@set -e ;\
 		cd $(ASSETS_PATH)/packages/stable && \
-		for file in $$(find . -name "*.deb" -printf '%P'); do \
+		for file in $$(find . -name "*.deb" -printf '%P\n'); do \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
 	@echo "  - stable RPM package checksum file"
 	@set -e ;\
 		cd $(ASSETS_PATH)/packages/stable && \
-		for file in $$(find . -name "*.rpm" -printf '%P'); do \
+		for file in $$(find . -name "*.rpm" -printf '%P\n'); do \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
@@ -638,14 +638,14 @@ packages-dev: linux-x64-dev-build
 	@echo "  - dev DEB package checksum file"
 	@set -e ;\
 		cd $(ASSETS_PATH)/packages/dev && \
-		for file in $$(find . -name "*.deb" -printf '%P'); do \
+		for file in $$(find . -name "*.deb" -printf '%P\n'); do \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
 	@echo "  - dev RPM package checksum file"
 	@set -e ;\
 		cd $(ASSETS_PATH)/packages/dev && \
-		for file in $$(find . -name "*.rpm" -printf '%P'); do \
+		for file in $$(find . -name "*.rpm" -printf '%P\n'); do \
 			$(CHECKSUMCMD) $${file} > $${file}.sha256 ; \
 		done
 
@@ -666,14 +666,14 @@ package-links:
 	@echo "  - DEB package download links"
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
-		for file in $$(find . -name "*.deb" -printf '%P'); do \
+		for file in $$(find . -name "*.deb" -printf '%P\n'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
-		for file in $$(find . -name "*.deb.sha256" -printf '%P'); do \
+		for file in $$(find . -name "*.deb.sha256" -printf '%P\n'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
@@ -681,7 +681,7 @@ package-links:
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
-		for file in $$(find . -name "*.deb" -printf '%P'); do \
+		for file in $$(find . -name "*.deb" -printf '%P\n'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
@@ -689,7 +689,7 @@ package-links:
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
-		for file in $$(find . -name "*.deb.sha256" -printf '%P'); do \
+		for file in $$(find . -name "*.deb.sha256" -printf '%P\n'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
@@ -698,14 +698,14 @@ package-links:
 	@echo "  - RPM package download links"
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
-		for file in $$(find . -name "*.rpm" -printf '%P'); do \
+		for file in $$(find . -name "*.rpm" -printf '%P\n'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
 	fi
 	@if [ -d $(ASSETS_PATH)/packages/dev ]; then \
 		cd $(ASSETS_PATH)/packages/dev && \
-		for file in $$(find . -name "*.rpm.sha256" -printf '%P'); do \
+		for file in $$(find . -name "*.rpm.sha256" -printf '%P\n'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
@@ -713,7 +713,7 @@ package-links:
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
-		for file in $$(find . -name "*.rpm" -printf '%P'); do \
+		for file in $$(find . -name "*.rpm" -printf '%P\n'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
@@ -721,7 +721,7 @@ package-links:
 
 	@if [ -d $(ASSETS_PATH)/packages/stable ]; then \
 		cd $(ASSETS_PATH)/packages/stable && \
-		for file in $$(find . -name "*.rpm.sha256" -printf '%P'); do \
+		for file in $$(find . -name "*.rpm.sha256" -printf '%P\n'); do \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(PKG_DOWNLOAD_LINKS_FILE) && \
 			echo "$(BASE_URL)/$(RELEASE_TAG)/$${file}" >> $(ALL_DOWNLOAD_LINKS_FILE); \
 		done; \
