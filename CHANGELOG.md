@@ -26,6 +26,49 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.12.0] - 2023-03-02
+
+### Overview
+
+- Add new flags to `check_cert` plugin
+- Change format of emitted performance data "expiration" metrics
+- Change exit state for several scenarios
+- Give leaf cert highest priority for non-OK states
+- Bug fixes
+- built using Go 1.19.6
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- (GH-397) Add support for ignoring expired intermediate/root certificates
+  - add `ignore-expired-intermediate-certs flag` to allow explicitly ignoring
+    expired intermediate certificates in a chain
+  - add `ignore-expired-root-certs` flag to allow explicitly ignoring expired
+    intermediate certificates in a chain
+- (GH-530) Update `netutils.GetCerts` to log num certs fetched
+
+### Changed
+
+- (GH-281) check_cert | Give leaf cert highest priority when it is expiring or
+  expired
+- (GH-529) Update handling of performance data metrics to allow emitting
+  negative expiration values
+
+### Fixed
+
+- (GH-505) Setting up an "expiration only" monitoring configuration for a
+  self-signed certificate without SANs entries fails unless
+  `ignore-hostname-verification-if-empty-sans` flag is specified
+- (GH-525) Explicitly ignoring OK/passing validation results does not work
+- (GH-531) Fix Makefile find command printf syntax
+- (GH-509) chcon: can't apply partial context to unlabeled file
+  '/usr/lib64/nagios/plugins/check_cert'
+- (GH-536) Use UNKNOWN state for perfdata add failures
+- (GH-537) Use UNKNOWN state for invalid command-line args
+- (GH-538) Use WARNING state for unexpected cert file content
+
 ## [v0.11.2] - 2023-02-24
 
 ### Overview
@@ -1243,7 +1286,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.11.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.12.0...HEAD
+[v0.12.0]: https://github.com/atc0005/check-cert/releases/tag/v0.12.0
 [v0.11.2]: https://github.com/atc0005/check-cert/releases/tag/v0.11.2
 [v0.11.1]: https://github.com/atc0005/check-cert/releases/tag/v0.11.1
 [v0.11.0]: https://github.com/atc0005/check-cert/releases/tag/v0.11.0
