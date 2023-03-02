@@ -22,17 +22,32 @@ plugin_path="/usr/lib64/nagios/plugins"
 
 # Set required SELinux context to allow plugin use when SELinux is enabled.
 if [ -f "${plugin_path}/${plugin_name}" ]; then
-    chcon \
-        --verbose \
-        -t nagios_unconfined_plugin_exec_t \
-        -u system_u \
-        -r object_r \
-        /usr/lib64/nagios/plugins/${plugin_name}
 
-    if [ $? -eq 0 ]; then
-        echo "Successfully applied SELinux contexts on ${plugin_path}/${plugin_name}"
+    # Make sure we can locate the selinuxenabled binary.
+    if [ -x "$(command -v selinuxenabled)" ]; then
+        selinuxenabled
+
+        if [ $? -ne 0 ]; then
+            echo -e "\nSELinux is not enabled, skipping application of contexts."
+        else
+            # SELinux is enabled. Set context.
+            echo -e "\nApplying SELinux contexts on ${plugin_path}/${plugin_name} ..."
+            chcon \
+                --verbose \
+                -t nagios_unconfined_plugin_exec_t \
+                -u system_u \
+                -r object_r \
+                ${plugin_path}/${plugin_name}
+
+            if [ $? -eq 0 ]; then
+                echo "Successfully applied SELinux contexts on ${plugin_path}/${plugin_name}"
+            else
+                echo "Failed to set SELinux contexts on ${plugin_path}/${plugin_name}"
+            fi
+        fi
+
     else
-        echo "Failed to set SELinux contexts on ${plugin_path}/${plugin_name}"
+        echo "Error: Failed to locate selinuxenabled command." >&2
     fi
 
 else

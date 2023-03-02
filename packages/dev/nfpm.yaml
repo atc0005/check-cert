@@ -69,6 +69,10 @@ contents:
 
 overrides:
   rpm:
+    depends:
+      # Provides selinuxenabled tool.
+      # Installed by default even via the "minimal" installation option.
+      - libselinux-utils
     scripts:
       # preinstall: ./scripts/rpm/preinstall.sh
       postinstall: ./scripts/rpm/postinstall.sh
