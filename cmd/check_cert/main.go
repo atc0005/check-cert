@@ -391,7 +391,13 @@ func main() {
 		// Surface the error in plugin output.
 		plugin.AddError(perfDataErr)
 
-		// TODO: Abort plugin execution with UNKNOWN status?
+		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
+		plugin.ServiceOutput = fmt.Sprintf(
+			"%s: Failed to generate performance data metrics",
+			nagios.StateUNKNOWNLabel,
+		)
+
+		return
 	}
 
 	if err := plugin.AddPerfData(false, pd...); err != nil {
@@ -402,7 +408,11 @@ func main() {
 		// Surface the error in plugin output.
 		plugin.AddError(err)
 
-		// TODO: Abort plugin execution with UNKNOWN status?
+		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
+		plugin.ServiceOutput = fmt.Sprintf(
+			"%s: Failed to process performance data metrics",
+			nagios.StateUNKNOWNLabel,
+		)
 	}
 
 	switch {
