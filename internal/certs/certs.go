@@ -614,28 +614,6 @@ func OldestRootCert(certChain []*x509.Certificate) *x509.Certificate {
 // is returned indicating how many days the certificate is past expiration.
 //
 // An error is returned if the pointer to the given certificate is nil.
-// func ExpiresInDays(cert *x509.Certificate) (int, error) {
-// 	if cert == nil {
-// 		return 0, fmt.Errorf(
-// 			"func ExpiresInDays: unable to determine expiration: %w",
-// 			ErrMissingValue,
-// 		)
-// 	}
-//
-// 	timeRemaining := time.Until(cert.NotAfter).Hours()
-//
-// 	// Toss remainder so that we only get the whole number of days
-// 	daysRemaining := int(math.Trunc(timeRemaining / 24))
-//
-// 	return daysRemaining, nil
-// }
-
-// ExpiresInDays evaluates the given certificate and returns the number of
-// days until the certificate expires. Zero is returned if the certificate is
-// expired or if the remaining certificate lifetime is shorter than one full
-// day.
-//
-// An error is returned if the pointer to the given certificate is nil.
 func ExpiresInDays(cert *x509.Certificate) (int, error) {
 	if cert == nil {
 		return 0, fmt.Errorf(
@@ -648,11 +626,6 @@ func ExpiresInDays(cert *x509.Certificate) (int, error) {
 
 	// Toss remainder so that we only get the whole number of days
 	daysRemaining := int(math.Trunc(timeRemaining / 24))
-
-	// Zero is our baseline for now.
-	if daysRemaining < 0 {
-		daysRemaining = 0
-	}
 
 	return daysRemaining, nil
 }
