@@ -125,7 +125,7 @@ func main() {
 			))
 			plugin.ServiceOutput = fmt.Sprintf(
 				"%s: Unknown data encountered while parsing certificates file %q",
-				nagios.StateCRITICALLabel,
+				nagios.StateWARNINGLabel,
 				cfg.Filename,
 			)
 
@@ -137,7 +137,7 @@ func main() {
 				nagios.CheckOutputEOL,
 				string(parseAttemptLeftovers),
 			)
-			plugin.ExitStatusCode = nagios.StateCRITICALExitCode
+			plugin.ExitStatusCode = nagios.StateWARNINGExitCode
 
 			return
 		}
