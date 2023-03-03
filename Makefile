@@ -222,6 +222,14 @@ goclean:
 ## clean: alias for goclean
 clean: goclean
 
+.PHONY: clean-linux-x64-dev
+## clean-linux-x64-dev: removes dev assets for Linux x64 distros
+clean-linux-x64-dev:
+	@echo "Removing dev build assets used to generate dev packages"
+	@for target in $(WHAT); do \
+		rm -vf $(ASSETS_PATH)/$${target}/$$target-linux-amd64-dev; \
+	done
+
 .PHONY: gitclean
 ## gitclean: WARNING - recursively cleans working tree by removing non-versioned files
 gitclean:
@@ -741,7 +749,7 @@ dev-build: clean linux-x64-dev-build packages-dev package-links linux-x64-dev-co
 
 .PHONY: release-build
 ## release-build: generates stable build assets for public release
-release-build: clean windows linux-x86 packages-stable linux-x64-compress linux-x64-checksums links
+release-build: clean windows linux-x86 packages-dev clean-linux-x64-dev packages-stable linux-x64-compress linux-x64-checksums links
 	@echo "Completed all tasks for stable release build"
 
 .PHONY: helper-docker-builder-setup
