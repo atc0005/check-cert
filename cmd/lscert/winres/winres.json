@@ -37,7 +37,7 @@
             "CompanyName": "github.com/atc0005",
             "FileDescription": "CLI app used to generate a summary of certificate chain metadata and validation results.",
             "FileVersion": "",
-            "InternalName": "check_cert",
+            "InternalName": "lscert",
             "LegalCopyright": "© Adam Chalkley. Licensed under MIT.",
             "LegalTrademarks": "",
             "OriginalFilename": "main.go",
