@@ -413,6 +413,8 @@ func main() {
 			"%s: Failed to process performance data metrics",
 			nagios.StateUNKNOWNLabel,
 		)
+
+		return
 	}
 
 	switch {
