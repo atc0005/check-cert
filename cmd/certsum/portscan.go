@@ -153,8 +153,12 @@ func portScanner(
 					// tracked and reserve a spot in the (intentionally limited)
 					// channel shared with per-host (parent) goroutines.
 					portChecksWG.Add(1)
-					// fmt.Println("Reserving spot in port scan rate limiter")
+
+					log.Debug().Msg("Reserving spot in port scan rate limiter")
 					portScanRateLimiter <- struct{}{}
+					log.Debug().
+						Int("reserved", len(portScanRateLimiter)).
+						Msg("Port scan rate limiter reservation added")
 
 					log.Debug().Msg("Starting child port scanner goroutine")
 					go func(
@@ -178,11 +182,14 @@ func portScanner(
 							log.Debug().Msg("portChecksWG.Done() called")
 
 							// release spot for next port scan goroutine to run
+							log.Debug().
+								Int("reserved", len(portScanRateLimiter)).
+								Msg("Releasing spot in port scan rate limiter")
 							select {
 							case <-portScanRateLimiter:
 								log.Debug().
 									Int("reserved", len(portScanRateLimiter)).
-									Msg("Releasing spot in port scan rate limiter")
+									Msg("Released spot in port scan rate limiter")
 
 							default:
 								log.Warn().

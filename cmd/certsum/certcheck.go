@@ -186,6 +186,12 @@ func certScanner(
 				log.Debug().Msg("certScanner: incrementing waitgroup")
 				certScanWG.Add(1)
 
+				log.Debug().Msg("Reserving spot in cert scan rate limiter")
+				rateLimiter <- struct{}{}
+				log.Debug().
+					Int("reserved", len(rateLimiter)).
+					Msg("Cert scan rate limiter reservation added")
+
 				go func(
 					ctx context.Context,
 					portscanResult netutils.PortCheckResult,
@@ -196,9 +202,28 @@ func certScanner(
 
 					// make sure we give up our spot when finished
 					defer func() {
+						log.Debug().Msg("cert scan goroutine defer triggered")
+
 						// indicate that we're done with this goroutine
 						log.Debug().Msg("certScanner: decrementing waitgroup")
 						certScanWG.Done()
+
+						// release spot for next cert scan goroutine to run
+						log.Debug().
+							Int("reserved", len(rateLimiter)).
+							Msg("Releasing spot in cert scan rate limiter")
+						select {
+						case <-rateLimiter:
+							log.Debug().
+								Int("reserved", len(rateLimiter)).
+								Msg("Released spot in cert scan rate limiter")
+
+						default:
+							log.Warn().
+								Int("reserved", len(rateLimiter)).
+								Bool("ctx_cancelled", ctx.Err() != nil).
+								Msg("ERROR: No spot to release in cert scan rate limiter")
+						}
 					}()
 
 					var certFetchErr error
