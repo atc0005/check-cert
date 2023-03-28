@@ -278,7 +278,6 @@ func main() {
 
 	sansValidationResult := certs.ValidateSANsList(
 		certChain,
-		cfg.DNSName,
 		cfg.SANsEntries,
 		certs.CertChainValidationOptions{
 			IgnoreValidationResultSANs: !cfg.ApplyCertSANsListValidationResults(),
