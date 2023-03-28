@@ -427,7 +427,7 @@ func main() {
 		}
 
 		plugin.ServiceOutput = validationResults.OneLineSummary()
-		plugin.LongServiceOutput = validationResults.Report(cfg.VerboseOutput)
+		plugin.LongServiceOutput = validationResults.Report()
 
 		plugin.ExitStatusCode = validationResults.ServiceState().ExitCode
 
@@ -442,7 +442,7 @@ func main() {
 	default:
 
 		plugin.ServiceOutput = validationResults.OneLineSummary()
-		plugin.LongServiceOutput = validationResults.Report(cfg.VerboseOutput)
+		plugin.LongServiceOutput = validationResults.Report()
 
 		plugin.ExitStatusCode = nagios.StateOKExitCode
 		log.Debug().
