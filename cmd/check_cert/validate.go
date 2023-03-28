@@ -66,7 +66,6 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 
 	sansValidationResult := certs.ValidateSANsList(
 		certChain,
-		cfg.DNSName,
 		cfg.SANsEntries,
 		sansValidationOptions,
 	)

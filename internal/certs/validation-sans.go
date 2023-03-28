@@ -79,7 +79,6 @@ type SANsListValidationResult struct {
 // config package.
 func ValidateSANsList(
 	certChain []*x509.Certificate,
-	dnsName string,
 	requiredEntries []string,
 	validationOptions CertChainValidationOptions,
 ) SANsListValidationResult {
