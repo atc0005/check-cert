@@ -26,6 +26,53 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.13.0] - 2023-03-29
+
+### Overview
+
+- Add support for rootless container builds
+- Generate `dev` packages with release builds
+- Bug fixes
+- Dependency updates
+- built using Go 1.19.7
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- Builds
+  - (GH-541) Makefile | Include `dev` packages with future stable releases
+  - (GH-548) Add rootless container builds via Docker/Podman
+
+### Changed
+
+- Dependencies
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.9.0` to `go-ci-oldstable-build-v0.10.3`
+  - `mattn/go-isatty`
+    - `v0.0.17` to `v0.0.18`
+  - `golang.org/x/sys`
+    - `v0.5.0` to `v0.6.0`
+
+### Fixed
+
+- (GH-544) Fix lscert Windows binary InternalName metadata
+- (GH-546) Add missing return for perfdata add failure case
+- (GH-550) Update vuln analysis GHAW to use on.push hook
+- (GH-552) cmd/certsum/certcheck.go:89:2: unused-parameter: parameter
+  'rateLimiter' seems to be unused, consider removing or renaming it as _
+  (revive)
+- (GH-553) internal/config/logging.go:142:2: if-return: redundant if ...; err
+  != nil check, just return error instead. (revive)
+- (GH-554) internal/certs/validation-results.go:693:47: unused-parameter:
+  parameter 'verbose' seems to be unused, consider removing or renaming it as
+  _ (revive)
+- (GH-555) internal/certs/validation-sans.go:82:2: unused-parameter: parameter
+  'dnsName' seems to be unused, consider removing or renaming it as _ (revive)
+- (GH-556) Implement certScanner rate limiting
+- (GH-565) Fix some errwrap linting errors
+
 ## [v0.12.0] - 2023-03-02
 
 ### Overview
@@ -1286,7 +1333,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.13.0...HEAD
+[v0.13.0]: https://github.com/atc0005/check-cert/releases/tag/v0.13.0
 [v0.12.0]: https://github.com/atc0005/check-cert/releases/tag/v0.12.0
 [v0.11.2]: https://github.com/atc0005/check-cert/releases/tag/v0.11.2
 [v0.11.1]: https://github.com/atc0005/check-cert/releases/tag/v0.11.1
