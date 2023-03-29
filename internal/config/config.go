@@ -165,7 +165,7 @@ func (mvi *multiValueIntFlag) Set(value string) error {
 		port, strConvErr := strconv.Atoi(strings.TrimSpace(v))
 		if strConvErr != nil {
 			return fmt.Errorf(
-				"error processing flag; failed to convert string %q to int: %v",
+				"error processing flag; failed to convert string %q to int: %w",
 				v,
 				strConvErr,
 			)

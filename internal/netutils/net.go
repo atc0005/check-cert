@@ -351,7 +351,7 @@ func ExpandHost(hostPattern string) (HostPattern, error) {
 		if IsCIDR(hostPattern) {
 			ipAddrs, _, err := CIDRHosts(hostPattern)
 			if err != nil {
-				return HostPattern{}, fmt.Errorf("error parsing CIDR range: %s", err)
+				return HostPattern{}, fmt.Errorf("error parsing CIDR range: %w", err)
 			}
 			// fmt.Printf("%q is a CIDR rangeof %d IPs\n", s, count)
 
