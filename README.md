@@ -171,7 +171,7 @@ failing.
 Certificate metadata can be retrieved from:
 
 - a remote service at a specified fully-qualified domain name (e.g.,
-  www.github.com) or IP Address and port (e.g., 443)
+  `www.github.com`) or IP Address and port (e.g., 443)
 - a local certificate "bundle" or standalone leaf certificate file
 
 If specifying a host via IP Address, a hostname validation failure will be
@@ -620,7 +620,7 @@ validation checks and any behavior changes at that time noted.
 | `dn`, `dns-name`                             | **Maybe** |         | No     | *fully-qualified domain name or IP Address*                             | A fully-qualified domain name or IP Address in the Subject Alternate Names (SANs) list for the leaf certificate. If specified, this value will be used when retrieving the certificate chain (SNI support) and for hostname verification. Required when evaluating certificate files. See the `server` flag description for more information.        |
 | `ignore-hostname-verification-if-empty-sans` | No        | `false` | No     | `true`, `false`                                                         | Whether a hostname verification failure should be ignored if Subject Alternate Names (SANs) list is empty.                                                                                                                                                                                                                                           |
 | `ignore-expired-intermediate-certs`          | No        | `false` | No     | `true`, `false`                                                         | Whether expired intermediate certificates should be ignored.                                                                                                                                                                                                                                                                                         |
-| `ignore-expired-root-certs`                  | No        | `false` | No     | `true`, `false`                                                         | Whether expired root certificates should be ignored. |
+| `ignore-expired-root-certs`                  | No        | `false` | No     | `true`, `false`                                                         | Whether expired root certificates should be ignored.                                                                                                                                                                                                                                                                                                 |
 | `ignore-validation-result`                   | No        |         | No     | `sans`, `expiration`, `hostname`                                        | List of keywords for certificate chain validation check result that should be explicitly ignored and not used to determine final validation state.                                                                                                                                                                                                   |
 | `apply-validation-result`                    | No        |         | No     | `sans`, `expiration`, `hostname`                                        | List of keywords for certificate chain validation check results that should be explicitly applied and used to determine final validation state.                                                                                                                                                                                                      |
 | `list-ignored-errors`                        | No        | `false` | No     | `true`, `false`                                                         | Toggles emission of ignored validation check result errors. Disabled by default to reduce confusion.                                                                                                                                                                                                                                                 |
@@ -724,8 +724,8 @@ sufficient interest.
 #### OK results
 
 This example shows using the Nagios plugin to manually check a remote
-certificate-enabled port on www.google.com. We override the default `WARNING`
-and `CRITICAL` age threshold values with somewhat arbitrary numbers.
+certificate-enabled port on `www.google.com`. We override the default
+`WARNING` and `CRITICAL` age threshold values with somewhat arbitrary numbers.
 
 NOTE: Use the `--verbose` flag to expose further details.
 
@@ -2181,8 +2181,8 @@ For example, these given host values are deduped:
   1. 192.168.5.3
   1. 192.168.5.3
 - FQDNs
-  1. www.example.com
-  1. www.example.com
+  1. `www.example.com`
+  1. `www.example.com`
 - exact IP ranges (CIDR or partial)
   1. 192.168.5.0/24
   1. 192.168.5.0/24
