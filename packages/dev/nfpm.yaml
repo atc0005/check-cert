@@ -10,24 +10,6 @@
 # https://nfpm.goreleaser.com/usage/
 # https://nfpm.goreleaser.com/configuration/
 
-# Scratch notes below used while testing.
-#
-#
-# Auto-generate package filenames:
-#
-# nfpm package --config packages/dev/nfpm.yaml --packager deb --target ./release_assets/
-# nfpm package --config packages/dev/nfpm.yaml --packager rpm --target ./release_assets/
-#
-# Use explicit short package names:
-#
-# nfpm package --config packages/dev/nfpm.yaml --packager deb --target ./release_assets/check-cert-dev_amd64.deb
-# nfpm package --config packages/dev/nfpm.yaml --packager rpm --target ./release_assets/check-cert-dev.x86_64.rpm
-
-#
-# dpkg-deb -I release_assets/check-cert-dev*.deb
-# sudo dpkg -i release_assets/check-cert-dev*.deb
-# dpkg -s check-cert
-
 name: "check-cert-dev"
 arch: "amd64"
 platform: "linux"

@@ -63,18 +63,3 @@ echo "- Obtain latest release: ${project_releases}"
 echo "- View/Ask questions: ${project_discussions}"
 echo "- View/Open issues: ${project_issues}"
 echo
-
-
-# Copying contexts from existing plugin:
-#
-# [root@atc0005-rhel8-test ~]# ls -laZ /usr/lib64/nagios/plugins/check_by_ssh
-# -rwxr-xr-x. root root system_u:object_r:nagios_unconfined_plugin_exec_t:s0 /usr/lib64/nagios/plugins/check_by_ssh
-# [root@atc0005-rhel8-test ~]# sudo chcon --verbose --reference /usr/lib64/nagios/plugins/check_by_ssh /usr/lib64/nagios/plugins/check_cert
-
-# Explicitly applying contexts:
-#
-# [root@atc0005-rhel8-test ~]# sudo chcon --verbose -t nagios_unconfined_plugin_exec_t -u system_u -r object_r /usr/lib64/nagios/plugins/check_cert
-# changing security context of '/usr/lib64/nagios/plugins/check_cert'
-#
-# [root@atc0005-rhel8-test ~]# ls -laZ /usr/lib64/nagios/plugins/check_cert
-# -rwxr-xr-x. 1 root root system_u:object_r:nagios_unconfined_plugin_exec_t:s0 6035136 Dec 12 11:14 /usr/lib64/nagios/plugins/check_cert
