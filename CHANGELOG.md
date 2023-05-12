@@ -26,6 +26,34 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.13.1] - 2023-05-12
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- built using Go 1.19.9
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.7` to `1.19.9`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.10.3` to `go-ci-oldstable-build-v0.10.5`
+  - `rs/zerolog`
+    - `v1.29.0` to `v1.29.1`
+  - `golang.org/x/sys`
+    - `v0.6.0` to `v0.8.0`
+
+### Fixed
+
+- (GH-574) Misc cleanup tasks
+- (GH-575) Fix markdownlint linting errors
+
 ## [v0.13.0] - 2023-03-29
 
 ### Overview
@@ -1333,7 +1361,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.13.1...HEAD
+[v0.13.1]: https://github.com/atc0005/check-cert/releases/tag/v0.13.1
 [v0.13.0]: https://github.com/atc0005/check-cert/releases/tag/v0.13.0
 [v0.12.0]: https://github.com/atc0005/check-cert/releases/tag/v0.12.0
 [v0.11.2]: https://github.com/atc0005/check-cert/releases/tag/v0.11.2
