@@ -668,8 +668,16 @@ func FormattedExpiration(expireTime time.Time) string {
 
 	hoursRemainingStr = fmt.Sprintf("%dh", int64(hoursRemaining))
 
-	formattedTimeRemainingStr = strings.Join([]string{
-		daysRemainingStr, hoursRemainingStr}, " ")
+	// Only join days and hours remaining if there *are* days remaining.
+	switch {
+	case daysRemainingStr != "":
+		formattedTimeRemainingStr = strings.Join(
+			[]string{daysRemainingStr, hoursRemainingStr},
+			" ",
+		)
+	default:
+		formattedTimeRemainingStr = hoursRemainingStr
+	}
 
 	switch {
 	case !certExpired:
