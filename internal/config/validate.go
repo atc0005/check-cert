@@ -192,8 +192,17 @@ func (c Config) validate(appType AppType) error {
 		// value "show" flags
 	}
 
-	if c.Port < 0 {
-		return fmt.Errorf("invalid TCP port number %d", c.Port)
+	// TCP Port 0 is used by server applications to indicate that they should
+	// bind to an available port. Specifying port 0 for a client application
+	// is not useful.
+	if c.Port <= 0 {
+		return fmt.Errorf(
+			"invalid TCP port number; got %d,"+
+				" expected value between %d and %d (e.g., 443, 636)",
+			c.Port,
+			tcpSystemPortStart,
+			tcpDynamicPrivatePortEnd,
+		)
 	}
 
 	if c.Timeout() < 0 {

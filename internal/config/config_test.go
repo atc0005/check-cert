@@ -131,6 +131,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 		{
 			name: "DefaultValidateExpirationResults",
 			cfg: Config{
+				Port:         443,
 				LoggingLevel: defaultLogLevel,
 				Server:       "www.example.com",
 				AgeWarning:   defaultCertExpireAgeWarning,
@@ -141,6 +142,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 		{
 			name: "IgnoreValidateExpirationResults",
 			cfg: Config{
+				Port:                    443,
 				LoggingLevel:            defaultLogLevel,
 				Server:                  "www.example.com",
 				AgeWarning:              defaultCertExpireAgeWarning,
@@ -152,6 +154,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 		{
 			name: "ApplyValidateExpirationResults",
 			cfg: Config{
+				Port:                   443,
 				LoggingLevel:           defaultLogLevel,
 				Server:                 "www.example.com",
 				AgeWarning:             defaultCertExpireAgeWarning,
@@ -163,6 +166,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 		{
 			name: "DefaultValidateHostnameResults",
 			cfg: Config{
+				Port:         443,
 				LoggingLevel: defaultLogLevel,
 				Server:       "www.example.com",
 				AgeWarning:   defaultCertExpireAgeWarning,
@@ -173,6 +177,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 		{
 			name: "IgnoreValidateHostnameResults",
 			cfg: Config{
+				Port:                    443,
 				LoggingLevel:            defaultLogLevel,
 				Server:                  "www.example.com",
 				AgeWarning:              defaultCertExpireAgeWarning,
@@ -184,6 +189,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 		{
 			name: "ApplyValidateHostnameResults",
 			cfg: Config{
+				Port:                   443,
 				LoggingLevel:           defaultLogLevel,
 				Server:                 "www.example.com",
 				AgeWarning:             defaultCertExpireAgeWarning,
@@ -195,6 +201,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 		{
 			name: "DefaultValidateSANsListResultsWithoutSANsEntries",
 			cfg: Config{
+				Port:         443,
 				LoggingLevel: defaultLogLevel,
 				Server:       "www.example.com",
 				AgeWarning:   defaultCertExpireAgeWarning,
@@ -205,6 +212,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 		{
 			name: "DefaultValidateSANsListResultsWithSANsEntries",
 			cfg: Config{
+				Port:         443,
 				LoggingLevel: defaultLogLevel,
 				Server:       "www.example.com",
 				AgeWarning:   defaultCertExpireAgeWarning,
@@ -216,6 +224,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 		{
 			name: "IgnoreValidateSANsListResults",
 			cfg: Config{
+				Port:                    443,
 				LoggingLevel:            defaultLogLevel,
 				Server:                  "www.example.com",
 				AgeWarning:              defaultCertExpireAgeWarning,
@@ -227,6 +236,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 		{
 			name: "ApplyValidateSANsListResultsWithSANsEntries",
 			cfg: Config{
+				Port:                   443,
 				LoggingLevel:           defaultLogLevel,
 				Server:                 "www.example.com",
 				AgeWarning:             defaultCertExpireAgeWarning,
@@ -239,6 +249,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 		{
 			name: "ApplyValidateSANsListResultsWithoutSANsEntries",
 			cfg: Config{
+				Port:                   443,
 				LoggingLevel:           defaultLogLevel,
 				Server:                 "www.example.com",
 				AgeWarning:             defaultCertExpireAgeWarning,

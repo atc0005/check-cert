@@ -243,3 +243,18 @@ const (
 // limit number of IP Addresses "printed" by the Stringer interface to a
 // human-readable number
 const mvhPrintLimit int = 50
+
+// TCP port ranges
+// http://www.iana.org/assignments/port-numbers
+// Port numbers are assigned in various ways, based on three ranges: System
+// Ports (0-1023), User Ports (1024-49151), and the Dynamic and/or Private
+// Ports (49152-65535)
+const (
+	tcpReservedPort            int = 0
+	tcpSystemPortStart         int = 1
+	tcpSystemPortEnd           int = 1023
+	tcpUserPortStart           int = 1024
+	tcpUserPortEnd             int = 49151
+	tcpDynamicPrivatePortStart int = 49152
+	tcpDynamicPrivatePortEnd   int = 65535
+)
