@@ -26,6 +26,39 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.14.0] - 2023-06-07
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- built using Go 1.19.10
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- (GH-585) Add advice for `read: connection reset by peer` error
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.9` to `1.19.10`
+  - `atc0005/go-nagios`
+    - `v0.14.0` to `v0.15.0`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.10.5` to `go-ci-oldstable-build-v0.10.6`
+  - `mattn/go-isatty`
+    - `v0.0.18` to `v0.0.19`
+
+### Fixed
+
+- (GH-579) Formatted expiration has stray leading space when only hours remain
+- (GH-583) Disable depguard linter
+- (GH-584) Fix TCP port flag validation
+
 ## [v0.13.1] - 2023-05-12
 
 ### Overview
@@ -1361,7 +1394,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.13.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.14.0...HEAD
+[v0.14.0]: https://github.com/atc0005/check-cert/releases/tag/v0.14.0
 [v0.13.1]: https://github.com/atc0005/check-cert/releases/tag/v0.13.1
 [v0.13.0]: https://github.com/atc0005/check-cert/releases/tag/v0.13.0
 [v0.12.0]: https://github.com/atc0005/check-cert/releases/tag/v0.12.0
