@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"syscall"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -23,6 +24,12 @@ var errRuntimeTimeoutReached = errors.New("plugin runtime exceeded specified tim
 // runtimeTimeoutReachedAdvice offers advice to the sysadmin for routine
 // occurrence.
 const runtimeTimeoutReachedAdvice string = "consider increasing value if this is routinely encountered"
+
+// connectionResetByPeerAdvice offers advice to the sysadmin to check the
+// certificate/port bindings when a "read: connection reset by peer" error is
+// encountered. An IIS site with a missing binding has been observed in the
+// field as a cause of this issue.
+const connectionResetByPeerAdvice string = "consider checking certificate/port bindings (e.g., IIS Site Bindings)"
 
 // annotateError is a helper function used to add additional human-readable
 // explanation for errors commonly emitted by dependencies.
@@ -78,6 +85,13 @@ func annotateError(logger zerolog.Logger, errs ...error) []error {
 						err,
 						errRuntimeTimeoutReached,
 						runtimeTimeoutReachedAdvice,
+					))
+
+				case errors.Is(err, syscall.ECONNRESET):
+					annotatedErrors = append(annotatedErrors, fmt.Errorf(
+						"%w: %s",
+						err,
+						connectionResetByPeerAdvice,
 					))
 
 				default:
