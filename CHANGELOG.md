@@ -30,6 +30,7 @@ The following types of changes will be recorded in this file:
 
 ### Overview
 
+- Add advice for handling error
 - Bug fixes
 - Dependency updates
 - built using Go 1.19.10
