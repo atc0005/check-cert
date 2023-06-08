@@ -31,6 +31,14 @@ const runtimeTimeoutReachedAdvice string = "consider increasing value if this is
 // field as a cause of this issue.
 const connectionResetByPeerAdvice string = "consider checking certificate/port bindings (e.g., IIS Site Bindings)"
 
+// connectionRefusedAdvice offers advice to the sysadmin to check the
+// specified port and remote service state. The "connect: connection refused"
+// error is often encountered when an application associated with the
+// certificate being checked is stopped (e.g., troubleshooting purposes,
+// replacing a certificate or the service has crashed) or if the wrong
+// port was specified for a service.
+const connectionRefusedAdvice string = "consider double-checking specified port and remote service state (i.e., make sure service is actually running on given port)"
+
 // annotateError is a helper function used to add additional human-readable
 // explanation for errors commonly emitted by dependencies.
 //
@@ -92,6 +100,13 @@ func annotateError(logger zerolog.Logger, errs ...error) []error {
 						"%w: %s",
 						err,
 						connectionResetByPeerAdvice,
+					))
+
+				case errors.Is(err, syscall.ECONNREFUSED):
+					annotatedErrors = append(annotatedErrors, fmt.Errorf(
+						"%w: %s",
+						err,
+						connectionRefusedAdvice,
 					))
 
 				default:
