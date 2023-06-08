@@ -26,6 +26,24 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.0] - 2023-06-08
+
+### Overview
+
+- Add advice for handling error
+- built using Go 1.19.10
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- (GH-591) Add advice for `connect: connection refused` error
+
+### Fixed
+
+- (GH-593) Add missing overview item for v0.14.0 release
+
 ## [v0.14.0] - 2023-06-07
 
 ### Overview
@@ -1395,7 +1413,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.0...HEAD
+[v0.15.0]: https://github.com/atc0005/check-cert/releases/tag/v0.15.0
 [v0.14.0]: https://github.com/atc0005/check-cert/releases/tag/v0.14.0
 [v0.13.1]: https://github.com/atc0005/check-cert/releases/tag/v0.13.1
 [v0.13.0]: https://github.com/atc0005/check-cert/releases/tag/v0.13.0
