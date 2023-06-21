@@ -26,6 +26,31 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.1] - 2023-06-21
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- built using Go 1.19.10
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.10.6` to `go-ci-oldstable-build-v0.11.0`
+  - `golang.org/x/sys`
+    - `v0.8.0` to `v0.9.0`
+- (GH-596) Update vuln analysis GHAW to remove on.push hook
+
+### Fixed
+
+- (GH-598) Restore local CodeQL workflow
+- (GH-600) Fix helper function closure collection evaluation
+
 ## [v0.15.0] - 2023-06-08
 
 ### Overview
@@ -1413,7 +1438,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.1...HEAD
+[v0.15.1]: https://github.com/atc0005/check-cert/releases/tag/v0.15.1
 [v0.15.0]: https://github.com/atc0005/check-cert/releases/tag/v0.15.0
 [v0.14.0]: https://github.com/atc0005/check-cert/releases/tag/v0.14.0
 [v0.13.1]: https://github.com/atc0005/check-cert/releases/tag/v0.13.1
