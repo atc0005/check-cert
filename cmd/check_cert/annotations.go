@@ -68,7 +68,7 @@ func annotateError(logger zerolog.Logger, errs ...error) []error {
 
 	isNilErrCollection := func(collection []error) bool {
 		if len(collection) != 0 {
-			for _, err := range errs {
+			for _, err := range collection {
 				if err != nil {
 					return false
 				}
