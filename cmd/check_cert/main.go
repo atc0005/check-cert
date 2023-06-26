@@ -61,12 +61,9 @@ func main() {
 		return
 	}
 
-	// Collect last minute details just before ending plugin execution.
-	defer func(plugin *nagios.Plugin, logger zerolog.Logger) {
-		// Annotate errors (if applicable) with additional context to aid in
-		// troubleshooting.
-		plugin.Errors = annotateError(logger, plugin.Errors...)
-	}(plugin, cfg.Log)
+	// Annotate all errors (if any) with remediation advice just before ending
+	// plugin execution.
+	defer annotateErrors(plugin)
 
 	if cfg.EmitBranding {
 		// If enabled, show application details at end of notification
