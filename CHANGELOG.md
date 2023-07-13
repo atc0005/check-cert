@@ -26,6 +26,32 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.2] - 2023-07-13
+
+### Overview
+
+- Minor tweaks
+- Dependency updates
+- built using Go 1.19.11
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.10` to `1.19.11`
+  - `atc0005/go-nagios`
+    - `v0.15.0` to `v0.16.0`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.11.0` to `go-ci-oldstable-build-v0.10.3`
+  - `golang.org/x/sys`
+    - `v0.9.0` to `v0.10.0`
+- (GH-532) Update RPM `postinstall.sh` script to use `restorecon` in place of
+  `chcon`
+- (GH-604) Update error annotation implementation
+
 ## [v0.15.1] - 2023-06-21
 
 ### Overview
@@ -1438,7 +1464,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.2...HEAD
+[v0.15.2]: https://github.com/atc0005/check-cert/releases/tag/v0.15.2
 [v0.15.1]: https://github.com/atc0005/check-cert/releases/tag/v0.15.1
 [v0.15.0]: https://github.com/atc0005/check-cert/releases/tag/v0.15.0
 [v0.14.0]: https://github.com/atc0005/check-cert/releases/tag/v0.14.0
