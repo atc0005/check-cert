@@ -45,7 +45,7 @@ The following types of changes will be recorded in this file:
   - `atc0005/go-nagios`
     - `v0.15.0` to `v0.16.0`
   - `atc0005/go-ci`
-    - `go-ci-oldstable-build-v0.11.0` to `go-ci-oldstable-build-v0.10.3`
+    - `go-ci-oldstable-build-v0.11.0` to `go-ci-oldstable-build-v0.11.3`
   - `golang.org/x/sys`
     - `v0.9.0` to `v0.10.0`
 - (GH-532) Update RPM `postinstall.sh` script to use `restorecon` in place of
