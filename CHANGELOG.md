@@ -26,6 +26,31 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.3] - 2023-08-16
+
+### Added
+
+- (GH-614) Add initial automated release notes config
+- (GH-616) Add initial automated release build workflow
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.11` to `1.20.7`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.11.0` to `go-ci-oldstable-build-v0.13.4`
+  - `rs/zerolog`
+    - `v1.29.1` to `v1.30.0`
+  - `golang.org/x/sys`
+    - `v0.10.0` to `v0.11.0`
+- (GH-618) Update Dependabot config to monitor both branches
+- (GH-640) Update project to Go 1.20 series
+
+### Fixed
+
+- (GH-612) Fix CHANGELOG entry for v0.15.2 entry
+
 ## [v0.15.2] - 2023-07-13
 
 ### Overview
@@ -1464,7 +1489,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.3...HEAD
+[v0.15.3]: https://github.com/atc0005/check-cert/releases/tag/v0.15.3
 [v0.15.2]: https://github.com/atc0005/check-cert/releases/tag/v0.15.2
 [v0.15.1]: https://github.com/atc0005/check-cert/releases/tag/v0.15.1
 [v0.15.0]: https://github.com/atc0005/check-cert/releases/tag/v0.15.0
