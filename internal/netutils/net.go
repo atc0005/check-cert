@@ -421,8 +421,7 @@ func ExpandHost(hostPattern string) (HostPattern, error) {
 				num, err := strconv.Atoi(halves[0])
 				if err != nil {
 					return HostPattern{}, fmt.Errorf(
-						"octet %q of IP pattern %q invalid; "+
-							"non-numeric values present: %w",
+						"octet %q of IP pattern %q invalid; non-numeric values present: %w",
 						octets[octIdx],
 						hostPattern,
 						ErrUnrecognizedIPRange,
@@ -449,8 +448,7 @@ func ExpandHost(hostPattern string) (HostPattern, error) {
 				rangeStart, err := strconv.Atoi(halves[0])
 				if err != nil {
 					return HostPattern{}, fmt.Errorf(
-						"octet %q of IP pattern %q invalid; "+
-							"non-numeric values present: %w",
+						"octet %q of IP pattern %q invalid; non-numeric values present: %w",
 						octets[octIdx],
 						hostPattern,
 						ErrUnrecognizedIPRange,
@@ -460,8 +458,7 @@ func ExpandHost(hostPattern string) (HostPattern, error) {
 				rangeEnd, err := strconv.Atoi(halves[1])
 				if err != nil {
 					return HostPattern{}, fmt.Errorf(
-						"octet %q of IP pattern %q invalid; "+
-							"non-numeric values present: %w",
+						"octet %q of IP pattern %q invalid; non-numeric values present: %w",
 						octets[octIdx],
 						hostPattern,
 						ErrUnrecognizedIPRange,
