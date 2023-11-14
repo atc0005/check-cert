@@ -80,20 +80,20 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 			ignoreExpiredRootCertificatesFlagHelp,
 		)
 
-		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+shorthandFlagSuffix)
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
 
 		flag.BoolVar(&c.ListIgnoredValidationCheckResultErrors, ListIgnoredErrorsFlag, defaultListIgnoredValidationCheckResultErrors, listIgnoredErrorsFlagHelp)
 
 		flag.StringVar(&c.Filename, FilenameFlagLong, defaultFilename, filenameFlagHelp)
 
-		flag.StringVar(&c.Server, ServerFlagShort, defaultServer, serverFlagHelp+" (shorthand)")
+		flag.StringVar(&c.Server, ServerFlagShort, defaultServer, serverFlagHelp+shorthandFlagSuffix)
 		flag.StringVar(&c.Server, ServerFlagLong, defaultServer, serverFlagHelp)
 
-		flag.StringVar(&c.DNSName, DNSNameFlagShort, defaultDNSName, dnsNameFlagHelp+" (shorthand)")
+		flag.StringVar(&c.DNSName, DNSNameFlagShort, defaultDNSName, dnsNameFlagHelp+shorthandFlagSuffix)
 		flag.StringVar(&c.DNSName, DNSNameFlagLong, defaultDNSName, dnsNameFlagHelp)
 
-		flag.IntVar(&c.Port, PortFlagShort, defaultPort, portFlagHelp+" (shorthand)")
+		flag.IntVar(&c.Port, PortFlagShort, defaultPort, portFlagHelp+shorthandFlagSuffix)
 		flag.IntVar(&c.Port, PortFlagLong, defaultPort, portFlagHelp)
 
 		flag.Var(
@@ -135,19 +135,19 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 
 		appDescription = "Used to generate a summary of certificate chain metadata and validation results for quick review."
 
-		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+shorthandFlagSuffix)
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
 
 		flag.StringVar(&c.Filename, FilenameFlagLong, defaultFilename, filenameFlagHelp)
 		flag.BoolVar(&c.EmitCertText, EmitCertTextFlagLong, defaultEmitCertText, emitCertTextFlagHelp)
 
-		flag.StringVar(&c.Server, ServerFlagShort, defaultServer, serverFlagHelp+" (shorthand)")
+		flag.StringVar(&c.Server, ServerFlagShort, defaultServer, serverFlagHelp+shorthandFlagSuffix)
 		flag.StringVar(&c.Server, ServerFlagLong, defaultServer, serverFlagHelp)
 
 		flag.StringVar(&c.DNSName, DNSNameFlagShort, defaultDNSName, dnsNameFlagHelp)
 		flag.StringVar(&c.DNSName, DNSNameFlagLong, defaultDNSName, dnsNameFlagHelp)
 
-		flag.IntVar(&c.Port, PortFlagShort, defaultPort, portFlagHelp+" (shorthand)")
+		flag.IntVar(&c.Port, PortFlagShort, defaultPort, portFlagHelp+shorthandFlagSuffix)
 		flag.IntVar(&c.Port, PortFlagLong, defaultPort, portFlagHelp)
 
 	case appType.Scanner:
@@ -164,56 +164,56 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		appDescription = "Scanner used for evaluating certificates in one or more given IP ranges or collection of name/FQDN values."
 
 		flag.IntVar(&c.timeoutPortScan, TimeoutPortScanFlagLong, defaultPortScanTimeout, timeoutPortScanFlagHelp)
-		flag.IntVar(&c.timeoutPortScan, TimeoutPortScanFlagShort, defaultPortScanTimeout, timeoutPortScanFlagHelp+" (shorthand)")
+		flag.IntVar(&c.timeoutPortScan, TimeoutPortScanFlagShort, defaultPortScanTimeout, timeoutPortScanFlagHelp+shorthandFlagSuffix)
 
 		flag.Var(&c.hosts, HostsFlagLong, hostsFlagHelp)
 		flag.Var(&c.hosts, HostsFlagAlt, hostsFlagHelp+" (alt name)")
 
 		flag.IntVar(&c.ScanRateLimit, ScanRateLimitFlagLong, defaultScanRateLimit, scanRateLimitFlagHelp)
-		flag.IntVar(&c.ScanRateLimit, ScanRateLimitFlagShort, defaultScanRateLimit, scanRateLimitFlagHelp+" (shorthand)")
+		flag.IntVar(&c.ScanRateLimit, ScanRateLimitFlagShort, defaultScanRateLimit, scanRateLimitFlagHelp+shorthandFlagSuffix)
 
 		flag.IntVar(&c.timeoutAppInactivity, AppTimeoutFlagLong, defaultAppTimeout, timeoutAppInactivityFlagHelp)
-		flag.IntVar(&c.timeoutAppInactivity, AppTimeoutFlagShort, defaultAppTimeout, timeoutAppInactivityFlagHelp+" (shorthand)")
+		flag.IntVar(&c.timeoutAppInactivity, AppTimeoutFlagShort, defaultAppTimeout, timeoutAppInactivityFlagHelp+shorthandFlagSuffix)
 
 		flag.Var(&c.portsList, PortsFlagLong, portsListFlagHelp)
-		flag.Var(&c.portsList, PortsFlagShort, portsListFlagHelp+" (shorthand)")
+		flag.Var(&c.portsList, PortsFlagShort, portsListFlagHelp+shorthandFlagSuffix)
 
 		flag.BoolVar(&c.ShowPortScanResults, ShowPortScanResultsFlagLong, defaultShowPortScanResults, showPortScanResultsFlagHelp)
-		flag.BoolVar(&c.ShowPortScanResults, ShowPortScanResultsFlagShort, defaultShowPortScanResults, showPortScanResultsFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.ShowPortScanResults, ShowPortScanResultsFlagShort, defaultShowPortScanResults, showPortScanResultsFlagHelp+shorthandFlagSuffix)
 
 		flag.BoolVar(&c.ShowHostsWithClosedPorts, ShowHostsWithClosedPortsFlagLong, defaultShowHostsWithClosedPorts, showHostsWithClosedPortsFlagHelp)
-		flag.BoolVar(&c.ShowHostsWithClosedPorts, ShowHostsWithClosedPortsFlagShort, defaultShowHostsWithClosedPorts, showHostsWithClosedPortsFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.ShowHostsWithClosedPorts, ShowHostsWithClosedPortsFlagShort, defaultShowHostsWithClosedPorts, showHostsWithClosedPortsFlagHelp+shorthandFlagSuffix)
 
 		flag.BoolVar(&c.ShowHostsWithValidCerts, ShowHostsWithValidCertsFlagLong, defaultShowHostsWithValidCerts, showHostsWithValidCertsFlagHelp)
-		flag.BoolVar(&c.ShowHostsWithValidCerts, ShowHostsWithValidCertsFlagShort, defaultShowHostsWithValidCerts, showHostsWithValidCertsFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.ShowHostsWithValidCerts, ShowHostsWithValidCertsFlagShort, defaultShowHostsWithValidCerts, showHostsWithValidCertsFlagHelp+shorthandFlagSuffix)
 
 		flag.BoolVar(&c.ShowValidCerts, ShowValidCertsFlagLong, defaultShowValidCerts, showValidCertsFlagHelp)
-		flag.BoolVar(&c.ShowValidCerts, ShowValidCertsFlagShort, defaultShowValidCerts, showValidCertsFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.ShowValidCerts, ShowValidCertsFlagShort, defaultShowValidCerts, showValidCertsFlagHelp+shorthandFlagSuffix)
 
 		flag.BoolVar(&c.ShowOverview, ShowOverviewFlagLong, defaultShowOverview, showOverviewFlagHelp)
-		flag.BoolVar(&c.ShowOverview, ShowOverviewFlagShort, defaultShowOverview, showOverviewFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.ShowOverview, ShowOverviewFlagShort, defaultShowOverview, showOverviewFlagHelp+shorthandFlagSuffix)
 
 	}
 
 	// Shared flags for all application type
 
-	flag.Var(&c.SANsEntries, SANsEntriesFlagShort, sansEntriesFlagHelp+" (shorthand)")
+	flag.Var(&c.SANsEntries, SANsEntriesFlagShort, sansEntriesFlagHelp+shorthandFlagSuffix)
 	flag.Var(&c.SANsEntries, SANsEntriesFlagLong, sansEntriesFlagHelp)
 
-	flag.IntVar(&c.AgeWarning, AgeWarningFlagShort, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp+" (shorthand)")
+	flag.IntVar(&c.AgeWarning, AgeWarningFlagShort, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp+shorthandFlagSuffix)
 	flag.IntVar(&c.AgeWarning, AgeWarningFlagLong, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
 
-	flag.IntVar(&c.AgeCritical, AgeCriticalFlagShort, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp+" (shorthand)")
+	flag.IntVar(&c.AgeCritical, AgeCriticalFlagShort, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp+shorthandFlagSuffix)
 	flag.IntVar(&c.AgeCritical, AgeCriticalFlagLong, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
 
-	flag.IntVar(&c.timeout, TimeoutFlagShort, defaultConnectTimeout, timeoutConnectFlagHelp+" (shorthand)")
+	flag.IntVar(&c.timeout, TimeoutFlagShort, defaultConnectTimeout, timeoutConnectFlagHelp+shorthandFlagSuffix)
 	flag.IntVar(&c.timeout, TimeoutFlagLong, defaultConnectTimeout, timeoutConnectFlagHelp)
 
 	flag.StringVar(
 		&c.LoggingLevel,
 		LogLevelFlagShort,
 		defaultLogLevel,
-		supportedValuesFlagHelpText(logLevelFlagHelp, supportedLogLevels())+" (shorthand)",
+		supportedValuesFlagHelpText(logLevelFlagHelp, supportedLogLevels())+shorthandFlagSuffix,
 	)
 	flag.StringVar(
 		&c.LoggingLevel,

@@ -71,8 +71,7 @@ func (c Config) validate(appType AppType) error {
 		for _, specifiedKeyword := range c.ignoreValidationResults {
 			if !textutils.InList(specifiedKeyword, supportedValidationKeywords, true) {
 				return fmt.Errorf(
-					"invalid ignore validation results keyword specified;"+
-						" got %v, expected one of %v",
+					"invalid ignore validation results keyword specified; got %v, expected one of %v",
 					specifiedKeyword,
 					supportedValidationKeywords,
 				)
@@ -84,8 +83,7 @@ func (c Config) validate(appType AppType) error {
 		for _, specifiedKeyword := range c.applyValidationResults {
 			if !textutils.InList(specifiedKeyword, supportedValidationKeywords, true) {
 				return fmt.Errorf(
-					"invalid apply validation results keyword specified;"+
-						" got %v, expected one of %v",
+					"invalid apply validation results keyword specified; got %v, expected one of %v",
 					specifiedKeyword,
 					supportedValidationKeywords,
 				)
