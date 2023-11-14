@@ -297,10 +297,15 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 	// Grab the first PEM formatted block in our PEM cert file data.
 	block, rest := pem.Decode(pemData)
 
-	// we should get something on the first attempt
-	if block == nil {
+	switch {
+	case block == nil:
 		return nil, nil, fmt.Errorf(
-			"failed to decode %s as PEM formatted certificate file",
+			"failed to decode %s as PEM formatted certificate file; potentially malformed certificate",
+			filename,
+		)
+	case len(block.Bytes) == 0:
+		return nil, nil, fmt.Errorf(
+			"failed to decode %s as PEM formatted certificate file; potentially empty certificate file",
 			filename,
 		)
 	}
