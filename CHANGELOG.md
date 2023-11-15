@@ -26,6 +26,27 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.5] - 2023-11-15
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-692) canary: bump golang from 1.20.10 to 1.20.11 in /dependabot/docker/go
+- (GH-682) canary: bump golang from 1.20.8 to 1.20.10 in /dependabot/docker/go
+- (GH-681) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.10 to go-ci-oldstable-build-v0.13.11 in /dependabot/docker/builds
+- (GH-683) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.11 to go-ci-oldstable-build-v0.13.12 in /dependabot/docker/builds
+- (GH-694) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.12 to go-ci-oldstable-build-v0.14.1 in /dependabot/docker/builds
+- (GH-687) go.mod: bump github.com/mattn/go-isatty from 0.0.19 to 0.0.20
+- (GH-671) go.mod: bump github.com/rs/zerolog from 1.30.0 to 1.31.0
+- (GH-673) go.mod: bump golang.org/x/sys from 0.12.0 to 0.13.0
+- (GH-690) go.mod: bump golang.org/x/sys from 0.13.0 to 0.14.0
+
+### Bug Fixes
+
+- (GH-698) Fix goconst linting errors
+- (GH-699) Improve cert file parsing
+
 ## [v0.15.4] - 2023-10-06
 
 ### Changed
@@ -1505,7 +1526,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.4...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.5...HEAD
+[v0.15.5]: https://github.com/atc0005/check-cert/releases/tag/v0.15.5
 [v0.15.4]: https://github.com/atc0005/check-cert/releases/tag/v0.15.4
 [v0.15.3]: https://github.com/atc0005/check-cert/releases/tag/v0.15.3
 [v0.15.2]: https://github.com/atc0005/check-cert/releases/tag/v0.15.2
