@@ -124,11 +124,23 @@ func InsertDelimiter(s string, delimiter string, pos int) string {
 
 // BytesToDelimitedHexStr converts a byte slice to a delimited hex string.
 func BytesToDelimitedHexStr(bx []byte, delimiter string) string {
-	hexStr := make([]string, 0, len(bx))
-	for _, v := range bx {
-		hexStr = append(hexStr, fmt.Sprintf("%X", v))
-	}
-	return strings.Join(hexStr, delimiter)
+	// hexStr := make([]string, 0, len(bx))
+	// for _, v := range bx {
+	// 	hexStr = append(hexStr, fmt.Sprintf(
+	// 		// Pad single digits with a leading zero.
+	// 		// see also atc0005/check-cert#706
+	// 		"%02X", v,
+	// 	))
+	// }
+	// return strings.Join(hexStr, delimiter)
+
+	hexStr := fmt.Sprintf("%X", bx)
+	delimiterPosition := 2
+
+	formattedHexStr := InsertDelimiter(hexStr, delimiter, delimiterPosition)
+	formattedHexStr = strings.ToUpper(formattedHexStr)
+
+	return formattedHexStr
 }
 
 // Matches returns a list of successful matches and a list of failed matches
