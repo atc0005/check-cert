@@ -26,6 +26,20 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.6] - 2023-12-08
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-713) canary: bump golang from 1.20.11 to 1.20.12 in /dependabot/docker/go
+- (GH-714) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.1 to go-ci-oldstable-build-v0.14.2 in /dependabot/docker/builds
+- (GH-710) go.mod: bump golang.org/x/sys from 0.14.0 to 0.15.0
+
+### Fixed
+
+- (GH-707) Fix textutils.BytesToDelimitedHexStr logic
+
 ## [v0.15.5] - 2023-11-15
 
 ### Changed
@@ -1526,7 +1540,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.5...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.6...HEAD
+[v0.15.6]: https://github.com/atc0005/check-cert/releases/tag/v0.15.6
 [v0.15.5]: https://github.com/atc0005/check-cert/releases/tag/v0.15.5
 [v0.15.4]: https://github.com/atc0005/check-cert/releases/tag/v0.15.4
 [v0.15.3]: https://github.com/atc0005/check-cert/releases/tag/v0.15.3
