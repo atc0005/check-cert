@@ -39,6 +39,19 @@ func (c Config) validate(appType AppType) error {
 			)
 		}
 
+		// TCP Port 0 is used by server applications to indicate that they should
+		// bind to an available port. Specifying port 0 for a client application
+		// is not useful.
+		if c.Port <= 0 {
+			return fmt.Errorf(
+				"invalid TCP port number; got %d,"+
+					" expected value between %d and %d (e.g., 443, 636)",
+				c.Port,
+				tcpSystemPortStart,
+				tcpDynamicPrivatePortEnd,
+			)
+		}
+
 	case appType.Plugin:
 		// User can specify one of filename or server, but not both (mostly in
 		// order to keep the logic simpler)
@@ -61,6 +74,19 @@ func (c Config) validate(appType AppType) error {
 				ServerFlagLong,
 				IgnoreValidationResultFlag,
 				ValidationKeywordHostname,
+			)
+		}
+
+		// TCP Port 0 is used by server applications to indicate that they should
+		// bind to an available port. Specifying port 0 for a client application
+		// is not useful.
+		if c.Port <= 0 {
+			return fmt.Errorf(
+				"invalid TCP port number; got %d,"+
+					" expected value between %d and %d (e.g., 443, 636)",
+				c.Port,
+				tcpSystemPortStart,
+				tcpDynamicPrivatePortEnd,
 			)
 		}
 
@@ -188,19 +214,6 @@ func (c Config) validate(appType AppType) error {
 
 		// TODO: Figure out how to (or if we need to) validate mix of boolean
 		// value "show" flags
-	}
-
-	// TCP Port 0 is used by server applications to indicate that they should
-	// bind to an available port. Specifying port 0 for a client application
-	// is not useful.
-	if c.Port <= 0 {
-		return fmt.Errorf(
-			"invalid TCP port number; got %d,"+
-				" expected value between %d and %d (e.g., 443, 636)",
-			c.Port,
-			tcpSystemPortStart,
-			tcpDynamicPrivatePortEnd,
-		)
 	}
 
 	if c.Timeout() < 0 {
