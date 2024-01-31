@@ -26,6 +26,20 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.8] - 2024-01-31
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-730) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.3 to go-ci-oldstable-build-v0.14.4 in /dependabot/docker/builds
+- (GH-735) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.4 to go-ci-oldstable-build-v0.14.5 in /dependabot/docker/builds
+- (GH-736) go.mod: bump github.com/atc0005/go-nagios from 0.16.0 to 0.16.1
+
+### Fixed
+
+- (GH-743) Fix certsum port flag validation
+
 ## [v0.15.7] - 2024-01-19
 
 ### Changed
@@ -1551,7 +1565,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.7...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.8...HEAD
+[v0.15.8]: https://github.com/atc0005/check-cert/releases/tag/v0.15.8
 [v0.15.7]: https://github.com/atc0005/check-cert/releases/tag/v0.15.7
 [v0.15.6]: https://github.com/atc0005/check-cert/releases/tag/v0.15.6
 [v0.15.5]: https://github.com/atc0005/check-cert/releases/tag/v0.15.5
