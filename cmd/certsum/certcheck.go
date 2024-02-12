@@ -194,7 +194,7 @@ func certScanner(
 
 				go func(
 					ctx context.Context,
-					portscanResult netutils.PortCheckResult,
+					psResult netutils.PortCheckResult,
 					timeout time.Duration,
 					resultsChan chan<- certs.DiscoveredCertChain,
 					log zerolog.Logger,
@@ -228,9 +228,9 @@ func certScanner(
 
 					var certFetchErr error
 					log.Debug().
-						Str("host", portScanResult.Host).
-						Str("ip_address", portScanResult.IPAddress.String()).
-						Int("port", portScanResult.Port).
+						Str("host", psResult.Host).
+						Str("ip_address", psResult.IPAddress.String()).
+						Int("port", psResult.Port).
 						Msg("Retrieving certificate chain")
 
 					// NOTE: We explicitly specify the IP Address to prevent
@@ -239,9 +239,9 @@ func certScanner(
 					// of using a name/FQDN to open the connection) to
 					// retrieve the certificate chain.
 					certChain, certFetchErr := netutils.GetCerts(
-						portScanResult.Host,
-						portScanResult.IPAddress.String(),
-						portScanResult.Port,
+						psResult.Host,
+						psResult.IPAddress.String(),
+						psResult.Port,
 						timeout,
 						log,
 					)
@@ -253,9 +253,9 @@ func certScanner(
 						}
 						log.Error().
 							Err(certFetchErr).
-							Str("host", portScanResult.Host).
-							Str("ip_address", portScanResult.IPAddress.String()).
-							Int("port", portScanResult.Port).
+							Str("host", psResult.Host).
+							Str("ip_address", psResult.IPAddress.String()).
+							Int("port", psResult.Port).
 							Msg("error fetching certificates chain")
 
 						// os.Exit(1)
@@ -266,9 +266,9 @@ func certScanner(
 
 					log.Debug().Msg("Attempting to send cert chain on resultsChan")
 					resultsChan <- certs.DiscoveredCertChain{
-						Name:      portScanResult.Host,
-						IPAddress: portScanResult.IPAddress.String(),
-						Port:      portScanResult.Port,
+						Name:      psResult.Host,
+						IPAddress: psResult.IPAddress.String(),
+						Port:      psResult.Port,
 						Certs:     certChain,
 					}
 
