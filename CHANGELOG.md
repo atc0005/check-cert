@@ -26,6 +26,22 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.9] - 2024-02-14
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-758) canary: bump golang from 1.20.13 to 1.20.14 in /dependabot/docker/go
+- (GH-747) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.5 to go-ci-oldstable-build-v0.14.6 in /dependabot/docker/builds
+- (GH-759) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.6 to go-ci-oldstable-build-v0.14.9 in /dependabot/docker/builds
+- (GH-749) go.mod: bump github.com/rs/zerolog from 1.31.0 to 1.32.0
+- (GH-756) go.mod: bump golang.org/x/sys from 0.16.0 to 0.17.0
+
+### Fixed
+
+- (GH-765) Fix linting error and potential race condition
+
 ## [v0.15.8] - 2024-01-31
 
 ### Changed
@@ -1565,7 +1581,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.8...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.9...HEAD
+[v0.15.9]: https://github.com/atc0005/check-cert/releases/tag/v0.15.9
 [v0.15.8]: https://github.com/atc0005/check-cert/releases/tag/v0.15.8
 [v0.15.7]: https://github.com/atc0005/check-cert/releases/tag/v0.15.7
 [v0.15.6]: https://github.com/atc0005/check-cert/releases/tag/v0.15.6
