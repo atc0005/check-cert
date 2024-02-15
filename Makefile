@@ -577,6 +577,60 @@ linux-x64-dev-links:
 
 	@echo "Completed generating download links for dev linux x64 assets"
 
+.PHONY: linux-arm64-build
+## linux-arm64-build: builds assets for Linux arm64 distros
+linux-arm64-build:
+	@echo "Building release assets for linux arm64 ..."
+
+	@set -e; for target in $(WHAT); do \
+		mkdir -p $(ASSETS_PATH)/$$target && \
+		echo "  building $$target arm64 binary" && \
+		env GOOS=linux GOARCH=arm64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-linux-arm64 $(PROJECT_DIR)/cmd/$$target; \
+	done
+
+	@echo "Completed build tasks for linux arm64"
+
+.PHONY: linux-arm64-compress
+## linux-arm64-compress: compresses generated Linux arm64 assets
+linux-arm64-compress:
+	@echo "Compressing release assets for linux arm64 ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  compressing $$target arm64 binary" && \
+		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-linux-arm64 > \
+			$(ASSETS_PATH)/$$target/$$target-linux-arm64.xz && \
+		rm -f $(ASSETS_PATH)/$$target/$$target-linux-arm64; \
+	done
+
+	@echo "Completed compress tasks for linux arm64"
+
+.PHONY: linux-arm64-checksums
+## linux-arm64-checksums: generates checksum files for Linux arm64 assets
+linux-arm64-checksums:
+	@echo "Generating checksum files for linux arm64 assets ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  generating $$target checksum file" && \
+		cd $(ASSETS_PATH)/$$target && \
+		$(CHECKSUMCMD) $$target-linux-arm64.xz > $$target-linux-arm64.xz.sha256 && \
+		cd $$OLDPWD; \
+	done
+
+	@echo "Completed generation of checksum files for linux arm64"
+
+.PHONY: linux-arm64-links
+## linux-arm64-links: generates download URLs for Linux arm64 assets
+linux-arm64-links:
+	@echo "Generating download links for linux arm64 assets ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-arm64.xz" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-linux-arm64.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+	done
+
+	@echo "Completed generating download links for linux arm64 assets"
+
 .PHONY: linux-x86
 ## linux-x86: generates assets for Linux x86
 linux-x86: linux-x86-build linux-x86-compress linux-x86-checksums
@@ -587,15 +641,20 @@ linux-x86: linux-x86-build linux-x86-compress linux-x86-checksums
 linux-x64: linux-x64-build linux-x64-compress linux-x64-checksums
 	@echo "Completed all tasks for linux x64"
 
+.PHONY: linux-arm64
+## linux-arm64: generates assets for Linux arm64
+linux-arm64: linux-arm64-build linux-arm64-compress linux-arm64-checksums
+	@echo "Completed all tasks for linux arm64"
+
 .PHONY: linux
-## linux: generates assets for Linux x86 and x64 distros
-linux: linux-x86 linux-x64
+## linux: generates assets for Linux x86, x64, and arm64 distros
+linux: linux-x86 linux-x64 linux-arm64
 	@echo "Completed all tasks for linux"
 
 .PHONY: linux-links
-## linux-links: generates download URLs for Linux x86 and x64 assets
-linux-links: linux-x86-links linux-x64-links
-	@echo "Completed generating download links for linux x86 and x64 assets"
+## linux-links: generates download URLs for Linux x86, x64, and arm64 assets
+linux-links: linux-x86-links linux-x64-links linux-arm64-links
+	@echo "Completed generating download links for linux x86, x64, and arm64 assets"
 
 .PHONY: packages-stable
 ## packages-stable: generates "stable" release series DEB and RPM packages
@@ -754,7 +813,7 @@ package-links:
 
 .PHONY: links
 ## links: generates download URLs for release assets
-links: windows-x86-links windows-x64-links linux-x86-links linux-x64-links package-links
+links: windows-x86-links windows-x64-links linux-x86-links linux-x64-links linux-arm64-links package-links
 	@echo "Completed generating download links for all release assets"
 
 .PHONY: dev-build
@@ -764,7 +823,7 @@ dev-build: clean linux-x64-dev-build packages-dev package-links linux-x64-dev-co
 
 .PHONY: release-build
 ## release-build: generates stable build assets for public release
-release-build: clean windows linux-x86 packages-dev clean-linux-x64-dev packages-stable linux-x64-compress linux-x64-checksums links
+release-build: clean windows linux-x86 linux-arm64 packages-dev clean-linux-x64-dev packages-stable linux-x64-compress linux-x64-checksums links
 	@echo "Completed all tasks for stable release build"
 
 .PHONY: helper-builder-setup
