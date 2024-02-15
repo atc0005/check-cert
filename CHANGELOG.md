@@ -26,6 +26,123 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.9] - 2024-02-14
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-758) canary: bump golang from 1.20.13 to 1.20.14 in /dependabot/docker/go
+- (GH-747) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.5 to go-ci-oldstable-build-v0.14.6 in /dependabot/docker/builds
+- (GH-759) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.6 to go-ci-oldstable-build-v0.14.9 in /dependabot/docker/builds
+- (GH-749) go.mod: bump github.com/rs/zerolog from 1.31.0 to 1.32.0
+- (GH-756) go.mod: bump golang.org/x/sys from 0.16.0 to 0.17.0
+
+### Fixed
+
+- (GH-765) Fix linting error and potential race condition
+
+## [v0.15.8] - 2024-01-31
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-730) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.3 to go-ci-oldstable-build-v0.14.4 in /dependabot/docker/builds
+- (GH-735) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.4 to go-ci-oldstable-build-v0.14.5 in /dependabot/docker/builds
+- (GH-736) go.mod: bump github.com/atc0005/go-nagios from 0.16.0 to 0.16.1
+
+### Fixed
+
+- (GH-743) Fix certsum port flag validation
+
+## [v0.15.7] - 2024-01-19
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-724) canary: bump golang from 1.20.12 to 1.20.13 in /dependabot/docker/go
+- (GH-726) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.2 to go-ci-oldstable-build-v0.14.3 in /dependabot/docker/builds
+- (GH-721) ghaw: bump github/codeql-action from 2 to 3
+- (GH-722) go.mod: bump golang.org/x/sys from 0.15.0 to 0.16.0
+
+## [v0.15.6] - 2023-12-08
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-713) canary: bump golang from 1.20.11 to 1.20.12 in /dependabot/docker/go
+- (GH-714) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.1 to go-ci-oldstable-build-v0.14.2 in /dependabot/docker/builds
+- (GH-710) go.mod: bump golang.org/x/sys from 0.14.0 to 0.15.0
+
+### Fixed
+
+- (GH-707) Fix textutils.BytesToDelimitedHexStr logic
+
+## [v0.15.5] - 2023-11-15
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-692) canary: bump golang from 1.20.10 to 1.20.11 in /dependabot/docker/go
+- (GH-682) canary: bump golang from 1.20.8 to 1.20.10 in /dependabot/docker/go
+- (GH-681) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.10 to go-ci-oldstable-build-v0.13.11 in /dependabot/docker/builds
+- (GH-683) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.11 to go-ci-oldstable-build-v0.13.12 in /dependabot/docker/builds
+- (GH-694) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.12 to go-ci-oldstable-build-v0.14.1 in /dependabot/docker/builds
+- (GH-687) go.mod: bump github.com/mattn/go-isatty from 0.0.19 to 0.0.20
+- (GH-671) go.mod: bump github.com/rs/zerolog from 1.30.0 to 1.31.0
+- (GH-673) go.mod: bump golang.org/x/sys from 0.12.0 to 0.13.0
+- (GH-690) go.mod: bump golang.org/x/sys from 0.13.0 to 0.14.0
+
+### Bug Fixes
+
+- (GH-698) Fix goconst linting errors
+- (GH-699) Improve cert file parsing
+
+## [v0.15.4] - 2023-10-06
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-656) canary: bump golang from 1.20.7 to 1.20.8 in /dependabot/docker/go
+- (GH-646) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.4 to go-ci-oldstable-build-v0.13.5 in /dependabot/docker/builds
+- (GH-648) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.5 to go-ci-oldstable-build-v0.13.6 in /dependabot/docker/builds
+- (GH-650) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.6 to go-ci-oldstable-build-v0.13.7 in /dependabot/docker/builds
+- (GH-657) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.7 to go-ci-oldstable-build-v0.13.8 in /dependabot/docker/builds
+- (GH-664) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.8 to go-ci-oldstable-build-v0.13.9 in /dependabot/docker/builds
+- (GH-668) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.9 to go-ci-oldstable-build-v0.13.10 in /dependabot/docker/builds
+- (GH-655) ghaw: bump actions/checkout from 3 to 4
+- (GH-653) go.mod: bump golang.org/x/sys from 0.11.0 to 0.12.0
+
+## [v0.15.3] - 2023-08-16
+
+### Added
+
+- (GH-614) Add initial automated release notes config
+- (GH-616) Add initial automated release build workflow
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.11` to `1.20.7`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.11.0` to `go-ci-oldstable-build-v0.13.4`
+  - `rs/zerolog`
+    - `v1.29.1` to `v1.30.0`
+  - `golang.org/x/sys`
+    - `v0.10.0` to `v0.11.0`
+- (GH-618) Update Dependabot config to monitor both branches
+- (GH-640) Update project to Go 1.20 series
+
+### Fixed
+
+- (GH-612) Fix CHANGELOG entry for v0.15.2 entry
+
 ## [v0.15.2] - 2023-07-13
 
 ### Overview
@@ -1464,7 +1581,14 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.9...HEAD
+[v0.15.9]: https://github.com/atc0005/check-cert/releases/tag/v0.15.9
+[v0.15.8]: https://github.com/atc0005/check-cert/releases/tag/v0.15.8
+[v0.15.7]: https://github.com/atc0005/check-cert/releases/tag/v0.15.7
+[v0.15.6]: https://github.com/atc0005/check-cert/releases/tag/v0.15.6
+[v0.15.5]: https://github.com/atc0005/check-cert/releases/tag/v0.15.5
+[v0.15.4]: https://github.com/atc0005/check-cert/releases/tag/v0.15.4
+[v0.15.3]: https://github.com/atc0005/check-cert/releases/tag/v0.15.3
 [v0.15.2]: https://github.com/atc0005/check-cert/releases/tag/v0.15.2
 [v0.15.1]: https://github.com/atc0005/check-cert/releases/tag/v0.15.1
 [v0.15.0]: https://github.com/atc0005/check-cert/releases/tag/v0.15.0
