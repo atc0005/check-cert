@@ -425,7 +425,7 @@ settings intended to optimize for size and to prevent dynamic linkage.
          and related packages on Windows
 1. Build binaries
    - for the detected current operating system and architecture, explicitly
-         using bundled dependencies in top-level `vendor` folder
+     using bundled dependencies in top-level `vendor` folder
      - `go build -mod=vendor ./cmd/check_cert/`
      - `go build -mod=vendor ./cmd/lscert/`
      - `go build -mod=vendor ./cmd/certsum/`
