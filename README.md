@@ -424,17 +424,19 @@ settings intended to optimize for size and to prevent dynamic linkage.
          [References](references.md) section for options for installing `gcc`
          and related packages on Windows
 1. Build binaries
-   - for the current operating system, explicitly using bundled dependencies
-         in top-level `vendor` folder
+   - for the detected current operating system and architecture, explicitly
+         using bundled dependencies in top-level `vendor` folder
      - `go build -mod=vendor ./cmd/check_cert/`
      - `go build -mod=vendor ./cmd/lscert/`
      - `go build -mod=vendor ./cmd/certsum/`
    - for all supported platforms (where `make` is installed)
       - `make all`
-   - for use on Windows
+   - for use on Windows amd64
       - `make windows-x64-build`
-   - for use on Linux
+   - for use on Linux amd64
      - `make linux-x64-build`
+   - for use on Linux arm64
+     - `make linux-arm64-build`
 1. Copy the newly compiled binary from the applicable `/tmp` subdirectory path
    (based on the clone instructions in this section) below and deploy where
    needed.
