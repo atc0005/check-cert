@@ -26,6 +26,22 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.16.1] - 2024-03-07
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-804) Add todo/release label to "Go Runtime" PRs
+- (GH-800) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.15.3 to go-ci-oldstable-build-v0.15.4 in /dependabot/docker/builds
+- (GH-796) Go Dependency: Bump golang.org/x/sys from 0.17.0 to 0.18.0
+- (GH-799) Go Runtime: Bump golang from 1.21.7 to 1.21.8 in /dependabot/docker/go
+
+#### Other
+
+- (GH-793) Update README to explicitly mention arm64 builds
+- (GH-795) Update README indentation
+
 ## [v0.16.0] - 2024-02-27
 
 ### Added
@@ -1601,7 +1617,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.16.1...HEAD
+[v0.16.1]: https://github.com/atc0005/check-cert/releases/tag/v0.16.1
 [v0.16.0]: https://github.com/atc0005/check-cert/releases/tag/v0.16.0
 [v0.15.9]: https://github.com/atc0005/check-cert/releases/tag/v0.15.9
 [v0.15.8]: https://github.com/atc0005/check-cert/releases/tag/v0.15.8
