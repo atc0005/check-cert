@@ -635,6 +635,91 @@ func ExpiresInDays(cert *x509.Certificate) (int, error) {
 	return daysRemaining, nil
 }
 
+// MaxLifespan returns the maximum lifespan for a given certificate from the
+// date it was issued until the time it is scheduled to expire.
+func MaxLifespan(cert *x509.Certificate) (time.Duration, error) {
+	if cert == nil {
+		return 0, fmt.Errorf(
+			"func MaxLifespan: unable to determine expiration: %w",
+			ErrMissingValue,
+		)
+	}
+
+	maxCertLifespan := cert.NotAfter.Sub(cert.NotBefore)
+
+	return maxCertLifespan, nil
+}
+
+// MaxLifespanInDays returns the maximum lifespan in days for a given
+// certificate from the date it was issued until the time it is scheduled to
+// expire.
+func MaxLifespanInDays(cert *x509.Certificate) (int, error) {
+	if cert == nil {
+		return 0, fmt.Errorf(
+			"func MaxLifespanInDays: unable to determine expiration: %w",
+			ErrMissingValue,
+		)
+	}
+
+	maxCertLifespan := cert.NotAfter.Sub(cert.NotBefore)
+	daysMaxLifespan := int(math.Trunc(maxCertLifespan.Hours() / 24))
+
+	return daysMaxLifespan, nil
+}
+
+// LifeRemainingPercentage returns the percentage of remaining time before a
+// certificate expires.
+func LifeRemainingPercentage(cert *x509.Certificate) (float64, error) {
+	if cert == nil {
+		return 0, fmt.Errorf(
+			"func LifeRemainingPercentage: unable to determine expiration: %w",
+			ErrMissingValue,
+		)
+	}
+
+	if IsExpiredCert(cert) {
+		return 0.0, nil
+	}
+
+	daysMaxLifespan, err := MaxLifespanInDays(cert)
+	if err != nil {
+		return 0, err
+	}
+
+	daysRemaining, err := ExpiresInDays(cert)
+	if err != nil {
+		return 0, err
+	}
+
+	certLifeRemainingPercentage := float64(daysRemaining) / float64(daysMaxLifespan) * 100
+
+	return certLifeRemainingPercentage, nil
+}
+
+// LifeRemainingPercentageTruncated returns the truncated percentage of
+// remaining time before a certificate expires.
+func LifeRemainingPercentageTruncated(cert *x509.Certificate) (int, error) {
+	if cert == nil {
+		return 0, fmt.Errorf(
+			"func LifeRemainingPercentageTruncated: unable to determine expiration: %w",
+			ErrMissingValue,
+		)
+	}
+
+	if IsExpiredCert(cert) {
+		return 0, nil
+	}
+
+	certLifeRemainingPercentage, err := LifeRemainingPercentage(cert)
+	if err != nil {
+		return 0, err
+	}
+
+	certLifespanRemainingTruncated := int(math.Trunc(certLifeRemainingPercentage))
+
+	return certLifespanRemainingTruncated, nil
+}
+
 // FormattedExpiration receives a Time value and converts it to a string
 // representing the largest useful whole units of time in days and hours. For
 // example, if a certificate has 1 year, 2 days and 3 hours remaining until
