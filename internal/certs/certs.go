@@ -345,7 +345,7 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 		// we're done attempting to decode the cert file; we have found data
 		// that fails to decode properly
-		if block == nil && len(rest) > 0 {
+		if len(rest) > 0 {
 			break
 		}
 	}
@@ -952,7 +952,7 @@ func isSelfSigned(cert *x509.Certificate) bool {
 
 						return false
 
-					case md5RSASigVerifyErr == nil:
+					default:
 						// fmt.Println("MD5 signature verified")
 
 						return true
