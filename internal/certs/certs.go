@@ -821,40 +821,50 @@ func FormatCertSerialNumber(sn *big.Int) string {
 func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning time.Time, ignoreExpired bool) string {
 	var expiresText string
 	certExpiration := cert.NotAfter
+
+	var lifeRemainingText string
+	if remaining, err := LifeRemainingPercentageTruncated(cert); err == nil {
+		lifeRemainingText = fmt.Sprintf(" (%d%%)", remaining)
+	}
+
 	switch {
 	case certExpiration.Before(time.Now()) && ignoreExpired:
 		expiresText = fmt.Sprintf(
-			"[EXPIRED, IGNORED] %s",
+			"[EXPIRED, IGNORED] %s%s",
 			FormattedExpiration(certExpiration),
+			lifeRemainingText,
 		)
 	case certExpiration.Before(time.Now()):
 		expiresText = fmt.Sprintf(
-			"[EXPIRED] %s",
+			"[EXPIRED] %s%s",
 			FormattedExpiration(certExpiration),
+			lifeRemainingText,
 		)
 	case certExpiration.Before(ageCritical):
 		expiresText = fmt.Sprintf(
-			"[%s] %s",
+			"[%s] %s%s",
 			nagios.StateCRITICALLabel,
 			FormattedExpiration(certExpiration),
+			lifeRemainingText,
 		)
 	case certExpiration.Before(ageWarning):
 		expiresText = fmt.Sprintf(
-			"[%s] %s",
+			"[%s] %s%s",
 			nagios.StateWARNINGLabel,
 			FormattedExpiration(certExpiration),
+			lifeRemainingText,
 		)
 	default:
 		expiresText = fmt.Sprintf(
-			"[%s] %s",
+			"[%s] %s%s",
 			nagios.StateOKLabel,
 			FormattedExpiration(certExpiration),
+			lifeRemainingText,
 		)
 
 	}
 
 	return expiresText
-
 }
 
 // ShouldCertExpirationBeIgnored evaluates a given certificate, its
