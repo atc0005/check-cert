@@ -28,16 +28,38 @@ func getPerfData(certChain []*x509.Certificate, ageCritical int, ageWarning int)
 		)
 	}
 
+	// NOTE: We allow falling back to 0 value if leaf or intermediate
+	// certificates are not available.
+	//
+	// This allows monitoring an intermediates bundle where a leaf certificate
+	// is not present and it allows monitoring a certificate chain where
+	// sysadmins did not include an intermediates bundle (e.g., accidental
+	// omission).
+	//
+	// For those cases the `certs_present_intermediate` and
+	// `certs_present_leaf` metrics are intended to clarify why a value of 0
+	// is emitted for `expires_*`, or `life_remaining_*` metrics.
+
 	var expiresLeaf int
 	oldestLeaf := certs.OldestLeafCert(certChain)
 	if daysToExpiration, err := certs.ExpiresInDays(oldestLeaf); err == nil {
 		expiresLeaf = daysToExpiration
 	}
 
+	var oldestLeafLifeRemaining int
+	if leafLifeRemaining, err := certs.LifeRemainingPercentageTruncated(oldestLeaf); err == nil {
+		oldestLeafLifeRemaining = leafLifeRemaining
+	}
+
 	var expiresIntermediate int
 	oldestIntermediate := certs.OldestIntermediateCert(certChain)
 	if daysToExpiration, err := certs.ExpiresInDays(oldestIntermediate); err == nil {
 		expiresIntermediate = daysToExpiration
+	}
+
+	var oldestIntermediateLifeRemaining int
+	if intermediateLifeRemaining, err := certs.LifeRemainingPercentageTruncated(oldestIntermediate); err == nil {
+		oldestIntermediateLifeRemaining = intermediateLifeRemaining
 	}
 
 	certsPresentLeaf := strconv.Itoa(certs.NumLeafCerts(certChain))
@@ -75,6 +97,24 @@ func getPerfData(certChain []*x509.Certificate, ageCritical int, ageWarning int)
 		{
 			Label: "certs_present_unknown",
 			Value: certsPresentUnknown,
+		},
+		{
+			Label:             "life_remaining_leaf",
+			Value:             fmt.Sprintf("%d", oldestLeafLifeRemaining),
+			UnitOfMeasurement: "%",
+
+			// TODO: GH-789
+			// Warn:              fmt.Sprintf("%d", ageWarning),
+			// Crit:              fmt.Sprintf("%d", ageCritical),
+		},
+		{
+			Label:             "life_remaining_intermediate",
+			Value:             fmt.Sprintf("%d", oldestIntermediateLifeRemaining),
+			UnitOfMeasurement: "%",
+
+			// TODO: GH-789
+			// Warn:              fmt.Sprintf("%d", ageWarning),
+			// Crit:              fmt.Sprintf("%d", ageCritical),
 		},
 	}
 

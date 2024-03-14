@@ -158,6 +158,8 @@ feedback that you may have. Thanks in advance!
 | `certs_present_intermediate`      | Number of intermediate certificates present in the chain.                                                                                                                                                                           |
 | `certs_present_root`              | Number of root certificates present in the chain.                                                                                                                                                                                   |
 | `certs_present_unknown`           | Number of certificates present in the chain with an unknown scope (i.e., the plugin cannot determine whether a leaf, intermediate or root). Please [report this scenario](https://github.com/atc0005/check-cert/issues/new/choose). |
+| `life_remaining_leaf`             | Percentage of remaining time before leaf (aka, "server") certificate expires. If multiple leaf certificates are present (invalid configuration), the one expiring soonest is reported.                                              |
+| `life_remaining_intermediate`     | Percentage of remaining time before the next to expire intermediate certificate expires.                                                                                                                                            |
 
 ### `lscert`
 
