@@ -26,6 +26,17 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.17.0] - 2024-03-15
+
+### Added
+
+- (GH-813) Add certificate lifetime metrics
+- (GH-814) Add life remaining percentage to expiration status
+
+### Fixed
+
+- (GH-820) Fix nilness govet linting errors
+
 ## [v0.16.1] - 2024-03-07
 
 ### Changed
@@ -1617,7 +1628,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.16.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.17.0...HEAD
+[v0.17.0]: https://github.com/atc0005/check-cert/releases/tag/v0.17.0
 [v0.16.1]: https://github.com/atc0005/check-cert/releases/tag/v0.16.1
 [v0.16.0]: https://github.com/atc0005/check-cert/releases/tag/v0.16.0
 [v0.15.9]: https://github.com/atc0005/check-cert/releases/tag/v0.15.9
