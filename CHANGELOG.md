@@ -26,6 +26,18 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.17.1] - 2024-04-08
+
+### Changed
+
+- (GH-825) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.15.4 to go-ci-oldstable-build-v0.16.0 in /dependabot/docker/builds
+- (GH-827) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.16.0 to go-ci-oldstable-build-v0.16.1 in /dependabot/docker/builds
+- (GH-828) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.16.1 to go-ci-oldstable-build-v0.19.0 in /dependabot/docker/builds
+- (GH-830) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.19.0 to go-ci-oldstable-build-v0.20.0 in /dependabot/docker/builds
+- (GH-834) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.0 to go-ci-oldstable-build-v0.20.1 in /dependabot/docker/builds
+- (GH-835) Go Dependency: Bump golang.org/x/sys from 0.18.0 to 0.19.0
+- (GH-832) Go Runtime: Bump golang from 1.21.8 to 1.21.9 in /dependabot/docker/go
+
 ## [v0.17.0] - 2024-03-15
 
 ### Added
@@ -1628,7 +1640,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.17.1...HEAD
+[v0.17.1]: https://github.com/atc0005/check-cert/releases/tag/v0.17.1
 [v0.17.0]: https://github.com/atc0005/check-cert/releases/tag/v0.17.0
 [v0.16.1]: https://github.com/atc0005/check-cert/releases/tag/v0.16.1
 [v0.16.0]: https://github.com/atc0005/check-cert/releases/tag/v0.16.0
