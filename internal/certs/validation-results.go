@@ -706,7 +706,7 @@ func (ccvr CertChainValidationResults) Report() string {
 	// Ensure results are sorted prior to generated report output.
 	ccvr.Sort()
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&summary,
 		"%s%sPROBLEM RESULTS:%s",
 		nagios.CheckOutputEOL,
@@ -716,7 +716,7 @@ func (ccvr CertChainValidationResults) Report() string {
 
 	switch {
 	case !ccvr.HasFailed():
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&summary,
 			"%s* None%s",
 			nagios.CheckOutputEOL,
@@ -725,7 +725,7 @@ func (ccvr CertChainValidationResults) Report() string {
 	default:
 		for _, result := range ccvr {
 			if !result.IsOKState() {
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					&summary,
 					// "\xE2\x9B\x94 [!!] %s%s",
 					"%s[!!] %s%s",
@@ -737,7 +737,7 @@ func (ccvr CertChainValidationResults) Report() string {
 		}
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&summary,
 		"%s%sIGNORED RESULTS:%s",
 		nagios.CheckOutputEOL,
@@ -747,7 +747,7 @@ func (ccvr CertChainValidationResults) Report() string {
 
 	switch {
 	case !ccvr.HasIgnored():
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&summary,
 			"%s* None%s",
 			nagios.CheckOutputEOL,
@@ -756,7 +756,7 @@ func (ccvr CertChainValidationResults) Report() string {
 	default:
 		for _, result := range ccvr {
 			if result.IsIgnored() {
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					&summary,
 					// "\u23ED\uFE0F [--] %s%s",
 					"%s[--] %s%s",
@@ -768,7 +768,7 @@ func (ccvr CertChainValidationResults) Report() string {
 		}
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&summary,
 		"%s%sSUCCESS RESULTS:%s",
 		nagios.CheckOutputEOL,
@@ -778,7 +778,7 @@ func (ccvr CertChainValidationResults) Report() string {
 
 	switch {
 	case !ccvr.HasSucceeded():
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&summary,
 			"%s* None%s",
 			nagios.CheckOutputEOL,
@@ -787,7 +787,7 @@ func (ccvr CertChainValidationResults) Report() string {
 	default:
 		for _, result := range ccvr {
 			if result.IsSucceeded() {
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					&summary,
 					// "\xE2\x9C\x85 [OK] %s%s",
 					"%s[OK] %s%s",

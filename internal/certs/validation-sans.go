@@ -395,7 +395,7 @@ func (slvr SANsListValidationResult) StatusDetail() string {
 			unexpected = strings.Join(slvr.unmatchedSANsEntriesFromCert, ", ")
 		}
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&detail,
 			"missing: [%s], unexpected: [%s]",
 			missing,
