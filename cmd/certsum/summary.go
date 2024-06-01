@@ -49,20 +49,20 @@ func printSummaryHighLevel(
 	switch {
 	case hasHostNameVal:
 		// Header row in output
-		fmt.Fprintf(tw,
+		_, _ = fmt.Fprintf(tw,
 			"Host (Name/FQDN)\tIP Addr\tPort\tSubject or SANs\tStatus\tChain Summary\tSerial\n")
 
 		// Separator row
-		fmt.Fprintln(tw,
+		_, _ = fmt.Fprintln(tw,
 			"---\t---\t---\t---\t---\t---\t---")
 
 	default:
 		// Header row in output
-		fmt.Fprintf(tw,
+		_, _ = fmt.Fprintf(tw,
 			"Host\tPort\tSubject or SANs\tStatus\tChain Summary\tSerial\n")
 
 		// Separator row
-		fmt.Fprintln(tw,
+		_, _ = fmt.Fprintln(tw,
 			"---\t---\t---\t---\t---\t---")
 	}
 
@@ -109,7 +109,7 @@ func printSummaryHighLevel(
 
 		switch {
 		case hasHostNameVal:
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				tw,
 				"%v\t%v\t%v\t%v\t%s\t%v\t%v\n",
 				certChain.Name,
@@ -121,7 +121,7 @@ func printSummaryHighLevel(
 				certs.FormatCertSerialNumber(certChain.Certs[0].SerialNumber),
 			)
 		default:
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				tw,
 				"%v\t%v\t%v\t%s\t%v\t%v\n",
 				certChain.IPAddress,
@@ -135,7 +135,7 @@ func printSummaryHighLevel(
 
 	}
 
-	fmt.Fprintln(tw)
+	_, _ = fmt.Fprintln(tw)
 	if err := tw.Flush(); err != nil {
 		log.Printf(
 			"error occurred flushing tabwriter: %v",
@@ -182,20 +182,20 @@ func printSummaryDetailedLevel(
 	switch {
 	case hasHostNameVal:
 		// Header row in output
-		fmt.Fprintf(tw,
+		_, _ = fmt.Fprintf(tw,
 			"Host (Name/FQDN)\tIP Addr\tPort\tSubject or SANs\tStatus (Type)\tSummary\tSerial\n")
 
 		// Separator row
-		fmt.Fprintln(tw,
+		_, _ = fmt.Fprintln(tw,
 			"---\t---\t---\t---\t---\t---\t---")
 
 	default:
 		// Header row in output
-		fmt.Fprintf(tw,
+		_, _ = fmt.Fprintf(tw,
 			"Host\tPort\tSubject or SANs\tStatus (Type)\tSummary\tSerial\n")
 
 		// Separator row
-		fmt.Fprintln(tw,
+		_, _ = fmt.Fprintln(tw,
 			"---\t---\t---\t---\t---\t---")
 	}
 
@@ -230,7 +230,7 @@ func printSummaryDetailedLevel(
 
 			switch {
 			case hasHostNameVal:
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					tw,
 					"%v\t%v\t%v\t%v\t%s (%s)\t%v\t%v\n",
 					certChain.Name,
@@ -243,7 +243,7 @@ func printSummaryDetailedLevel(
 					certs.FormatCertSerialNumber(cert.SerialNumber),
 				)
 			default:
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					tw,
 					"%v\t%v\t%v\t%s (%s)\t%v\t%v\n",
 					certChain.IPAddress,
@@ -260,7 +260,7 @@ func printSummaryDetailedLevel(
 
 	}
 
-	fmt.Fprintln(tw)
+	_, _ = fmt.Fprintln(tw)
 	if err := tw.Flush(); err != nil {
 		log.Printf(
 			"error occurred flushing tabwriter: %v",
