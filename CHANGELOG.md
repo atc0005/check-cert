@@ -26,6 +26,22 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.17.3] - 2024-06-06
+
+### Changed
+
+- (GH-856) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.4 to go-ci-oldstable-build-v0.20.5 in /dependabot/docker/builds
+- (GH-861) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.5 to go-ci-oldstable-build-v0.20.6 in /dependabot/docker/builds
+- (GH-871) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.6 to go-ci-oldstable-build-v0.20.7 in /dependabot/docker/builds
+- (GH-859) Go Dependency: Bump github.com/rs/zerolog from 1.32.0 to 1.33.0
+- (GH-868) Go Dependency: Bump golang.org/x/sys from 0.20.0 to 0.21.0
+- (GH-869) Go Runtime: Bump golang from 1.21.10 to 1.21.11 in /dependabot/docker/go
+
+### Fixed
+
+- (GH-863) Remove inactive maligned linter
+- (GH-864) Fix errcheck linting errors
+
 ## [v0.17.2] - 2024-05-11
 
 ### Changed
@@ -1650,7 +1666,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.17.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.17.3...HEAD
+[v0.17.3]: https://github.com/atc0005/check-cert/releases/tag/v0.17.3
 [v0.17.2]: https://github.com/atc0005/check-cert/releases/tag/v0.17.2
 [v0.17.1]: https://github.com/atc0005/check-cert/releases/tag/v0.17.1
 [v0.17.0]: https://github.com/atc0005/check-cert/releases/tag/v0.17.0
