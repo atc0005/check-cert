@@ -26,6 +26,16 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.17.6] - 2024-08-21
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-920) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.8 to go-ci-oldstable-build-v0.21.9 in /dependabot/docker/builds
+- (GH-923) Go Runtime: Bump golang from 1.21.13 to 1.22.6 in /dependabot/docker/go
+- (GH-922) Update project to Go 1.22 series
+
 ## [v0.17.5] - 2024-08-13
 
 ### Changed
@@ -1704,7 +1714,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.17.5...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.17.6...HEAD
+[v0.17.6]: https://github.com/atc0005/check-cert/releases/tag/v0.17.6
 [v0.17.5]: https://github.com/atc0005/check-cert/releases/tag/v0.17.5
 [v0.17.4]: https://github.com/atc0005/check-cert/releases/tag/v0.17.4
 [v0.17.3]: https://github.com/atc0005/check-cert/releases/tag/v0.17.3
