@@ -80,6 +80,20 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 			ignoreExpiredRootCertificatesFlagHelp,
 		)
 
+		flag.BoolVar(
+			&c.IgnoreExpiringIntermediateCertificates,
+			IgnoreExpiringIntermediateCertificatesFlag,
+			defaultIgnoreExpiringIntermediateCertificates,
+			ignoreExpiringIntermediateCertificatesFlagHelp,
+		)
+
+		flag.BoolVar(
+			&c.IgnoreExpiringRootCertificates,
+			IgnoreExpiringRootCertificatesFlag,
+			defaultIgnoreExpiringRootCertificates,
+			ignoreExpiringRootCertificatesFlagHelp,
+		)
+
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+shorthandFlagSuffix)
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
 
