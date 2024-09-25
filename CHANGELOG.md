@@ -26,6 +26,151 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.17.7] - 2024-09-25
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-936) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.11 to go-ci-oldstable-build-v0.21.12 in /dependabot/docker/builds
+- (GH-939) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.12 to go-ci-oldstable-build-v0.21.13 in /dependabot/docker/builds
+- (GH-930) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.9 to go-ci-oldstable-build-v0.21.11 in /dependabot/docker/builds
+- (GH-931) Go Dependency: Bump golang.org/x/sys from 0.24.0 to 0.25.0
+- (GH-934) Go Runtime: Bump golang from 1.22.6 to 1.22.7 in /dependabot/docker/go
+
+## [v0.17.6] - 2024-08-21
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-920) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.8 to go-ci-oldstable-build-v0.21.9 in /dependabot/docker/builds
+- (GH-923) Go Runtime: Bump golang from 1.21.13 to 1.22.6 in /dependabot/docker/go
+- (GH-922) Update project to Go 1.22 series
+
+## [v0.17.5] - 2024-08-13
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-897) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.4 to go-ci-oldstable-build-v0.21.5 in /dependabot/docker/builds
+- (GH-901) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.5 to go-ci-oldstable-build-v0.21.6 in /dependabot/docker/builds
+- (GH-903) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.6 to go-ci-oldstable-build-v0.21.7 in /dependabot/docker/builds
+- (GH-911) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.7 to go-ci-oldstable-build-v0.21.8 in /dependabot/docker/builds
+- (GH-907) Go Dependency: Bump golang.org/x/sys from 0.22.0 to 0.23.0
+- (GH-915) Go Dependency: Bump golang.org/x/sys from 0.23.0 to 0.24.0
+- (GH-910) Go Runtime: Bump golang from 1.21.12 to 1.21.13 in /dependabot/docker/go
+
+#### Other
+
+- (GH-905) Push `REPO_VERSION` var into containers for builds
+
+## [v0.17.4] - 2024-07-10
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-876) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.7 to go-ci-oldstable-build-v0.20.8 in /dependabot/docker/builds
+- (GH-879) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.8 to go-ci-oldstable-build-v0.21.0 in /dependabot/docker/builds
+- (GH-884) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.0 to go-ci-oldstable-build-v0.21.2 in /dependabot/docker/builds
+- (GH-886) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.2 to go-ci-oldstable-build-v0.21.3 in /dependabot/docker/builds
+- (GH-890) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.3 to go-ci-oldstable-build-v0.21.4 in /dependabot/docker/builds
+- (GH-891) Go Dependency: Bump golang.org/x/sys from 0.21.0 to 0.22.0
+- (GH-887) Go Runtime: Bump golang from 1.21.11 to 1.21.12 in /dependabot/docker/go
+
+## [v0.17.3] - 2024-06-06
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-856) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.4 to go-ci-oldstable-build-v0.20.5 in /dependabot/docker/builds
+- (GH-861) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.5 to go-ci-oldstable-build-v0.20.6 in /dependabot/docker/builds
+- (GH-871) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.6 to go-ci-oldstable-build-v0.20.7 in /dependabot/docker/builds
+- (GH-859) Go Dependency: Bump github.com/rs/zerolog from 1.32.0 to 1.33.0
+- (GH-868) Go Dependency: Bump golang.org/x/sys from 0.20.0 to 0.21.0
+- (GH-869) Go Runtime: Bump golang from 1.21.10 to 1.21.11 in /dependabot/docker/go
+
+### Fixed
+
+- (GH-863) Remove inactive maligned linter
+- (GH-864) Fix errcheck linting errors
+
+## [v0.17.2] - 2024-05-11
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-843) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.1 to go-ci-oldstable-build-v0.20.2 in /dependabot/docker/builds
+- (GH-848) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.2 to go-ci-oldstable-build-v0.20.3 in /dependabot/docker/builds
+- (GH-851) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.3 to go-ci-oldstable-build-v0.20.4 in /dependabot/docker/builds
+- (GH-842) Go Dependency: Bump golang.org/x/sys from 0.19.0 to 0.20.0
+- (GH-847) Go Runtime: Bump golang from 1.21.9 to 1.21.10 in /dependabot/docker/go
+
+## [v0.17.1] - 2024-04-08
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-825) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.15.4 to go-ci-oldstable-build-v0.16.0 in /dependabot/docker/builds
+- (GH-827) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.16.0 to go-ci-oldstable-build-v0.16.1 in /dependabot/docker/builds
+- (GH-828) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.16.1 to go-ci-oldstable-build-v0.19.0 in /dependabot/docker/builds
+- (GH-830) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.19.0 to go-ci-oldstable-build-v0.20.0 in /dependabot/docker/builds
+- (GH-834) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.0 to go-ci-oldstable-build-v0.20.1 in /dependabot/docker/builds
+- (GH-835) Go Dependency: Bump golang.org/x/sys from 0.18.0 to 0.19.0
+- (GH-832) Go Runtime: Bump golang from 1.21.8 to 1.21.9 in /dependabot/docker/go
+
+## [v0.17.0] - 2024-03-15
+
+### Added
+
+- (GH-813) Add certificate lifetime metrics
+- (GH-814) Add life remaining percentage to expiration status
+
+### Fixed
+
+- (GH-820) Fix nilness govet linting errors
+
+## [v0.16.1] - 2024-03-07
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-804) Add todo/release label to "Go Runtime" PRs
+- (GH-800) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.15.3 to go-ci-oldstable-build-v0.15.4 in /dependabot/docker/builds
+- (GH-796) Go Dependency: Bump golang.org/x/sys from 0.17.0 to 0.18.0
+- (GH-799) Go Runtime: Bump golang from 1.21.7 to 1.21.8 in /dependabot/docker/go
+
+#### Other
+
+- (GH-793) Update README to explicitly mention arm64 builds
+- (GH-795) Update README indentation
+
+## [v0.16.0] - 2024-02-27
+
+### Added
+
+- (GH-769) Add Linux ARM64 binaries to build and release process
+  - credit: [@GUI](https://github.com/GUI)
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-786) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.15.2 to go-ci-oldstable-build-v0.15.3 in /dependabot/docker/builds
+- (GH-782) canary: bump golang from 1.21.6 to 1.21.7 in /dependabot/docker/go
+- (GH-763) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.9 to go-ci-oldstable-build-v0.15.0 in /dependabot/docker/builds
+- (GH-776) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.15.0 to go-ci-oldstable-build-v0.15.1 in /dependabot/docker/builds
+- (GH-779) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.15.1 to go-ci-oldstable-build-v0.15.2 in /dependabot/docker/builds
+- (GH-784) Update Dependabot PR prefixes (redux)
+- (GH-783) Update Dependabot PR prefixes
+- (GH-781) Update project to Go 1.21 series
+
 ## [v0.15.9] - 2024-02-14
 
 ### Changed
@@ -1581,7 +1726,17 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.15.9...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.17.7...HEAD
+[v0.17.7]: https://github.com/atc0005/check-cert/releases/tag/v0.17.7
+[v0.17.6]: https://github.com/atc0005/check-cert/releases/tag/v0.17.6
+[v0.17.5]: https://github.com/atc0005/check-cert/releases/tag/v0.17.5
+[v0.17.4]: https://github.com/atc0005/check-cert/releases/tag/v0.17.4
+[v0.17.3]: https://github.com/atc0005/check-cert/releases/tag/v0.17.3
+[v0.17.2]: https://github.com/atc0005/check-cert/releases/tag/v0.17.2
+[v0.17.1]: https://github.com/atc0005/check-cert/releases/tag/v0.17.1
+[v0.17.0]: https://github.com/atc0005/check-cert/releases/tag/v0.17.0
+[v0.16.1]: https://github.com/atc0005/check-cert/releases/tag/v0.16.1
+[v0.16.0]: https://github.com/atc0005/check-cert/releases/tag/v0.16.0
 [v0.15.9]: https://github.com/atc0005/check-cert/releases/tag/v0.15.9
 [v0.15.8]: https://github.com/atc0005/check-cert/releases/tag/v0.15.8
 [v0.15.7]: https://github.com/atc0005/check-cert/releases/tag/v0.15.7
