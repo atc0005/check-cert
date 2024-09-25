@@ -134,14 +134,25 @@ type CertChainValidationOptions struct {
 	// Names (SANs) validation against a leaf certificate in a chain.
 	IgnoreValidationResultSANs bool
 
+	// IgnoreExpiringIntermediateCertificates tracks whether a request was
+	// made to ignore validation check results for certificate expiration
+	// against intermediate certificates in a certificate chain which are
+	// expiring.
+	IgnoreExpiringIntermediateCertificates bool
+
+	// IgnoreExpiringRootCertificates tracks whether a request was made to
+	// ignore validation check results for certificate expiration against root
+	// certificates in a certificate chain which are expiring.
+	IgnoreExpiringRootCertificates bool
+
 	// IgnoreExpiredIntermediateCertificates tracks whether a request was made
 	// to ignore validation check results for certificate expiration against
-	// intermediate certificates in a certificate chain.
+	// intermediate certificates in a certificate chain which have expired.
 	IgnoreExpiredIntermediateCertificates bool
 
 	// IgnoreExpiredRootCertificates tracks whether a request was made to
 	// ignore validation check results for certificate expiration against root
-	// certificates in a certificate chain.
+	// certificates in a certificate chain which have expired.
 	IgnoreExpiredRootCertificates bool
 }
 
@@ -816,9 +827,9 @@ func FormatCertSerialNumber(sn *big.Int) string {
 
 // ExpirationStatus receives a certificate and the expiration threshold values
 // for CRITICAL and WARNING states and returns a human-readable string
-// indicating the overall status at a glance. If requested, an expired
-// certificate is marked as ignored.
-func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning time.Time, ignoreExpired bool) string {
+// indicating the overall status at a glance. If requested, an expiring or
+// expired certificate is marked as ignored.
+func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning time.Time, ignoreExpiration bool) string {
 	var expiresText string
 	certExpiration := cert.NotAfter
 
@@ -828,7 +839,7 @@ func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning 
 	}
 
 	switch {
-	case certExpiration.Before(time.Now()) && ignoreExpired:
+	case certExpiration.Before(time.Now()) && ignoreExpiration:
 		expiresText = fmt.Sprintf(
 			"[EXPIRED, IGNORED] %s%s",
 			FormattedExpiration(certExpiration),
@@ -840,10 +851,22 @@ func ExpirationStatus(cert *x509.Certificate, ageCritical time.Time, ageWarning 
 			FormattedExpiration(certExpiration),
 			lifeRemainingText,
 		)
+	case certExpiration.Before(ageCritical) && ignoreExpiration:
+		expiresText = fmt.Sprintf(
+			"[EXPIRING, IGNORED] %s%s",
+			FormattedExpiration(certExpiration),
+			lifeRemainingText,
+		)
 	case certExpiration.Before(ageCritical):
 		expiresText = fmt.Sprintf(
 			"[%s] %s%s",
 			nagios.StateCRITICALLabel,
+			FormattedExpiration(certExpiration),
+			lifeRemainingText,
+		)
+	case certExpiration.Before(ageWarning) && ignoreExpiration:
+		expiresText = fmt.Sprintf(
+			"[EXPIRING, IGNORED] %s%s",
 			FormattedExpiration(certExpiration),
 			lifeRemainingText,
 		)
@@ -874,6 +897,8 @@ func ShouldCertExpirationBeIgnored(
 	cert *x509.Certificate,
 	certChain []*x509.Certificate,
 	validationOptions CertChainValidationOptions,
+	ageCriticalThreshold time.Time,
+	ageWarningThreshold time.Time,
 ) bool {
 
 	if validationOptions.IgnoreValidationResultExpiration {
@@ -885,10 +910,20 @@ func ShouldCertExpirationBeIgnored(
 			validationOptions.IgnoreExpiredRootCertificates {
 			return true
 		}
+
+		if IsExpiringCert(cert, ageCriticalThreshold, ageWarningThreshold) &&
+			validationOptions.IgnoreExpiringRootCertificates {
+			return true
+		}
 	}
 	if IsIntermediateCert(cert, certChain) {
 		if IsExpiredCert(cert) &&
 			validationOptions.IgnoreExpiredIntermediateCertificates {
+			return true
+		}
+
+		if IsExpiringCert(cert, ageCriticalThreshold, ageWarningThreshold) &&
+			validationOptions.IgnoreExpiringIntermediateCertificates {
 			return true
 		}
 	}
@@ -1117,7 +1152,13 @@ func GenerateCertChainReport(
 			certificate,
 			ageCriticalThreshold,
 			ageWarningThreshold,
-			ShouldCertExpirationBeIgnored(certificate, certChain, validationOptions),
+			ShouldCertExpirationBeIgnored(
+				certificate,
+				certChain,
+				validationOptions,
+				ageCriticalThreshold,
+				ageWarningThreshold,
+			),
 		)
 
 		fingerprints := struct {
