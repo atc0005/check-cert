@@ -26,6 +26,12 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.18.0] - 2024-09-25
+
+### Added
+
+- (GH-947) Add support for ignoring expiring non-leaf certs
+
 ## [v0.17.7] - 2024-09-25
 
 ### Changed
@@ -1726,7 +1732,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.17.7...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.18.0...HEAD
+[v0.18.0]: https://github.com/atc0005/check-cert/releases/tag/v0.18.0
 [v0.17.7]: https://github.com/atc0005/check-cert/releases/tag/v0.17.7
 [v0.17.6]: https://github.com/atc0005/check-cert/releases/tag/v0.17.6
 [v0.17.5]: https://github.com/atc0005/check-cert/releases/tag/v0.17.5
