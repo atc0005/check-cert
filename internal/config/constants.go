@@ -53,6 +53,8 @@ const (
 	listIgnoredErrorsFlagHelp                                string = "Toggles emission of ignored validation check result errors. Disabled by default to reduce confusion."
 	ignoreExpiredIntermediateCertificatesFlagHelp            string = "Whether expired intermediate certificates should be ignored."
 	ignoreExpiredRootCertificatesFlagHelp                    string = "Whether expired root certificates should be ignored."
+	ignoreExpiringIntermediateCertificatesFlagHelp           string = "Whether expiring intermediate certificates should be ignored."
+	ignoreExpiringRootCertificatesFlagHelp                   string = "Whether expiring root certificates should be ignored."
 )
 
 // shorthandFlagSuffix is appended to short flag help text to emphasize that
@@ -71,8 +73,10 @@ const (
 	// certificate chain validation state.
 	IgnoreHostnameVerificationFailureIfEmptySANsListFlag string = "ignore-hostname-verification-if-empty-sans"
 
-	IgnoreExpiredIntermediateCertificatesFlag string = "ignore-expired-intermediate-certs"
-	IgnoreExpiredRootCertificatesFlag         string = "ignore-expired-root-certs"
+	IgnoreExpiredIntermediateCertificatesFlag  string = "ignore-expired-intermediate-certs"
+	IgnoreExpiredRootCertificatesFlag          string = "ignore-expired-root-certs"
+	IgnoreExpiringIntermediateCertificatesFlag string = "ignore-expiring-intermediate-certs"
+	IgnoreExpiringRootCertificatesFlag         string = "ignore-expiring-root-certs"
 
 	VersionFlagLong  string = "version"
 	VerboseFlagLong  string = "verbose"
@@ -168,6 +172,13 @@ const (
 
 	// Default choice of whether expired root certificates should be ignored.
 	defaultIgnoreExpiredRootCertificates bool = false
+
+	// Default choice of whether expiring intermediate certificates should be
+	// ignored.
+	defaultIgnoreExpiringIntermediateCertificates bool = false
+
+	// Default choice of whether expiring root certificates should be ignored.
+	defaultIgnoreExpiringRootCertificates bool = false
 
 	// Whether validation check result errors should be included in the final
 	// plugin report output. By default, ignored errors are not included as

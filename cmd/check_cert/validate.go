@@ -92,9 +92,11 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 	}
 
 	expirationValidationOptions := certs.CertChainValidationOptions{
-		IgnoreExpiredIntermediateCertificates: cfg.IgnoreExpiredIntermediateCertificates,
-		IgnoreExpiredRootCertificates:         cfg.IgnoreExpiredRootCertificates,
-		IgnoreValidationResultExpiration:      !cfg.ApplyCertExpirationValidationResults(),
+		IgnoreExpiredIntermediateCertificates:  cfg.IgnoreExpiredIntermediateCertificates,
+		IgnoreExpiredRootCertificates:          cfg.IgnoreExpiredRootCertificates,
+		IgnoreExpiringIntermediateCertificates: cfg.IgnoreExpiringIntermediateCertificates,
+		IgnoreExpiringRootCertificates:         cfg.IgnoreExpiringRootCertificates,
+		IgnoreValidationResultExpiration:       !cfg.ApplyCertExpirationValidationResults(),
 	}
 
 	log.Debug().

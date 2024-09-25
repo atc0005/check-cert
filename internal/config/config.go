@@ -318,6 +318,14 @@ type Config struct {
 	// failure.
 	IgnoreHostnameVerificationFailureIfEmptySANsList bool
 
+	// IgnoreExpiringIntermediateCertificates indicates whether expiring
+	// intermediate certificates should be ignored.
+	IgnoreExpiringIntermediateCertificates bool
+
+	// IgnoreExpiringRootCertificates indicates whether expiring root
+	// certificates should be ignored.
+	IgnoreExpiringRootCertificates bool
+
 	// IgnoreExpiredIntermediateCertificates indicates whether expired
 	// intermediate certificates should be ignored.
 	IgnoreExpiredIntermediateCertificates bool
