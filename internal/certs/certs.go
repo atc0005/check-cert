@@ -8,6 +8,7 @@
 package certs
 
 import (
+	"bytes"
 	"crypto"
 
 	// We use this to verify MD5WithRSA signatures.
@@ -95,6 +96,34 @@ var (
 	// configuration validation requires that at least one validation check is
 	// performed.
 	ErrNoCertValidationResults = errors.New("certificate validation results collection is empty")
+
+	// ErrUnsupportedFileFormat indicates that parsing attempts against a
+	// given file have failed because the file is in an unsupported format.
+	ErrUnsupportedFileFormat = errors.New("unsupported file format")
+
+	// ErrEmptyCertificateFile indicates that decoding/parsing attempts have
+	// failed due to an empty input file.
+	ErrEmptyCertificateFile = errors.New("potentially empty certificate file")
+
+	// ErrPEMParseFailureMalformedCertificate indicates that PEM decoding
+	// attempts have failed due to the assumption that the given input
+	// certificate data is malformed.
+	ErrPEMParseFailureMalformedCertificate = errors.New("potentially malformed certificate")
+
+	// ErrPEMParseFailureEmptyCertificateBlock indicates that PEM decoding
+	// attempts have failed due to what appears to be an empty PEM certificate
+	// block in the given input.
+	//
+	// For example:
+	//
+	// -----BEGIN CERTIFICATE-----
+	// -----END CERTIFICATE-----
+	//
+	//
+	// See also:
+	//
+	//  - https://github.com/smallstep/certinfo/pull/38
+	ErrPEMParseFailureEmptyCertificateBlock = errors.New("potentially empty certificate block")
 )
 
 // ServiceStater represents a type that is capable of evaluating its overall
@@ -178,6 +207,59 @@ type DiscoveredCertChain struct {
 // DiscoveredCertChains is a collection of discovered certificate chains for
 // specified hosts and ports.
 type DiscoveredCertChains []DiscoveredCertChain
+
+// PEM block type values (from preamble).
+//
+// See also:
+//
+//   - https://pkg.go.dev/encoding/pem#Block
+//   - https://8gwifi.org/PemParserFunctions.jsp
+//   - https://stackoverflow.com/questions/5355046/where-is-the-pem-file-format-specified
+//   - https://github.com/openssl/openssl/blob/4f899849ceec7cd8e45da9aa1802df782cf80202/include/openssl/pem.h#L35
+//
+// #nosec G101 -- Ignore false positive matches
+const (
+	PEMBlockTypeCRLBegin           = "-----BEGIN X509 CRL-----"
+	PEMBlockTypeCRLEnd             = "-----END X509 CRL-----"
+	PEMBlockTypeCRTBegin           = "-----BEGIN CERTIFICATE-----"
+	PEMBlockTypeCRTEnd             = "-----END CERTIFICATE-----"
+	PEMBlockTypeCSRBegin           = "-----BEGIN CERTIFICATE REQUEST-----"
+	PEMBlockTypeCSREnd             = "-----END CERTIFICATE REQUEST-----"
+	PEMBlockTypeNewCSRBegin        = "-----BEGIN NEW CERTIFICATE REQUEST-----"
+	PEMBlockTypeNewCSREnd          = "-----END NEW CERTIFICATE REQUEST-----"
+	PEMBlockTypePublicKeyBegin     = "-----BEGIN RSA PUBLIC KEY-----"
+	PEMBlockTypePublicKeyEnd       = "-----END RSA PUBLIC KEY-----"
+	PEMBlockTypeRSAPrivateKeyBegin = "-----BEGIN RSA PRIVATE KEY-----"
+	PEMBlockTypeRSAPrivateKeyEnd   = "-----END RSA PRIVATE KEY-----"
+	PEMBlockTypeDSAPrivateKeyBegin = "-----BEGIN DSA PRIVATE KEY-----"
+	PEMBlockTypeDSAPrivateKeyEnd   = "-----END DSA PRIVATE KEY-----"
+	PEMBlockTypeECPrivateKeyBegin  = "-----BEGIN EC PRIVATE KEY-----"
+	PEMBlockTypeECPrivateKeyEnd    = "-----END EC PRIVATE KEY-----"
+	PEMBlockTypePrivateKeyBegin    = "-----BEGIN PRIVATE KEY-----"
+	PEMBlockTypePrivateKeyEnd      = "-----END PRIVATE KEY-----"
+	PEMBlockTypePKCS7Begin         = "-----BEGIN PKCS7-----"
+	PEMBlockTypePKCS7End           = "-----END PKCS7-----"
+	PEMBlockTypePGPPrivateKeyBegin = "-----BEGIN PGP PRIVATE KEY BLOCK-----"
+	PEMBlockTypePGPPrivateKeyEnd   = "-----END PGP PRIVATE KEY BLOCK-----"
+	PEMBlockTypePGPPublicKeyBegin  = "-----BEGIN PGP PUBLIC KEY BLOCK-----"
+	PEMBlockTypePGPPublicKeyEnd    = "-----END PGP PUBLIC KEY BLOCK-----"
+)
+
+// Human readable values for common PEM block types.
+const (
+	PEMBlockTypeCRL           = "certificate revocation list"
+	PEMBlockTypeCRT           = "PEM encoded certificate"
+	PEMBlockTypeCSR           = "certificate signing request"
+	PEMBlockTypeNewCSR        = "certificate signing request"
+	PEMBlockTypePublicKey     = "RSA public key"
+	PEMBlockTypeRSAPrivateKey = "RSA private key"
+	PEMBlockTypeDSAPrivateKey = "DSA private key"
+	PEMBlockTypeECPrivateKey  = "EC private key"
+	PEMBlockTypePrivateKey    = "private key"
+	PEMBlockTypePKCS7         = "PKCS7"
+	PEMBlockTypePGPPrivateKey = "PGP private key"
+	PEMBlockTypePGPPublicKey  = "PGP public key"
+)
 
 // CertValidityDateLayout is the chosen date layout for displaying certificate
 // validity date/time values across our application.
@@ -289,36 +371,167 @@ func ServiceState(val ServiceStater) nagios.ServiceState {
 }
 
 // GetCertsFromFile is a helper function for retrieving a certificate chain
+// from a specified certificate file. An error is returned if the file format
+// cannot be decoded and parsed. Any trailing non-parsable data is returned
+// for potential further evaluation.
+func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
+	var certChain []*x509.Certificate
+
+	// Anything from the specified file that couldn't be converted to a
+	// certificate chain. While likely not of high value by itself, failure to
+	// parse a certificate file indicates a likely source of trouble.
+	var parseAttemptLeftovers []byte
+
+	// Read in the entire certificate file after first attempting to sanitize
+	// the input file variable contents.
+	certFileData, err := os.ReadFile(filepath.Clean(filename))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Bail if nothing was found.
+	if len(certFileData) == 0 {
+		return nil, nil, fmt.Errorf(
+			"failed to decode %s as certificate file: %w",
+			filename,
+			ErrEmptyCertificateFile,
+		)
+	}
+
+	// Do *NOT* normalize newlines on this content, strip blank lines only. If
+	// applied directly to DER encoded binary file content it will break
+	// parsing.
+	certFileData = textutils.StripBlankLines(certFileData)
+
+	unsupportedCertFormat := func(actualFormat string) ([]*x509.Certificate, []byte, error) {
+		return nil, nil, fmt.Errorf(
+			"failed to decode %s (%s format) as certificate file: %w",
+			filename,
+			actualFormat,
+			ErrUnsupportedFileFormat,
+		)
+	}
+
+	// Attempt to determine cert file type based on initial file contents. As
+	// of GH-862 only two input file formats are supported:
+	//
+	//   - PEM (text) encoded ASN.1 DER
+	//   - binary ASN.1 DER
+	//
+	// We attempt to match other known PEM encoded file formats and provide a
+	// useful error message to help sysadmins with troubleshooting.
+	switch {
+	case bytes.Contains(certFileData, []byte(PEMBlockTypeCRTBegin)):
+		// fmt.Println("File detected as PEM formatted")
+
+		// Attempt to parse as PEM encoded DER certificate file.
+		certChain, parseAttemptLeftovers, err = ParsePEMCertificates(certFileData)
+		if err != nil {
+			return nil, nil, fmt.Errorf(
+				"failed to decode %s as PEM formatted certificate file: %w",
+				filename,
+				err,
+			)
+		}
+
+	case bytes.Contains(certFileData, []byte(PEMBlockTypeCRLBegin)):
+		return unsupportedCertFormat(PEMBlockTypeCRL)
+
+	case bytes.Contains(certFileData, []byte(PEMBlockTypeCSRBegin)):
+		return unsupportedCertFormat(PEMBlockTypeCSR)
+
+	case bytes.Contains(certFileData, []byte(PEMBlockTypeNewCSRBegin)):
+		return unsupportedCertFormat(PEMBlockTypeNewCSR)
+
+	case bytes.Contains(certFileData, []byte(PEMBlockTypePublicKeyBegin)):
+		return unsupportedCertFormat(PEMBlockTypePublicKey)
+
+	case bytes.Contains(certFileData, []byte(PEMBlockTypeRSAPrivateKeyBegin)):
+		return unsupportedCertFormat(PEMBlockTypeRSAPrivateKey)
+
+	case bytes.Contains(certFileData, []byte(PEMBlockTypeDSAPrivateKeyBegin)):
+		return unsupportedCertFormat(PEMBlockTypeDSAPrivateKey)
+
+	case bytes.Contains(certFileData, []byte(PEMBlockTypeECPrivateKeyBegin)):
+		return unsupportedCertFormat(PEMBlockTypeECPrivateKey)
+
+	case bytes.Contains(certFileData, []byte(PEMBlockTypePrivateKeyBegin)):
+		return unsupportedCertFormat(PEMBlockTypePrivateKey)
+
+	case bytes.Contains(certFileData, []byte(PEMBlockTypePKCS7Begin)):
+		return unsupportedCertFormat(PEMBlockTypePKCS7)
+
+	case bytes.Contains(certFileData, []byte(PEMBlockTypePGPPrivateKeyBegin)):
+		return unsupportedCertFormat(PEMBlockTypePGPPrivateKey)
+
+	case bytes.Contains(certFileData, []byte(PEMBlockTypePGPPublicKeyBegin)):
+		return unsupportedCertFormat(PEMBlockTypePGPPublicKey)
+
+	default:
+		// Parse as ASN.1 (binary) DER data.
+		certChain, err = x509.ParseCertificates(certFileData)
+		if err != nil {
+			return nil, nil, fmt.Errorf(
+				"failed to decode %s as ASN.1 (binary) DER formatted certificate file: %w",
+				filename,
+				err,
+			)
+		}
+	}
+
+	return certChain, parseAttemptLeftovers, err
+
+}
+
+// GetCertsFromPEMFile is a helper function for retrieving a certificate chain
 // from a specified PEM formatted certificate file. An error is returned if
 // the file cannot be decoded and parsed (e.g., empty file, not PEM
 // formatted). Any leading non-PEM formatted data is skipped while any
 // trailing non-PEM formatted data is returned for potential further
 // evaluation.
-func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
-
-	var certChain []*x509.Certificate
-
-	// Read in the entire PEM certificate file after first attempting to
-	// sanitize the input file variable contents.
-	pemData, err := os.ReadFile(filepath.Clean(filename))
+func GetCertsFromPEMFile(filename string) ([]*x509.Certificate, []byte, error) {
+	// Read in the entire certificate file after first attempting to sanitize
+	// the input file variable contents.
+	certFileData, err := os.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Grab the first PEM formatted block in our PEM cert file data.
-	block, rest := pem.Decode(pemData)
+	certFileData = textutils.StripBlankLines(certFileData)
+
+	// Attempt to parse as PEM encoded DER certificate file.
+	certChain, parseAttemptLeftovers, err := ParsePEMCertificates(certFileData)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"failed to decode %s as PEM formatted certificate file: %w",
+			filename,
+			err,
+		)
+	}
+
+	return certChain, parseAttemptLeftovers, nil
+}
+
+// ParsePEMCertificates retrieves the given byte slice as a PEM formatted
+// certificate chain. Any leading non-PEM formatted data is skipped while any
+// trailing non-PEM formatted data is returned for potential further
+// evaluation. An error is returned if the given data cannot be decoded and
+// parsed.
+func ParsePEMCertificates(pemData []byte) ([]*x509.Certificate, []byte, error) {
+	var certChain []*x509.Certificate
+
+	// It's safe to normalize EOLs in PEM encoded data, but *not* in DER
+	// data itself.
+	pemData = textutils.NormalizeNewlines(pemData)
+
+	// Grab the first PEM formatted block.
+	block, parseAttemptLeftovers := pem.Decode(pemData)
 
 	switch {
 	case block == nil:
-		return nil, nil, fmt.Errorf(
-			"failed to decode %s as PEM formatted certificate file; potentially malformed certificate",
-			filename,
-		)
+		return nil, nil, ErrPEMParseFailureMalformedCertificate
 	case len(block.Bytes) == 0:
-		return nil, nil, fmt.Errorf(
-			"failed to decode %s as PEM formatted certificate file; potentially empty certificate file",
-			filename,
-		)
+		return nil, nil, ErrPEMParseFailureEmptyCertificateBlock
 	}
 
 	// If there is only one certificate (e.g., "server" or "leaf" certificate)
@@ -331,7 +544,7 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 			// fmt.Println("Type of block:", block.Type)
 			// fmt.Println("size of file content:", len(pemData))
-			// fmt.Println("size of rest:", len(rest))
+			// fmt.Println("size of parseAttemptLeftovers:", len(parseAttemptLeftovers))
 
 			cert, err := x509.ParseCertificate(block.Bytes)
 			if err != nil {
@@ -341,10 +554,10 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 			// we got a cert. Let's add it to our list
 			certChain = append(certChain, cert)
 
-			if len(rest) > 0 {
-				block, rest = pem.Decode(rest)
+			if len(parseAttemptLeftovers) > 0 {
+				block, parseAttemptLeftovers = pem.Decode(parseAttemptLeftovers)
 
-				// if we were able to decode the "rest" of the data, then
+				// if we were able to decode the rest of the data, then
 				// iterate again so we can parse it
 				if block != nil {
 					continue
@@ -356,13 +569,12 @@ func GetCertsFromFile(filename string) ([]*x509.Certificate, []byte, error) {
 
 		// we're done attempting to decode the cert file; we have found data
 		// that fails to decode properly
-		if len(rest) > 0 {
+		if len(parseAttemptLeftovers) > 0 {
 			break
 		}
 	}
 
-	return certChain, rest, err
-
+	return certChain, parseAttemptLeftovers, nil
 }
 
 // IsExpiredCert receives a x509 certificate and returns a boolean value
