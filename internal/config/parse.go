@@ -16,10 +16,6 @@ import (
 
 // parseServerValue evaluates a given string as a potential URL.
 //
-// If the given string does not fail parsing, but is not found to be a valid
-// URL the given string is assigned directly to the Config.Server field as-is
-// for later evaluation.
-//
 // If matched, the parsed host value is used to populate the Config.Server
 // field and the parsed port value (if available) is used to populate the
 // Config.Port field.
@@ -27,6 +23,10 @@ import (
 // The caller is responsible for guarding against overwriting any values
 // already specified by flags in order to provide the documented behavior for
 // specified flags and the URL pattern positional argument.
+//
+// If the given string does not fail parsing, but is not found to be a valid
+// URL or hostname the input string is used as-is to populate the
+// Config.Server field.
 func (c *Config) parseServerValue(serverVal string) error {
 
 	// url.Parse() is very forgiving. All known "valid" values are
@@ -96,9 +96,10 @@ func (c *Config) parseServerValue(serverVal string) error {
 		}
 
 	// If the specified server value was successfully parsed as a URL without
-	// a hostname value (in which case the server value is treated as a
-	// relative URL) we record the specified server value as-is for later
-	// validation.
+	// a hostname value then we record the specified server value as-is
+	// instead of using the parsed result; the specified server value may be a
+	// valid short name, fully-qualified domain name or IP Address of a system
+	// to evaluate.
 	default:
 
 		c.Server = serverVal

@@ -23,6 +23,7 @@ const SkipSANSCheckKeyword string = "SKIPSANSCHECKS"
 // See https://tldp.org/LDP/abs/html/exitcodes.html for additional details.
 const ExitCodeCatchall int = 1
 
+// Flag help text.
 const (
 	versionFlagHelp                                          string = "Whether to display application version and then immediately exit application."
 	sansEntriesFlagHelp                                      string = "One or many names required to be in the Subject Alternate Names (SANs) list for a leaf certificate. If provided, this list of comma-separated values is required for the certificate to pass validation. If the case-insensitive " + SkipSANSCheckKeyword + " keyword is provided the results from this validation check will be flagged as ignored."
@@ -37,7 +38,7 @@ const (
 	timeoutAppInactivityFlagHelp                             string = "The number of seconds the application is allowed to remain inactive (i.e., \"hung\") before it is automatically terminated."
 	scanRateLimitFlagHelp                                    string = "Maximum concurrent port and certificate scans. Remaining scans are queued until an existing scan completes."
 	emitCertTextFlagHelp                                     string = "Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default."
-	filenameFlagHelp                                         string = "Fully-qualified path to a PEM formatted certificate file containing one or more certificates."
+	inputFilenameFlagHelp                                    string = "Fully-qualified path to a PEM (text) or binary DER formatted input file containing one or more certificates."
 	certExpireAgeWarningFlagHelp                             string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state."
 	certExpireAgeCriticalFlagHelp                            string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a CRITICAL state."
 	brandingFlagHelp                                         string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
@@ -55,6 +56,12 @@ const (
 	ignoreExpiredRootCertificatesFlagHelp                    string = "Whether expired root certificates should be ignored."
 	ignoreExpiringIntermediateCertificatesFlagHelp           string = "Whether expiring intermediate certificates should be ignored."
 	ignoreExpiringRootCertificatesFlagHelp                   string = "Whether expiring root certificates should be ignored."
+)
+
+// Flag help text specific to the Copier app type.
+const (
+	outputFilenameFlagHelp  string = "Fully-qualified path to an output file to write one or more PEM (text) encoded certificates."
+	certTypesToKeepFlagHelp string = "List of keywords for certificate types that should be kept from the input certificate chain when saving the output file."
 )
 
 // shorthandFlagSuffix is appended to short flag help text to emphasize that
@@ -95,7 +102,12 @@ const (
 	ApplyValidationResultFlag  string = "apply-validation-result"
 
 	ListIgnoredErrorsFlag             string = "list-ignored-errors"
-	FilenameFlagLong                  string = "filename"
+	FilenameFlagLong                  string = "filename"        // inspector, plugin; potentially deprecated
+	InputFilenameFlagLong             string = "input-filename"  // copier
+	InputFilenameFlagShort            string = "if"              // copier
+	OutputFilenameFlagShort           string = "of"              // copier
+	OutputFilenameFlagLong            string = "output-filename" // copier
+	CertTypesToKeepFlagLong           string = "keep"            // copier
 	EmitCertTextFlagLong              string = "text"
 	TimeoutFlagLong                   string = "timeout"
 	TimeoutFlagShort                  string = "t"
@@ -139,6 +151,15 @@ const (
 	ValidationKeywordSANsList   string = "sans"
 )
 
+// Certificate type keywords used when filtering specific certificate types
+// for the output file.
+const (
+	CertTypeAll          string = "all"
+	CertTypeLeaf         string = "leaf"
+	CertTypeIntermediate string = "intermediate"
+	CertTypeRoot         string = "root"
+)
+
 // Default flag settings if not overridden by user input
 const (
 	defaultLogLevel              string = "info"
@@ -146,7 +167,7 @@ const (
 	defaultDNSName               string = ""
 	defaultPort                  int    = 443
 	defaultEmitCertText          bool   = false
-	defaultFilename              string = ""
+	defaultFilename              string = "" // inspector, plugin; potentially deprecated
 	defaultBranding              bool   = false
 	defaultVerboseOutput         bool   = false
 	defaultDisplayVersionAndExit bool   = false
@@ -206,6 +227,13 @@ const (
 	defaultApplyCertSANsListValidationResults bool = true
 )
 
+// Constants specific to the copier app.
+const (
+	defaultCertTypesToKeep string = "all"
+	defaultInputFilename   string = "" // future: shared by all apps reading an input file
+	defaultOutputFilename  string = ""
+)
+
 // Constants specific to certsum.
 const (
 	// Default timeout (in milliseconds) used when testing whether a TCP port
@@ -252,6 +280,7 @@ const (
 const (
 	appTypePlugin    string = "plugin"
 	appTypeInspector string = "inspector"
+	appTypeCopier    string = "copier"
 	appTypeScanner   string = "scanner"
 )
 
