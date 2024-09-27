@@ -577,6 +577,21 @@ func ParsePEMCertificates(pemData []byte) ([]*x509.Certificate, []byte, error) {
 	return certChain, parseAttemptLeftovers, nil
 }
 
+// WriteCertToPEMFile writes a single certificate to a file in PEM format.
+func WriteCertToPEMFile(file *os.File, cert *x509.Certificate) error {
+	pemBlock := &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: cert.Raw,
+	}
+
+	err := pem.Encode(file, pemBlock)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // IsExpiredCert receives a x509 certificate and returns a boolean value
 // indicating whether the cert has expired.
 func IsExpiredCert(cert *x509.Certificate) bool {

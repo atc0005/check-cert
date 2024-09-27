@@ -37,6 +37,11 @@ contents:
     file_info:
       mode: 0755
 
+  - src: ../../release_assets/cpcert/cpcert-linux-amd64
+    dst: /usr/bin/cpcert
+    file_info:
+      mode: 0755
+
   - src: ../../release_assets/check_cert/check_cert-linux-amd64
     dst: /usr/lib64/nagios/plugins/check_cert
     file_info:

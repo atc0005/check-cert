@@ -23,9 +23,18 @@ import (
 // builds.
 var version = "x.y.z"
 
-// ErrVersionRequested indicates that the user requested application version
-// information.
-var ErrVersionRequested = errors.New("version information requested")
+var (
+	// ErrVersionRequested indicates that the user requested application
+	// version information.
+	ErrVersionRequested = errors.New("version information requested")
+
+	// ErrInvalidPosArgPattern indicates that the user provided an invalid
+	// pattern for a positional argument.
+	ErrInvalidPosArgPattern = errors.New("invalid positional argument pattern")
+
+	// ErrUnsupportedOption indicates that an unsupported option was specified.
+	ErrUnsupportedOption = errors.New("unsupported option")
+)
 
 // AppType represents the type of application that is being
 // configured/initialized. Not all application types will use the same
@@ -47,6 +56,10 @@ type AppType struct {
 	// intended for examining a small set of targets for
 	// informational/troubleshooting purposes.
 	Inspector bool
+
+	// Copier represents an application used for copying or manipulating
+	// certificates.
+	Copier bool
 }
 
 // multiValueStringFlag is a custom type that satisfies the flag.Value
@@ -202,17 +215,35 @@ type Config struct {
 	// comma-separated list.
 	SANsEntries multiValueStringFlag
 
-	// Filename is the fully-qualified path to a file containing one or more
-	// certificates.
-	Filename string
+	// InputFilename is the fully-qualified path to an input file containing
+	// one or more certificates.
+	InputFilename string
 
-	// Server is the fully-qualified domain name of the system running a
-	// certificate-enabled service.
+	// OutputFilename is the fully-qualified path to an output file where one
+	// or more certificates will be written.
+	OutputFilename string
+
+	// Server is the fully-qualified domain name or IP Address of the system
+	// running a certificate-enabled service.
 	Server string
+
+	// PosArgInputPattern is either the fully-qualified domain name or IP
+	// Address of the system running a certificate-enabled service or the
+	// fully-qualified path to an input file containing one or more
+	// certificates.
+	PosArgInputPattern string
+
+	// PosArgOutputPattern is the fully-qualified path to an output file where
+	// one or more certificates will be written.
+	PosArgOutputPattern string
 
 	// hosts is the list of IP Addresses (single and ranges), hostnames or
 	// FQDNs to scan for certs.
 	hosts multiValueHostsFlag
+
+	// certTypesToKeep is the list of certificate types to keep from a given
+	// input certificate chain.
+	certTypesToKeep multiValueStringFlag
 
 	// ScanRateLimit is the maximum number of concurrent port scan attempts.
 	ScanRateLimit int

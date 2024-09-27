@@ -80,7 +80,7 @@ func main() {
 
 	// Honor request to parse filename first
 	switch {
-	case cfg.Filename != "":
+	case cfg.InputFilename != "":
 
 		log.Debug().Msg("Attempting to parse certificate file")
 
@@ -91,7 +91,7 @@ func main() {
 		var parseAttemptLeftovers []byte
 
 		var err error
-		certChain, parseAttemptLeftovers, err = certs.GetCertsFromFile(cfg.Filename)
+		certChain, parseAttemptLeftovers, err = certs.GetCertsFromFile(cfg.InputFilename)
 		if err != nil {
 			log.Error().Err(err).Msg(
 				"Error parsing certificates file")
@@ -100,14 +100,14 @@ func main() {
 			plugin.ServiceOutput = fmt.Sprintf(
 				"%s: Error parsing certificates file %q",
 				nagios.StateCRITICALLabel,
-				cfg.Filename,
+				cfg.InputFilename,
 			)
 			plugin.ExitStatusCode = nagios.StateCRITICALExitCode
 
 			return
 		}
 
-		certChainSource = cfg.Filename
+		certChainSource = cfg.InputFilename
 
 		log.Debug().Msg("Certificate file parsed")
 
@@ -118,18 +118,18 @@ func main() {
 			plugin.AddError(fmt.Errorf(
 				"%d unknown/unparsed bytes remaining at end of cert file %q",
 				len(parseAttemptLeftovers),
-				cfg.Filename,
+				cfg.InputFilename,
 			))
 			plugin.ServiceOutput = fmt.Sprintf(
 				"%s: Unknown data encountered while parsing certificates file %q",
 				nagios.StateWARNINGLabel,
-				cfg.Filename,
+				cfg.InputFilename,
 			)
 
 			plugin.LongServiceOutput = fmt.Sprintf(
 				"The following text from the %q certificate file failed to parse"+
 					" and is provided here for troubleshooting purposes:%s%s%s",
-				cfg.Filename,
+				cfg.InputFilename,
 				nagios.CheckOutputEOL,
 				nagios.CheckOutputEOL,
 				string(parseAttemptLeftovers),
@@ -353,7 +353,7 @@ func main() {
 		// both cases?
 		var template string
 		switch {
-		case cfg.Filename != "":
+		case cfg.InputFilename != "":
 			template = "%d certs found in %s%s%s"
 		default:
 			template = "%d certs retrieved for %s%s%s"

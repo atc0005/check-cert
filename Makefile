@@ -24,7 +24,7 @@
 SHELL := /bin/bash
 
 # Space-separated list of cmd/BINARY_NAME directories to build
-WHAT 					:= check_cert lscert certsum
+WHAT 					:= check_cert lscert certsum cpcert
 
 PROJECT_NAME			:= check-cert
 
