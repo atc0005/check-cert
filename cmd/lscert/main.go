@@ -63,19 +63,19 @@ func main() {
 
 	// Honor request to parse filename first
 	switch {
-	case cfg.Filename != "":
+	case cfg.InputFilename != "":
 
 		log.Debug().Msg("Attempting to retrieve certificates from file")
 
 		var err error
-		certChain, parseAttemptLeftovers, err = certs.GetCertsFromFile(cfg.Filename)
+		certChain, parseAttemptLeftovers, err = certs.GetCertsFromFile(cfg.InputFilename)
 		if err != nil {
 			log.Error().Err(err).Msg(
 				"Error parsing certificates file")
 			os.Exit(config.ExitCodeCatchall)
 		}
 
-		certChainSource = cfg.Filename
+		certChainSource = cfg.InputFilename
 
 	case cfg.Server != "":
 
@@ -216,7 +216,7 @@ func main() {
 		// was pulled from a server we "retrieved" it.
 		var template string
 		switch {
-		case cfg.Filename != "":
+		case cfg.InputFilename != "":
 			template = "- %s: %d certs found in %s\n"
 		default:
 			template = "- %s: %d certs retrieved for %s\n"
@@ -409,10 +409,11 @@ func main() {
 	if len(parseAttemptLeftovers) > 0 {
 		textutils.PrintHeader("CERTIFICATES | UNKNOWN data in cert file")
 
-		fmt.Printf("The following data (converted to text) was found in the %q file"+
-			" and is provided here in case it is useful for"+
-			" troubleshooting purposes.\n\n",
-			cfg.Filename,
+		fmt.Printf(
+			"The following data (converted to text) was found in the %q input"+
+				" file and is provided here in case it is useful for"+
+				" troubleshooting purposes.\n\n",
+			cfg.InputFilename,
 		)
 
 		fmt.Println(string(parseAttemptLeftovers))

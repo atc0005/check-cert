@@ -57,6 +57,17 @@ func (c Config) Hosts() []netutils.HostPattern {
 	return []netutils.HostPattern{}
 }
 
+// CertTypesToKeep returns the user-specified list of certificate types to
+// keep when copying a given certificates chain or the default value if not
+// specified.
+func (c Config) CertTypesToKeep() []string {
+	if c.certTypesToKeep != nil {
+		return c.certTypesToKeep
+	}
+
+	return []string{defaultCertTypesToKeep}
+}
+
 // ApplyCertHostnameValidationResults indicates whether certificate hostname
 // validation check results should be applied when performing final plugin
 // state evaluation. Precedence is given for explicit request to ignore this
@@ -174,6 +185,17 @@ func supportedValidationCheckResultKeywords() []string {
 		ValidationKeywordHostname,
 		ValidationKeywordExpiration,
 		ValidationKeywordSANsList,
+	}
+}
+
+// supportedCertTypeFilterKeywords returns a list of valid certificate type
+// keywords used by copier type applications in this project.
+func supportedCertTypeFilterKeywords() []string {
+	return []string{
+		CertTypeAll,
+		CertTypeLeaf,
+		CertTypeIntermediate,
+		CertTypeRoot,
 	}
 }
 

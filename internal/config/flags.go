@@ -99,7 +99,7 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 
 		flag.BoolVar(&c.ListIgnoredValidationCheckResultErrors, ListIgnoredErrorsFlag, defaultListIgnoredValidationCheckResultErrors, listIgnoredErrorsFlagHelp)
 
-		flag.StringVar(&c.Filename, FilenameFlagLong, defaultFilename, filenameFlagHelp)
+		flag.StringVar(&c.InputFilename, FilenameFlagLong, defaultFilename, inputFilenameFlagHelp)
 
 		flag.StringVar(&c.Server, ServerFlagShort, defaultServer, serverFlagHelp+shorthandFlagSuffix)
 		flag.StringVar(&c.Server, ServerFlagLong, defaultServer, serverFlagHelp)
@@ -121,6 +121,12 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 			ApplyValidationResultFlag,
 			supportedValuesFlagHelpText(applyValidationResultsFlagHelp, supportedValidationCheckResultKeywords()),
 		)
+
+		flag.IntVar(&c.AgeWarning, AgeWarningFlagShort, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp+shorthandFlagSuffix)
+		flag.IntVar(&c.AgeWarning, AgeWarningFlagLong, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
+
+		flag.IntVar(&c.AgeCritical, AgeCriticalFlagShort, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp+shorthandFlagSuffix)
+		flag.IntVar(&c.AgeCritical, AgeCriticalFlagLong, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
 
 	case appType.Inspector:
 
@@ -152,8 +158,66 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+shorthandFlagSuffix)
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
 
-		flag.StringVar(&c.Filename, FilenameFlagLong, defaultFilename, filenameFlagHelp)
+		flag.StringVar(&c.InputFilename, FilenameFlagLong, defaultInputFilename, inputFilenameFlagHelp)
 		flag.BoolVar(&c.EmitCertText, EmitCertTextFlagLong, defaultEmitCertText, emitCertTextFlagHelp)
+
+		flag.StringVar(&c.Server, ServerFlagShort, defaultServer, serverFlagHelp+shorthandFlagSuffix)
+		flag.StringVar(&c.Server, ServerFlagLong, defaultServer, serverFlagHelp)
+
+		flag.StringVar(&c.DNSName, DNSNameFlagShort, defaultDNSName, dnsNameFlagHelp)
+		flag.StringVar(&c.DNSName, DNSNameFlagLong, defaultDNSName, dnsNameFlagHelp)
+
+		flag.IntVar(&c.Port, PortFlagShort, defaultPort, portFlagHelp+shorthandFlagSuffix)
+		flag.IntVar(&c.Port, PortFlagLong, defaultPort, portFlagHelp)
+
+		flag.IntVar(&c.AgeWarning, AgeWarningFlagShort, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp+shorthandFlagSuffix)
+		flag.IntVar(&c.AgeWarning, AgeWarningFlagLong, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
+
+		flag.IntVar(&c.AgeCritical, AgeCriticalFlagShort, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp+shorthandFlagSuffix)
+		flag.IntVar(&c.AgeCritical, AgeCriticalFlagLong, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
+
+	case appType.Copier:
+
+		// Override the default Help output with a brief lead-in summary of
+		// the expected syntax and project version.
+		//
+		// For this specific application type, flags are required unless the
+		// host/url input and output filename patterns are provided, at which
+		// point flags are optional. Because I'm not sure how to specify this
+		// briefly, all three are listed as optional.
+		//
+		// https://stackoverflow.com/a/36787811/903870
+		// https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
+		usageTextHeaderTmpl = "%s\n\nUsage:  %s [flags] [input_pattern] [output_file]\n\n%s\n\nFlags:\n"
+
+		positionalArgRequirements = fmt.Sprintf(
+			"\nPositional Argument (\"input_pattern\" or \"output_pattern\") Requirements:\n\n"+
+				"- specifying the %q, %q or %q flags together with positional"+
+				" arguments is unsupported"+
+				"\n- if the %q flag is specified, its value will be"+
+				" ignored if a port is provided in the given URL pattern",
+			ServerFlagLong,
+			InputFilenameFlagLong,
+			OutputFilenameFlagLong,
+			PortFlagLong,
+		)
+
+		appDescription = "Used to copy and manipulate certificates."
+
+		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+shorthandFlagSuffix)
+		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
+
+		flag.StringVar(&c.InputFilename, InputFilenameFlagShort, defaultInputFilename, inputFilenameFlagHelp+shorthandFlagSuffix)
+		flag.StringVar(&c.InputFilename, InputFilenameFlagLong, defaultInputFilename, inputFilenameFlagHelp)
+
+		flag.StringVar(&c.OutputFilename, OutputFilenameFlagShort, defaultOutputFilename, outputFilenameFlagHelp+shorthandFlagSuffix)
+		flag.StringVar(&c.OutputFilename, OutputFilenameFlagLong, defaultOutputFilename, outputFilenameFlagHelp)
+
+		flag.Var(
+			&c.certTypesToKeep,
+			CertTypesToKeepFlagLong,
+			supportedValuesFlagHelpText(certTypesToKeepFlagHelp, supportedCertTypeFilterKeywords()),
+		)
 
 		flag.StringVar(&c.Server, ServerFlagShort, defaultServer, serverFlagHelp+shorthandFlagSuffix)
 		flag.StringVar(&c.Server, ServerFlagLong, defaultServer, serverFlagHelp)
@@ -207,18 +271,18 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		flag.BoolVar(&c.ShowOverview, ShowOverviewFlagLong, defaultShowOverview, showOverviewFlagHelp)
 		flag.BoolVar(&c.ShowOverview, ShowOverviewFlagShort, defaultShowOverview, showOverviewFlagHelp+shorthandFlagSuffix)
 
+		flag.IntVar(&c.AgeWarning, AgeWarningFlagShort, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp+shorthandFlagSuffix)
+		flag.IntVar(&c.AgeWarning, AgeWarningFlagLong, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
+
+		flag.IntVar(&c.AgeCritical, AgeCriticalFlagShort, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp+shorthandFlagSuffix)
+		flag.IntVar(&c.AgeCritical, AgeCriticalFlagLong, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
+
 	}
 
 	// Shared flags for all application type
 
 	flag.Var(&c.SANsEntries, SANsEntriesFlagShort, sansEntriesFlagHelp+shorthandFlagSuffix)
 	flag.Var(&c.SANsEntries, SANsEntriesFlagLong, sansEntriesFlagHelp)
-
-	flag.IntVar(&c.AgeWarning, AgeWarningFlagShort, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp+shorthandFlagSuffix)
-	flag.IntVar(&c.AgeWarning, AgeWarningFlagLong, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
-
-	flag.IntVar(&c.AgeCritical, AgeCriticalFlagShort, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp+shorthandFlagSuffix)
-	flag.IntVar(&c.AgeCritical, AgeCriticalFlagLong, defaultCertExpireAgeCritical, certExpireAgeCriticalFlagHelp)
 
 	flag.IntVar(&c.timeout, TimeoutFlagShort, defaultConnectTimeout, timeoutConnectFlagHelp+shorthandFlagSuffix)
 	flag.IntVar(&c.timeout, TimeoutFlagLong, defaultConnectTimeout, timeoutConnectFlagHelp)
