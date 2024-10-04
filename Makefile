@@ -208,6 +208,7 @@ goclean:
 	@mkdir -p "$(ASSETS_PATH)"
 	@rm -vf $(wildcard $(ASSETS_PATH)/*/*-linux-*)
 	@rm -vf $(wildcard $(ASSETS_PATH)/*/*-windows-*)
+	@rm -vf $(wildcard $(ASSETS_PATH)/*/*-darwin-*)
 	@rm -vf $(wildcard $(ASSETS_PATH)/packages/*/*.rpm)
 	@rm -vf $(wildcard $(ASSETS_PATH)/packages/*/*.rpm.sha256)
 	@rm -vf $(wildcard $(ASSETS_PATH)/packages/*/*.deb)
@@ -266,8 +267,8 @@ depsinstall:
 
 .PHONY: all
 # https://stackoverflow.com/questions/3267145/makefile-execute-another-target
-## all: generates assets for Linux distros and Windows
-all: clean windows linux
+## all: generates assets for Linux distros, Windows and macOS
+all: clean windows linux darwin
 	@echo "Completed all cross-platform builds ..."
 
 .PHONY: quick
@@ -631,6 +632,114 @@ linux-arm64-links:
 
 	@echo "Completed generating download links for linux arm64 assets"
 
+.PHONY: darwin-amd64-build
+## darwin-amd64-build: builds assets for macOS amd64 systems
+darwin-amd64-build:
+	@echo "Building release assets for darwin amd64 ..."
+
+	@set -e; for target in $(WHAT); do \
+		mkdir -p $(ASSETS_PATH)/$$target && \
+		echo "  building $$target amd64 binary" && \
+		env GOOS=darwin GOARCH=amd64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-darwin-amd64 $(PROJECT_DIR)/cmd/$$target; \
+	done
+
+	@echo "Completed build tasks for darwin amd64"
+
+.PHONY: darwin-amd64-compress
+## darwin-amd64-compress: compresses generated macOS amd64 assets
+darwin-amd64-compress:
+	@echo "Compressing release assets for darwin amd64 ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  compressing $$target amd64 binary" && \
+		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-darwin-amd64 > \
+			$(ASSETS_PATH)/$$target/$$target-darwin-amd64.xz && \
+		rm -f $(ASSETS_PATH)/$$target/$$target-darwin-amd64; \
+	done
+
+	@echo "Completed compress tasks for darwin amd64"
+
+.PHONY: darwin-amd64-checksums
+## darwin-amd64-checksums: generates checksum files for macOS amd64 assets
+darwin-amd64-checksums:
+	@echo "Generating checksum files for darwin amd64 assets ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  generating $$target checksum file" && \
+		cd $(ASSETS_PATH)/$$target && \
+		$(CHECKSUMCMD) $$target-darwin-amd64.xz > $$target-darwin-amd64.xz.sha256 && \
+		cd $$OLDPWD; \
+	done
+
+	@echo "Completed generation of checksum files for darwin amd64"
+
+.PHONY: darwin-amd64-links
+## darwin-amd64-links: generates download URLs for macOS amd64 assets
+darwin-amd64-links:
+	@echo "Generating download links for darwin amd64 assets ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-darwin-amd64.xz" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-darwin-amd64.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+	done
+
+	@echo "Completed generating download links for darwin amd64 assets"
+
+.PHONY: darwin-arm64-build
+## darwin-arm64-build: builds assets for macOS arm64 systems
+darwin-arm64-build:
+	@echo "Building release assets for darwin arm64 ..."
+
+	@set -e; for target in $(WHAT); do \
+		mkdir -p $(ASSETS_PATH)/$$target && \
+		echo "  building $$target arm64 binary" && \
+		env GOOS=darwin GOARCH=arm64 $(BUILDCMD) -o $(ASSETS_PATH)/$$target/$$target-darwin-arm64 $(PROJECT_DIR)/cmd/$$target; \
+	done
+
+	@echo "Completed build tasks for darwin arm64"
+
+.PHONY: darwin-arm64-compress
+## darwin-arm64-compress: compresses generated macOS arm64 assets
+darwin-arm64-compress:
+	@echo "Compressing release assets for darwin arm64 ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  compressing $$target arm64 binary" && \
+		$(COMPRESSCMD) $(ASSETS_PATH)/$$target/$$target-darwin-arm64 > \
+			$(ASSETS_PATH)/$$target/$$target-darwin-arm64.xz && \
+		rm -f $(ASSETS_PATH)/$$target/$$target-darwin-arm64; \
+	done
+
+	@echo "Completed compress tasks for darwin arm64"
+
+.PHONY: darwin-arm64-checksums
+## darwin-arm64-checksums: generates checksum files for macOS arm64 assets
+darwin-arm64-checksums:
+	@echo "Generating checksum files for darwin arm64 assets ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  generating $$target checksum file" && \
+		cd $(ASSETS_PATH)/$$target && \
+		$(CHECKSUMCMD) $$target-darwin-arm64.xz > $$target-darwin-arm64.xz.sha256 && \
+		cd $$OLDPWD; \
+	done
+
+	@echo "Completed generation of checksum files for darwin arm64"
+
+.PHONY: darwin-arm64-links
+## darwin-arm64-links: generates download URLs for macOS arm64 assets
+darwin-arm64-links:
+	@echo "Generating download links for darwin arm64 assets ..."
+
+	@set -e; for target in $(WHAT); do \
+		echo "  generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-darwin-arm64.xz" >> $(ALL_DOWNLOAD_LINKS_FILE) && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-darwin-arm64.xz.sha256" >> $(ALL_DOWNLOAD_LINKS_FILE); \
+	done
+
+	@echo "Completed generating download links for darwin arm64 assets"
+
 .PHONY: linux-x86
 ## linux-x86: generates assets for Linux x86
 linux-x86: linux-x86-build linux-x86-compress linux-x86-checksums
@@ -655,6 +764,26 @@ linux: linux-x86 linux-x64 linux-arm64
 ## linux-links: generates download URLs for Linux x86, x64, and arm64 assets
 linux-links: linux-x86-links linux-x64-links linux-arm64-links
 	@echo "Completed generating download links for linux x86, x64, and arm64 assets"
+
+.PHONY: darwin-amd64
+## darwin-amd64: generates assets for macOS amd64
+darwin-amd64: darwin-amd64-build darwin-amd64-compress darwin-amd64-checksums
+	@echo "Completed all tasks for darwin amd64"
+
+.PHONY: darwin-arm64
+## darwin-arm64: generates assets for macOS arm64
+darwin-arm64: darwin-arm64-build darwin-arm64-compress darwin-arm64-checksums
+	@echo "Completed all tasks for darwin arm64"
+
+.PHONY: darwin
+## darwin: generates assets for macOS amd64 and arm64 systems
+darwin: darwin-amd64 darwin-arm64
+	@echo "Completed all tasks for darwin"
+
+.PHONY: darwin-links
+## darwin-links: generates download URLs for macOS amd64 and arm64 assets
+darwin-links: darwin-amd64-links darwin-arm64-links
+	@echo "Completed generating download links for darwin amd64 and arm64 assets"
 
 .PHONY: packages-stable
 ## packages-stable: generates "stable" release series DEB and RPM packages
@@ -813,7 +942,7 @@ package-links:
 
 .PHONY: links
 ## links: generates download URLs for release assets
-links: windows-x86-links windows-x64-links linux-x86-links linux-x64-links linux-arm64-links package-links
+links: windows-x86-links windows-x64-links linux-x86-links linux-x64-links linux-arm64-links darwin-amd64-links darwin-arm64-links package-links
 	@echo "Completed generating download links for all release assets"
 
 .PHONY: dev-build
@@ -823,7 +952,7 @@ dev-build: clean linux-x64-dev-build packages-dev package-links linux-x64-dev-co
 
 .PHONY: release-build
 ## release-build: generates stable build assets for public release
-release-build: clean windows linux-x86 linux-arm64 packages-dev clean-linux-x64-dev packages-stable linux-x64-compress linux-x64-checksums links
+release-build: clean windows linux-x86 linux-arm64 packages-dev clean-linux-x64-dev packages-stable linux-x64-compress linux-x64-checksums darwin links
 	@echo "Completed all tasks for stable release build"
 
 .PHONY: helper-builder-setup
