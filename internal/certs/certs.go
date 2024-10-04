@@ -1356,6 +1356,18 @@ func GenerateCertChainReport(
 
 	certsTotal := len(certChain)
 
+	sansEntriesLine := func(cert *x509.Certificate) string {
+		if len(cert.DNSNames) > 0 {
+			return fmt.Sprintf(
+				"SANs entries (%d): %s",
+				len(cert.DNSNames),
+				cert.DNSNames,
+			)
+		}
+
+		return "SANs entries: None"
+	}
+
 	for idx, certificate := range certChain {
 
 		certPosition := ChainPosition(certificate, certChain)
@@ -1419,7 +1431,7 @@ func GenerateCertChainReport(
 			certsReport += fmt.Sprintf(
 				"Certificate %d of %d (%s):"+
 					"%s\tName: %s"+
-					"%s\tSANs entries: %s"+
+					"%s\t%s"+
 					"%s\tKeyID: %v"+
 					"%s\tIssuer: %s"+
 					"%s\tIssuerKeyID: %v"+
@@ -1436,7 +1448,7 @@ func GenerateCertChainReport(
 				nagios.CheckOutputEOL,
 				certificate.Subject,
 				nagios.CheckOutputEOL,
-				certificate.DNSNames,
+				sansEntriesLine(certificate),
 				nagios.CheckOutputEOL,
 				textutils.BytesToDelimitedHexStr(certificate.SubjectKeyId, ":"),
 				nagios.CheckOutputEOL,
@@ -1464,7 +1476,7 @@ func GenerateCertChainReport(
 			certsReport += fmt.Sprintf(
 				"Certificate %d of %d (%s):"+
 					"%s\tName: %s"+
-					"%s\tSANs entries: %s"+
+					"%s\t%s"+
 					"%s\tIssuer: %s"+
 					"%s\tSerial: %v"+
 					"%s\tIssued On: %s"+
@@ -1476,7 +1488,7 @@ func GenerateCertChainReport(
 				nagios.CheckOutputEOL,
 				certificate.Subject,
 				nagios.CheckOutputEOL,
-				certificate.DNSNames,
+				sansEntriesLine(certificate),
 				nagios.CheckOutputEOL,
 				certificate.Issuer,
 				nagios.CheckOutputEOL,
