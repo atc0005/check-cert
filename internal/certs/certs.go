@@ -616,6 +616,43 @@ func IsExpiringCert(cert *x509.Certificate, ageCritical time.Time, ageWarning ti
 
 }
 
+// HasLeafCert receives a slice of x509 certificates and indicates whether
+// any of the certificates in the chain are a leaf certificate.
+func HasLeafCert(certChain []*x509.Certificate) bool {
+	for _, cert := range certChain {
+		if IsLeafCert(cert, certChain) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasIntermediateCert receives a slice of x509 certificates and indicates
+// whether any of the certificates in the chain are an intermediate
+// certificate.
+func HasIntermediateCert(certChain []*x509.Certificate) bool {
+	for _, cert := range certChain {
+		if IsIntermediateCert(cert, certChain) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasRootCert receives a slice of x509 certificates and indicates whether any
+// of the certificates in the chain are a root certificate.
+func HasRootCert(certChain []*x509.Certificate) bool {
+	for _, cert := range certChain {
+		if IsRootCert(cert, certChain) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // HasExpiredCert receives a slice of x509 certificates and indicates whether
 // any of the certificates in the chain have expired.
 func HasExpiredCert(certChain []*x509.Certificate) bool {
