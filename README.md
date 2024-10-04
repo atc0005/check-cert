@@ -409,6 +409,13 @@ been tested.
 - Windows 10
 - Ubuntu Linux 18.04+
 - Red Hat Enterprise Linux 7+
+- macOS 11 Big Sur
+  - NOTE: You may need to build from source using an older Go release if your
+    version of macOS is not supported by the current "oldstable" version of Go
+  - "stable" release builds for this project are usually generated from the
+    most recent "oldstable" Go release version while "dev" or "unstable"
+    release builds are generated from the most recent "stable" or release
+    candidate Go release
 
 ## Installation
 
@@ -488,6 +495,10 @@ settings intended to optimize for size and to prevent dynamic linkage.
      - `make linux-x64-build`
    - for use on Linux arm64
      - `make linux-arm64-build`
+   - for use on macOS amd64
+     - `make darwin-amd64-build`
+   - for use on macOS arm64
+     - `make darwin-arm64-build`
 1. Copy the newly compiled binary from the applicable `/tmp` subdirectory path
    (based on the clone instructions in this section) below and deploy where
    needed.
