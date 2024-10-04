@@ -230,6 +230,7 @@ func main() {
 		)
 	}
 
+	hasLeafCert := certs.HasLeafCert(certChain)
 	hostnameValidationResult := certs.ValidateHostname(
 		certChain,
 		cfg.Server,
@@ -237,7 +238,7 @@ func main() {
 		config.IgnoreHostnameVerificationFailureIfEmptySANsListFlag,
 		certs.CertChainValidationOptions{
 			IgnoreHostnameVerificationFailureIfEmptySANsList: cfg.IgnoreHostnameVerificationFailureIfEmptySANsList,
-			IgnoreValidationResultHostname:                   !cfg.ApplyCertHostnameValidationResults(),
+			IgnoreValidationResultHostname:                   !hasLeafCert || cfg.DNSName == "",
 		},
 	)
 
@@ -259,10 +260,21 @@ func main() {
 			Msgf("%s validation ignored", hostnameValidationResult.CheckName())
 
 		fmt.Printf(
-			"- %s: %s %s\n",
+			"- %s: %s %s%s\n",
 			hostnameValidationResult.ServiceState().Label,
 			hostnameValidationResult.Status(),
 			hostnameValidationResult.Overview(),
+			func() string {
+				switch {
+				case hasLeafCert:
+					return fmt.Sprintf(
+						"(use %q flag to force evaluation)",
+						config.DNSNameFlagLong,
+					)
+				default:
+					return "(not supported for this cert type)"
+				}
+			}(),
 		)
 
 	default:
