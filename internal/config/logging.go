@@ -89,12 +89,34 @@ func (c *Config) setupLogging(appType AppType) error {
 			Str("version", Version()).
 			Str("logging_level", c.LoggingLevel).
 			Str("app_type", appTypeInspector).
-			Str("filename", c.Filename).
+			Str("filename", c.InputFilename).
 			Str("server", c.Server).
 			Int("port", c.Port).
 			Str("cert_check_timeout", c.Timeout().String()).
 			Int("age_warning", c.AgeWarning).
 			Int("age_critical", c.AgeCritical).
+			Logger()
+
+	case appType.Copier:
+		// CLI app logging uses ConsoleWriter to generate human-friendly,
+		// colorized output to stdout.
+		consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}
+
+		certTypesToKeep := zerolog.Arr()
+		for _, certType := range c.certTypesToKeep {
+			certTypesToKeep.Str(certType)
+		}
+
+		c.Log = zerolog.New(consoleWriter).With().Timestamp().Caller().
+			Str("version", Version()).
+			Str("logging_level", c.LoggingLevel).
+			Str("app_type", appTypeCopier).
+			Str("input_filename", c.InputFilename).
+			Str("output_filename", c.OutputFilename).
+			Array("cert_types_to_keep", certTypesToKeep).
+			Str("server", c.Server).
+			Int("port", c.Port).
+			Str("cert_fetch_timeout", c.Timeout().String()).
 			Logger()
 
 	case appType.Plugin:
@@ -106,7 +128,7 @@ func (c *Config) setupLogging(appType AppType) error {
 			Str("version", Version()).
 			Str("logging_level", c.LoggingLevel).
 			Str("app_type", appTypePlugin).
-			Str("filename", c.Filename).
+			Str("filename", c.InputFilename).
 			Str("server", c.Server).
 			Int("port", c.Port).
 			Str("cert_check_timeout", c.Timeout().String()).

@@ -17,10 +17,12 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
   - [`check_certs`](#check_certs)
     - [Performance Data](#performance-data)
   - [`lscert`](#lscert)
+  - [`cpcert`](#cpcert)
   - [`certsum`](#certsum)
 - [Features](#features)
   - [`check_cert`](#check_cert)
   - [`lscert`](#lscert-1)
+  - [`cpcert`](#cpcert-1)
   - [`certsum`](#certsum-1)
   - [common](#common)
 - [Changelog](#changelog)
@@ -39,12 +41,16 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
   - [Applying or ignoring validation check results](#applying-or-ignoring-validation-check-results)
     - [`check_cert` plugin](#check_cert-plugin)
     - [`lscert` CLI tool](#lscert-cli-tool)
+    - [`cpcert` CLI tool](#cpcert-cli-tool)
     - [`certsum` CLI tool](#certsum-cli-tool)
   - [Command-line arguments](#command-line-arguments)
     - [`check_cert`](#check_cert-1)
     - [`lscert`](#lscert-2)
       - [Flags](#flags)
       - [Positional Argument](#positional-argument)
+    - [`cpcert`](#cpcert-2)
+      - [Flags](#flags-1)
+      - [Positional Arguments](#positional-arguments)
     - [`certsum`](#certsum-2)
   - [Configuration file](#configuration-file)
 - [Examples](#examples)
@@ -72,6 +78,15 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
     - [WARNING results](#warning-results-1)
     - [CRITICAL results](#critical-results-1)
     - [Reviewing a certificate file](#reviewing-a-certificate-file-1)
+  - [`cpcert` CLI tool](#cpcert-cli-tool-1)
+    - [Using positional arguments](#using-positional-arguments)
+      - [Copying certificates from server](#copying-certificates-from-server)
+      - [Copying certificates from file](#copying-certificates-from-file)
+    - [Using flags](#using-flags)
+      - [Copy everything](#copy-everything)
+      - [Leaf certificate only](#leaf-certificate-only)
+      - [Intermediate certificates only](#intermediate-certificates-only)
+      - [Root certificates only](#root-certificates-only)
   - [`certsum` CLI tool](#certsum-cli-tool-1)
     - [Certificates Overview](#certificates-overview)
     - [CIDR range](#cidr-range)
@@ -90,13 +105,14 @@ submit improvements for review and potential inclusion into the project.
 
 ## Overview
 
-This repo contains various tools used to review, monitor & validate
+This repo contains various tools used to review, copy, monitor & validate
 certificates.
 
 | Tool Name     | Description                                                                                                                |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `check_certs` | Nagios plugin used to monitor & validate certificate chains.                                                               |
 | `lscert`      | CLI app used to generate a summary of certificate chain metadata and validation results.                                   |
+| `cpcert`      | CLI app used to copy and manipulate certificates.                                                                          |
 | `certsum`     | CLI app used to scan one or more given IP ranges or collection of name/FQDN values for certs and provide a summary report. |
 
 ### `check_certs`
@@ -187,6 +203,27 @@ noted unless:
 This hostname validation failure can be ignored if you are only interested in
 viewing the details for the default certificate associated with the IP
 Address.
+
+### `cpcert`
+
+The `cpcert` CLI app is used to copy and manipulate certificates.
+
+Certificates can be copied from:
+
+- a remote service at a specified fully-qualified domain name (e.g.,
+  `www.github.com`) or IP Address and port (e.g., 443)
+- a local certificate "bundle" or standalone leaf certificate file
+
+If specifying a host via IP Address, the default certificate chain (instead of
+the one specific to a dedicated virtual host) will be retrieved unless:
+
+- you also specify the `DNS Name` or `hostname` that you wish to retrieve the
+  certificate for
+- the IP Address is in the Subject Alternate Name (SANs) list for the
+  certificate
+
+Support is provided to filter the given input certificate chain to specified
+certificate types.
 
 ### `certsum`
 
@@ -297,6 +334,14 @@ accessible to this tool. Use FQDNs in order to retrieve certificates using
   - Hostname value for the leaf certificate in a chain
   - Subject Alternate Names (SANs) for the leaf certificate in a chain
 
+### `cpcert`
+
+- Copy certificate chain as-is from remote server
+
+- Filter given input file to specified types of certificates
+  - e.g., "keep leaf cert only"
+  - e.g., "keep intermediates only"
+
 ### `certsum`
 
 - Generate summary of discovered certificates from given hosts (single or IP
@@ -378,6 +423,7 @@ equivalent of `go build`.
 1. [Install][go-docs-install] Go
 1. `go install github.com/atc0005/check-cert/cmd/certsum@latest`
 1. `go install github.com/atc0005/check-cert/cmd/lscert@latest`
+1. `go install github.com/atc0005/check-cert/cmd/cpcert@latest`
 1. `GOBIN="${PWD}" go install github.com/atc0005/check-cert/cmd/check_cert@latest`
 1. `sudo mv check_cert /path/to/plugins/`
    - e.g., `/usr/lib/nagios/plugins/` or `/usr/lib64/nagios/plugins/`,
@@ -432,6 +478,7 @@ settings intended to optimize for size and to prevent dynamic linkage.
      using bundled dependencies in top-level `vendor` folder
      - `go build -mod=vendor ./cmd/check_cert/`
      - `go build -mod=vendor ./cmd/lscert/`
+     - `go build -mod=vendor ./cmd/cpcert/`
      - `go build -mod=vendor ./cmd/certsum/`
    - for all supported platforms (where `make` is installed)
       - `make all`
@@ -447,6 +494,7 @@ settings intended to optimize for size and to prevent dynamic linkage.
    - if using `Makefile`
      - look in `/tmp/check-cert/release_assets/check_cert/`
      - look in `/tmp/check-cert/release_assets/lscert/`
+     - look in `/tmp/check-cert/release_assets/cpcert/`
      - look in `/tmp/check-cert/release_assets/certsum/`
    - if using `go build`
      - look in `/tmp/check-cert/`
@@ -466,7 +514,7 @@ binary first before deploying it (e.g., `xz -d check_cert-linux-amd64.xz`).
 1. Deploy
    - Place `check_cert` alongside your other Nagios plugins
      - e.g., `/usr/lib/nagios/plugins/` or `/usr/lib64/nagios/plugins/`
-   - Place `lscert`, `certsum` in a location of your choice
+   - Place `lscert`,, `cpcert`, `certsum` in a location of your choice
      - e.g., `/usr/local/bin/`
 
 **NOTE**:
@@ -593,6 +641,10 @@ evaluation. While flags are not currently offered to explicitly *apply* or
 *ignore* validation check results this support may be added in the future if
 there is sufficient interest.
 
+#### `cpcert` CLI tool
+
+Not applicable to this tool.
+
 #### `certsum` CLI tool
 
 No changes to validation check results have been made as of the v0.8.0
@@ -611,7 +663,7 @@ validation checks and any behavior changes at that time noted.
 
 | Flag                                         | Required  | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                                          |
 | -------------------------------------------- | --------- | ------- | ------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `f`, `filename`                              | No        | `false` | No     | *valid file name characters*                                            | Fully-qualified path to a PEM (text) or binary DER formatted certificate file containing one or more certificates.                                                                                                                                                                                                                                   |
+| `f`, `filename`                              | No        |         | No     | *valid file name characters*                                            | Fully-qualified path to a PEM (text) or binary DER formatted certificate file containing one or more certificates.                                                                                                                                                                                                                                   |
 | `branding`                                   | No        | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                                                 |
 | `h`, `help`                                  | No        | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                               |
 | `v`, `verbose`                               | No        | `false` | No     | `v`, `verbose`                                                          | Toggles emission of detailed certificate metadata. This level of output is disabled by default.                                                                                                                                                                                                                                                      |
@@ -639,7 +691,7 @@ validation checks and any behavior changes at that time noted.
 
 | Flag                 | Required  | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                                          |
 | -------------------- | --------- | ------- | ------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `f`, `filename`      | No        | `false` | No     | *valid file name characters*                                            | Fully-qualified path to a PEM (text) or binary DER formatted certificate file containing one or more certificates.                                                                                                                                                                                                                                   |
+| `f`, `filename`      | No        |         | No     | *valid file name characters*                                            | Fully-qualified path to a PEM (text) or binary DER formatted certificate file containing one or more certificates.                                                                                                                                                                                                                                   |
 | `text`               | No        | `false` | No     | `true`, `false`                                                         | Toggles emission of x509 TLS certificates in an OpenSSL-inspired text format. This output is disabled by default.                                                                                                                                                                                                                                    |
 | `h`, `help`          | No        | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                               |
 | `v`, `verbose`       | No        | `false` | No     | `v`, `verbose`                                                          | Toggles emission of detailed certificate metadata. This level of output is disabled by default.                                                                                                                                                                                                                                                      |
@@ -665,26 +717,25 @@ positional argument. This positional argument value can be any of:
 ---
 
 **NOTE**: Due to limitations in the Go standard library's support for
-command-line argument handling you *must* specify positional arguments after
-all flags.
+command-line argument handling all flags must come before positional arguments
+on the command line.
 
 ---
 
 Valid syntax:
 
-`lscert PATTERN`
+- `lscert -flag1 value1 INPUT_PATTERN`
 
 Invalid syntax:
 
-- `lscert --log-level debug PATTERN`
-- `lscert --dns-name one.one.one.one 1.1.1.1`
+- `lscert INPUT_PATTERN -flag1 value1`
 
 Some valid examples:
 
 - `lscert google.com`
 - `lscert https://www.google.com`
 - `lscert https://www.google.com:443`
-- `lscert --log-level debug PATTERN`
+- `lscert --log-level debug google.com`
 - `lscert --dns-name one.one.one.one 1.1.1.1`
 
 Aside from the required order of flags and positional argument noted above,
@@ -692,6 +743,71 @@ there are additional requirements to be aware of:
 
 - if the `server` or `filename` flags are specified, the positional argument
   is ignored
+- if the `port` flag is specified, its value will be ignored if a port is
+  provided in the given URL pattern positional argument
+
+#### `cpcert`
+
+##### Flags
+
+| Flag                    | Required  | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                                   |
+| ----------------------- | --------- | ------- | ------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `if`, `input-filename`  | No        |         | No     | *valid file name characters*                                            | Fully-qualified path to a PEM (text) or binary DER formatted certificate file containing one or more certificates.                                                                                                                                                                                                                            |
+| `of`, `output-filename` | Yes       |         | No     | *valid file name characters*                                            | Fully-qualified path to an output file to write one or more PEM (text) encoded certificates.                                                                                                                                                                                                                                                  |
+| `h`, `help`             | No        | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                        |
+| `v`, `verbose`          | No        | `false` | No     | `v`, `verbose`                                                          | Toggles emission of detailed certificate metadata. This level of output is disabled by default.                                                                                                                                                                                                                                               |
+| `version`               | No        | `false` | No     | `version`                                                               | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                 |
+| `ll`, `log-level`       | No        | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                     |
+| `p`, `port`             | No        | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote certificate-enabled service. This is usually 443 (HTTPS) or 636 (LDAPS).                                                                                                                                                                                                                                               |
+| `t`, `timeout`          | No        | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a connection attempt to a remote certificate-enabled service (in order to retrieve the certificate) is abandoned and an error returned.                                                                                                                                                               |
+| `s`, `server`           | **Maybe** |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address used for certificate chain retrieval. This value should appear in the Subject Alternate Names (SANs) list for the leaf certificate unless also using the `dns-name` flag.                                                                                                                       |
+| `dn`, `dns-name`        | **Maybe** |         | No     | *fully-qualified domain name or IP Address*                             | A fully-qualified domain name or IP Address in the Subject Alternate Names (SANs) list for the leaf certificate. If specified, this value will be used when retrieving the certificate chain (SNI support) and for hostname verification. Required when evaluating certificate files. See the `server` flag description for more information. |
+| `keep`                  | No        | `all`   | No     | `all`, `leaf`, `intermediate`, `root`                                   | List of keywords for certificate types that should be kept from the input certificate chain when saving the output file.                                                                                                                                                                                                                      |
+
+##### Positional Arguments
+
+In addition to input and output filename flags, the `cpcert` tool accepts two
+positional arguments:
+
+1. URL pattern or input filename
+1. output filename
+
+"URL patterns" can be any of:
+
+- URL
+- resolvable name
+- IP Address
+
+---
+
+**NOTE**: Due to limitations in the Go standard library's support for
+command-line argument handling all flags must come before positional arguments
+on the command line.
+
+---
+
+Valid syntax:
+
+- `cpcert -flag1 value1 INPUT_PATTERN OUTPUT_FILE`
+
+Invalid syntax:
+
+- `cpcert INPUT_PATTERN OUTPUT_FILE -flag1 value1`
+
+Some valid examples:
+
+- `cpcert google.com google_cert_chain.pem`
+- `cpcert https://www.google.com google_cert_chain.pem`
+- `cpcert https://www.google.com:443 google_cert_chain.pem`
+- `cpcert --log-level debug google.com google_cert_chain.pem`
+- `cpcert --dns-name one.one.one.one 1.1.1.1 cf_dns_1111_cert_chain.pem`
+- `cpcert --keep leaf cf_dns_1111_cert_chain.pem cf_dns_1111_leaf_cert_only.pem`
+
+Aside from the required order of flags and positional argument noted above,
+there are additional requirements to be aware of:
+
+- specifying the `server`, `input-filename` or `output-filename` flags
+  alongside positional arguments is unsupported
 - if the `port` flag is specified, its value will be ignored if a port is
   provided in the given URL pattern positional argument
 
@@ -2065,6 +2181,233 @@ Certificate 1 of 1 (leaf):
         Issued On: 2022-06-06 08:29:46 +0000 UTC
         Expiration: 2022-08-29 08:29:45 +0000 UTC
         Status: [OK] 62d 21h remaining
+```
+
+### `cpcert` CLI tool
+
+#### Using positional arguments
+
+##### Copying certificates from server
+
+Here we use positional arguments for the server that we retrieve the
+certificate chain from and the output filename. We use a flag to specify the
+explicit DNS Name value so that SNI support is enabled for the `1.1.1.1`
+server that we connect to. In this example we save all certificates in the
+input chain to the output file.
+
+```console
+$ cpcert --dns-name one.one.one.one 1.1.1.1 cf_dns_1111_cert_chain.pem
+OK: 3 certs retrieved for service running on 1.1.1.1 at port 443 using host value "one.one.one.one":
+
+Chain Position    Cert Type       Subject        Issuer Certificate URLs
+--------------    ------------    -----------    ----------------------------
+0                 leaf            one.one.one    http://i.pki.goog/we1.crt
+1                 intermediate    WE1            http://i.pki.goog/r4.crt
+2                 intermediate    GTS Root R4    http://i.pki.goog/gsr1.crt
+
+
+Certificate chain successfully written to cf_dns_1111_cert_chain.pem
+```
+
+Here we rely on the given hostname value used to establish the connection to
+enable SNI support. In this example we also save all certificates in the
+input chain to the output file:
+
+```console
+$ cpcert www.google.com www_google_com_cert_chain.pem
+OK: 3 certs retrieved for service running on www.google.com (172.253.124.103) at port 443 using host value "www.google.com":
+
+Chain Position    Cert Type       Subject           Issuer Certificate URLs
+--------------    ------------    --------------    -------------------------------
+0                 leaf            www.google.com    http://i.pki.goog/wr2.crt
+1                 intermediate    WR2               http://i.pki.goog/r1.crt
+2                 intermediate    GTS Root R1       http://pki.goog/gsr1/gsr1.crt
+
+
+Certificate chain successfully written to www_google_com_cert_chain.pem
+```
+
+##### Copying certificates from file
+
+Here we use positional arguments for both the input file containing the
+certificate chain and the output filename. In this example we save just the
+leaf certificate from the input file to the output file:
+
+```console
+$ cpcert -keep leaf scratch/www_google_com_cert_chain.pem scratch/www_google_com_leaf_cert_only.pem
+OK: 3 certs found in scratch\www_google_com_cert_chain.pem:
+
+Chain Position    Cert Type       Subject           Issuer Certificate URLs
+--------------    ------------    --------------    -------------------------------
+0                 leaf            www.google.com    http://i.pki.goog/wr2.crt
+1                 intermediate    WR2               http://i.pki.goog/r1.crt
+2                 intermediate    GTS Root R1       http://pki.goog/gsr1/gsr1.crt
+
+OK: Input certificate chain filtered as requested.
+
+New certificate chain:
+
+Chain Position    Cert Type    Subject           Issuer Certificate URLs
+--------------    ---------    --------------    ---------------------------
+0                 leaf         www.google.com    http://i.pki.goog/wr2.crt
+
+
+1 of 3 certs successfully written to scratch/www_google_com_leaf_cert_only.pem
+```
+
+#### Using flags
+
+##### Copy everything
+
+This is the default behavior, we just specify it explicitly.
+
+```console
+$ cpcert --server www.google.com --output-filename scratch/www_google_com_cert_chain.pem
+OK: 3 certs retrieved for service running on www.google.com (142.250.9.103) at port 443 using host value "www.google.com":
+
+Chain Position    Cert Type       Subject           Issuer Certificate URLs
+--------------    ------------    --------------    -------------------------------
+0                 leaf            www.google.com    http://i.pki.goog/wr2.crt
+1                 intermediate    WR2               http://i.pki.goog/r1.crt
+2                 intermediate    GTS Root R1       http://pki.goog/gsr1/gsr1.crt
+
+OK: Retaining input certificate chain as-is:
+
+Chain Position    Cert Type       Subject           Issuer Certificate URLs
+--------------    ------------    --------------    -------------------------------
+0                 leaf            www.google.com    http://i.pki.goog/wr2.crt
+1                 intermediate    WR2               http://i.pki.goog/r1.crt
+2                 intermediate    GTS Root R1       http://pki.goog/gsr1/gsr1.crt
+
+
+3 of 3 certs successfully written to scratch/www_google_com_cert_chain.pem
+```
+
+##### Leaf certificate only
+
+```console
+$ cpcert --server www.google.com --keep leaf --output-filename scratch/www_google_com_leaf_cert_only.pem
+OK: 3 certs retrieved for service running on www.google.com (142.250.9.103) at port 443 using host value "www.google.com":
+
+Chain Position    Cert Type       Subject           Issuer Certificate URLs
+--------------    ------------    --------------    -------------------------------
+0                 leaf            www.google.com    http://i.pki.goog/wr2.crt
+1                 intermediate    WR2               http://i.pki.goog/r1.crt
+2                 intermediate    GTS Root R1       http://pki.goog/gsr1/gsr1.crt
+
+OK: Input certificate chain filtered as requested.
+
+New certificate chain:
+
+Chain Position    Cert Type    Subject           Issuer Certificate URLs
+--------------    ---------    --------------    ---------------------------
+0                 leaf         www.google.com    http://i.pki.goog/wr2.crt
+
+
+1 of 3 certs successfully written to scratch/www_google_com_leaf_cert_only.pem
+```
+
+Here we use create the same `scratch/www_google_com_leaf_cert_only.pem` output
+file using the full chain file (that we created in an earlier example) as the
+input:
+
+```console
+$ cpcert -keep leaf scratch/www_google_com_cert_chain.pem scratch/www_google_com_leaf_cert_only.pem
+OK: 3 certs found in scratch\www_google_com_cert_chain.pem:
+
+Chain Position    Cert Type       Subject           Issuer Certificate URLs
+--------------    ------------    --------------    -------------------------------
+0                 leaf            www.google.com    http://i.pki.goog/wr2.crt
+1                 intermediate    WR2               http://i.pki.goog/r1.crt
+2                 intermediate    GTS Root R1       http://pki.goog/gsr1/gsr1.crt
+
+OK: Input certificate chain filtered as requested.
+
+New certificate chain:
+
+Chain Position    Cert Type    Subject           Issuer Certificate URLs
+--------------    ---------    --------------    ---------------------------
+0                 leaf         www.google.com    http://i.pki.goog/wr2.crt
+
+
+1 of 3 certs successfully written to scratch/www_google_com_leaf_cert_only.pem
+```
+
+##### Intermediate certificates only
+
+```console
+$ cpcert --server www.google.com --keep intermediate --output-filename scratch/www_google_com_intermediate_certs_only.pem
+OK: 3 certs retrieved for service running on www.google.com (142.250.9.103) at port 443 using host value "www.google.com":
+
+Chain Position    Cert Type       Subject           Issuer Certificate URLs
+--------------    ------------    --------------    -------------------------------
+0                 leaf            www.google.com    http://i.pki.goog/wr2.crt
+1                 intermediate    WR2               http://i.pki.goog/r1.crt
+2                 intermediate    GTS Root R1       http://pki.goog/gsr1/gsr1.crt
+
+OK: Input certificate chain filtered as requested.
+
+New certificate chain:
+
+Chain Position    Cert Type       Subject        Issuer Certificate URLs
+--------------    ------------    -----------    -------------------------------
+0                 intermediate    WR2            http://i.pki.goog/r1.crt
+1                 intermediate    GTS Root R1    http://pki.goog/gsr1/gsr1.crt
+
+
+2 of 3 certs successfully written to scratch/www_google_com_intermediate_certs_only.pem
+```
+
+Here we use create the same
+`scratch/www_google_com_intermediate_certs_only.pem` output file using the
+full chain file (that we created in an earlier example) as the input:
+
+```console
+$ cpcert -keep intermediate scratch/www_google_com_cert_chain.pem scratch/www_google_com_intermediate_certs_only.pem
+OK: 3 certs found in scratch\www_google_com_cert_chain.pem:
+
+Chain Position    Cert Type       Subject           Issuer Certificate URLs
+--------------    ------------    --------------    -------------------------------
+0                 leaf            www.google.com    http://i.pki.goog/wr2.crt
+1                 intermediate    WR2               http://i.pki.goog/r1.crt
+2                 intermediate    GTS Root R1       http://pki.goog/gsr1/gsr1.crt
+
+OK: Input certificate chain filtered as requested.
+
+New certificate chain:
+
+Chain Position    Cert Type       Subject        Issuer Certificate URLs
+--------------    ------------    -----------    -------------------------------
+0                 intermediate    WR2            http://i.pki.goog/r1.crt
+1                 intermediate    GTS Root R1    http://pki.goog/gsr1/gsr1.crt
+
+
+2 of 3 certs successfully written to scratch/www_google_com_intermediate_certs_only.pem
+```
+
+##### Root certificates only
+
+This is admittedly an uncommon use case, but supported for completeness.
+
+```console
+$ cpcert --server untrusted-root.badssl.com --keep root --output-filename scratch/untrusted-root_badssl_com_root_only.pem
+OK: 2 certs retrieved for service running on untrusted-root.badssl.com (104.154.89.105) at port 443 using host value "untrusted-root.badssl.com":
+
+Chain Position    Cert Type    Subject                                        Issuer Certificate URLs
+--------------    ---------    -------------------------------------------    -----------------------
+0                 leaf         *.badssl.com                                   None
+1                 root         BadSSL Untrusted Root Certificate Authority    None
+
+OK: Input certificate chain filtered as requested.
+
+New certificate chain:
+
+Chain Position    Cert Type    Subject                                        Issuer Certificate URLs
+--------------    ---------    -------------------------------------------    -----------------------
+0                 root         BadSSL Untrusted Root Certificate Authority    None
+
+
+1 of 2 certs successfully written to scratch/untrusted-root_badssl_com_root_only.pem
 ```
 
 ### `certsum` CLI tool
