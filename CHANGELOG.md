@@ -26,6 +26,27 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.19.0] - 2024-10-05
+
+### Added
+
+- (GH-976) Add new tool to support copying/filtering certs
+- (GH-975) Add SANs list count to cert summary output
+- (GH-974) Add support for binary DER format cert files
+- (GH-978) Add support for macOS binaries
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-962) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.13 to go-ci-oldstable-build-v0.21.14 in /dependabot/docker/builds
+- (GH-970) Go Dependency: Bump golang.org/x/sys from 0.25.0 to 0.26.0
+- (GH-958) Go Runtime: Bump golang from 1.22.7 to 1.22.8 in /dependabot/docker/go
+
+#### Other
+
+- (GH-977) Update `lscert` hostname validation behavior
+
 ## [v0.18.0] - 2024-09-25
 
 ### Added
@@ -1732,7 +1753,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.19.0...HEAD
+[v0.19.0]: https://github.com/atc0005/check-cert/releases/tag/v0.19.0
 [v0.18.0]: https://github.com/atc0005/check-cert/releases/tag/v0.18.0
 [v0.17.7]: https://github.com/atc0005/check-cert/releases/tag/v0.17.7
 [v0.17.6]: https://github.com/atc0005/check-cert/releases/tag/v0.17.6
