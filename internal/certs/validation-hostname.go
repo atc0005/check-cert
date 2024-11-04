@@ -178,9 +178,6 @@ func ValidateHostname(
 	// troubleshooting information and guidance to resolve the issue. We
 	// accomplish this by setting a very specific error and looking for this
 	// error later when deciding which feedback to provide.
-	//
-	// We intentionally do not mark this validation check result as ignored as
-	// the sysadmin did not opt to explicitly do so.
 
 	case verifyErr != nil &&
 		(verifyErr.Error() == ErrX509CertReliesOnCommonName.Error() ||
@@ -192,9 +189,6 @@ func ValidateHostname(
 			hostnameValue:     hostnameValue,
 			validationOptions: validationOptions,
 			err:               ErrX509CertReliesOnCommonName,
-			// We intentionally do not mark this validation check result as
-			// ignored as the sysadmin did not opt to explicitly do so.
-			// ignored:                   false,
 
 			// Mark result as ignored *if* the sysadmin explicitly requested
 			// that we do so.
