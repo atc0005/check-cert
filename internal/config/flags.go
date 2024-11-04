@@ -94,6 +94,8 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 			ignoreExpiringRootCertificatesFlagHelp,
 		)
 
+		flag.BoolVar(&c.OmitSANsEntries, OmitSANsEntriesFlagLong, defaultOmitSANsEntriesList, omitSANsEntriesFlagHelp)
+
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+shorthandFlagSuffix)
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
 
@@ -154,6 +156,8 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 		)
 
 		appDescription = "Used to generate a summary of certificate chain metadata and validation results for quick review."
+
+		flag.BoolVar(&c.OmitSANsEntries, OmitSANsEntriesFlagLong, defaultOmitSANsEntriesList, omitSANsEntriesFlagHelp)
 
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagShort, defaultVerboseOutput, verboseOutputFlagHelp+shorthandFlagSuffix)
 		flag.BoolVar(&c.VerboseOutput, VerboseFlagLong, defaultVerboseOutput, verboseOutputFlagHelp)
