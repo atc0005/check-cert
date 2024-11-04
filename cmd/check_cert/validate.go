@@ -108,6 +108,7 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 		cfg.AgeCritical,
 		cfg.AgeWarning,
 		cfg.VerboseOutput,
+		cfg.OmitSANsEntries,
 		expirationValidationOptions,
 	)
 

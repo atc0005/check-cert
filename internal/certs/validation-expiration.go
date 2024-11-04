@@ -42,6 +42,10 @@ type ExpirationValidationResult struct {
 	// results output.
 	verboseOutput bool
 
+	// omitSANsEntries indicates that SANs entries should be omitted in
+	// certificate report details.
+	omitSANsEntries bool
+
 	// hasExpiredCerts indicates whether any certificates in the chain have
 	// expired.
 	hasExpiredCerts bool
@@ -111,6 +115,7 @@ func ValidateExpiration(
 	expireDaysCritical int,
 	expireDaysWarning int,
 	verboseOutput bool,
+	omitSANsEntries bool,
 	validationOptions CertChainValidationOptions,
 ) ExpirationValidationResult {
 
@@ -384,6 +389,7 @@ func ValidateExpiration(
 		validationOptions:            validationOptions,
 		ignored:                      ignored,
 		verboseOutput:                verboseOutput,
+		omitSANsEntries:              omitSANsEntries,
 		ageWarningThreshold:          certsExpireAgeWarning,
 		ageCriticalThreshold:         certsExpireAgeCritical,
 		hasExpiredCerts:              hasExpiredCerts,
@@ -619,6 +625,7 @@ func (evr ExpirationValidationResult) StatusDetail() string {
 		evr.ageWarningThreshold,
 		evr.verboseOutput,
 		evr.validationOptions,
+		evr.omitSANsEntries,
 	))
 
 	return detail.String()

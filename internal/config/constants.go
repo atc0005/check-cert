@@ -43,6 +43,7 @@ const (
 	certExpireAgeCriticalFlagHelp                            string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a CRITICAL state."
 	brandingFlagHelp                                         string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
 	verboseOutputFlagHelp                                    string = "Toggles emission of detailed certificate metadata. This level of output is disabled by default."
+	omitSANsEntriesFlagHelp                                  string = "Toggles listing of SANs entries list items in certificate metadata output. This list is included by default."
 	showHostsWithClosedPortsFlagHelp                         string = "Toggles listing all host port scan results, even for hosts without any specified ports in an open state."
 	showHostsWithValidCertsFlagHelp                          string = "Toggles listing all cert check results in overview output, even for hosts with valid certificates."
 	showValidCertsFlagHelp                                   string = "Toggles listing all certificates in output summary, even certificates which have passed all validity checks."
@@ -85,16 +86,17 @@ const (
 	IgnoreExpiringIntermediateCertificatesFlag string = "ignore-expiring-intermediate-certs"
 	IgnoreExpiringRootCertificatesFlag         string = "ignore-expiring-root-certs"
 
-	VersionFlagLong  string = "version"
-	VerboseFlagLong  string = "verbose"
-	VerboseFlagShort string = "v"
-	BrandingFlag     string = "branding"
-	ServerFlagLong   string = "server"
-	ServerFlagShort  string = "s"
-	PortFlagLong     string = "port"
-	PortFlagShort    string = "p"
-	DNSNameFlagLong  string = "dns-name"
-	DNSNameFlagShort string = "dn"
+	VersionFlagLong         string = "version"
+	OmitSANsEntriesFlagLong string = "omit-sans-list"
+	VerboseFlagLong         string = "verbose"
+	VerboseFlagShort        string = "v"
+	BrandingFlag            string = "branding"
+	ServerFlagLong          string = "server"
+	ServerFlagShort         string = "s"
+	PortFlagLong            string = "port"
+	PortFlagShort           string = "p"
+	DNSNameFlagLong         string = "dns-name"
+	DNSNameFlagShort        string = "dn"
 
 	// Flags used for specifying a list of keywords used to explicitly ignore
 	// or apply validation check results when determining final plugin state.
@@ -170,6 +172,7 @@ const (
 	defaultFilename              string = "" // inspector, plugin; potentially deprecated
 	defaultBranding              bool   = false
 	defaultVerboseOutput         bool   = false
+	defaultOmitSANsEntriesList   bool   = false
 	defaultDisplayVersionAndExit bool   = false
 
 	// Default WARNING threshold is 30 days
