@@ -42,6 +42,8 @@ const (
 	certExpireAgeWarningFlagHelp                             string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state."
 	certExpireAgeCriticalFlagHelp                            string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a CRITICAL state."
 	brandingFlagHelp                                         string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
+	payloadFlagHelp                                          string = "Toggles emission of encoded certificate chain payload. This output is disabled by default."
+	payloadWithFullChainFlagHelp                             string = "Toggles emission of encoded certificate chain payload with the full certificate chain included. This option is disabled by default due to the significant increase in payload size."
 	verboseOutputFlagHelp                                    string = "Toggles emission of detailed certificate metadata. This level of output is disabled by default."
 	omitSANsEntriesFlagHelp                                  string = "Toggles listing of SANs entries list items in certificate metadata output. This list is included by default."
 	showHostsWithClosedPortsFlagHelp                         string = "Toggles listing all host port scan results, even for hosts without any specified ports in an open state."
@@ -86,17 +88,19 @@ const (
 	IgnoreExpiringIntermediateCertificatesFlag string = "ignore-expiring-intermediate-certs"
 	IgnoreExpiringRootCertificatesFlag         string = "ignore-expiring-root-certs"
 
-	VersionFlagLong         string = "version"
-	OmitSANsEntriesFlagLong string = "omit-sans-list"
-	VerboseFlagLong         string = "verbose"
-	VerboseFlagShort        string = "v"
-	BrandingFlag            string = "branding"
-	ServerFlagLong          string = "server"
-	ServerFlagShort         string = "s"
-	PortFlagLong            string = "port"
-	PortFlagShort           string = "p"
-	DNSNameFlagLong         string = "dns-name"
-	DNSNameFlagShort        string = "dn"
+	VersionFlagLong          string = "version"
+	OmitSANsEntriesFlagLong  string = "omit-sans-list"
+	VerboseFlagLong          string = "verbose"
+	VerboseFlagShort         string = "v"
+	BrandingFlag             string = "branding"
+	PayloadFlag              string = "payload"
+	PayloadWithFullChainFlag string = "payload-with-full-chain"
+	ServerFlagLong           string = "server"
+	ServerFlagShort          string = "s"
+	PortFlagLong             string = "port"
+	PortFlagShort            string = "p"
+	DNSNameFlagLong          string = "dns-name"
+	DNSNameFlagShort         string = "dn"
 
 	// Flags used for specifying a list of keywords used to explicitly ignore
 	// or apply validation check results when determining final plugin state.
@@ -171,6 +175,8 @@ const (
 	defaultEmitCertText          bool   = false
 	defaultFilename              string = "" // inspector, plugin; potentially deprecated
 	defaultBranding              bool   = false
+	defaultPayload               bool   = false
+	defaultPayloadWithFullChain  bool   = false
 	defaultVerboseOutput         bool   = false
 	defaultOmitSANsEntriesList   bool   = false
 	defaultDisplayVersionAndExit bool   = false

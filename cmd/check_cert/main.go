@@ -30,6 +30,7 @@ func main() {
 	// Override default section headers with our custom values.
 	plugin.SetErrorsLabel("VALIDATION ERRORS")
 	plugin.SetDetailedInfoLabel("VALIDATION CHECKS REPORT")
+	plugin.SetEncodedPayloadLabel("CERTIFICATE METADATA PAYLOAD")
 
 	// defer this from the start so it is the last deferred function to run
 	defer plugin.ReturnCheckResults()
@@ -59,6 +60,14 @@ func main() {
 		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
 
 		return
+	}
+
+	// Enable this setting *after* we initialize the plugin configuration;
+	// Debug level is the default global logging level which our initialized
+	// configuration overrides (to either a user-specified value or Info as an
+	// app default).
+	if zerolog.GlobalLevel() == zerolog.DebugLevel || zerolog.GlobalLevel() == zerolog.TraceLevel {
+		plugin.DebugLoggingEnablePluginOutputSize()
 	}
 
 	// Annotate all errors (if any) with remediation advice just before ending
@@ -412,6 +421,10 @@ func main() {
 		)
 
 		return
+	}
+
+	if cfg.EmitPayload || cfg.EmitPayloadWithFullChain {
+		addCertChainPayload(plugin, cfg, validationResults)
 	}
 
 	switch {
