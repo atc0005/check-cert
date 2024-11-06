@@ -910,6 +910,46 @@ func ExpiresInDays(cert *x509.Certificate) (int, error) {
 	return daysRemaining, nil
 }
 
+// ExpiresInDaysPrecise evaluates the given certificate and returns the number
+// of days until the certificate expires as a floating point number. This
+// number is rounded down.
+//
+// If already expired, a negative number is returned indicating how many days
+// the certificate is past expiration.
+//
+// An error is returned if the pointer to the given certificate is nil.
+func ExpiresInDaysPrecise(cert *x509.Certificate) (float64, error) {
+	if cert == nil {
+		return 0, fmt.Errorf(
+			"func ExpiresInDaysPrecise: unable to determine expiration: %w",
+			ErrMissingValue,
+		)
+	}
+
+	timeRemaining := time.Until(cert.NotAfter).Hours()
+
+	// Round down to the nearest two decimal places.
+	daysRemaining := timeRemaining / 24
+	daysRemaining = math.Floor(daysRemaining*100) / 100
+
+	return daysRemaining, nil
+}
+
+// ExpiresInHours evaluates the given certificate and returns the number of
+// hours until the certificate expires as a floating point number.
+//
+// An error is returned if the pointer to the given certificate is nil.
+func ExpiresInHours(cert *x509.Certificate) (float64, error) {
+	if cert == nil {
+		return 0, fmt.Errorf(
+			"func ExpiresInHours: unable to determine expiration: %w",
+			ErrMissingValue,
+		)
+	}
+
+	return time.Until(cert.NotAfter).Hours(), nil
+}
+
 // MaxLifespan returns the maximum lifespan for a given certificate from the
 // date it was issued until the time it is scheduled to expire.
 func MaxLifespan(cert *x509.Certificate) (time.Duration, error) {
@@ -1391,6 +1431,29 @@ func ChainPosition(cert *x509.Certificate, certChain []*x509.Certificate) string
 
 }
 
+// SANsEntriesLine provides a formatted list of SANs entries for a given
+// certificate if present, "none" if none are available or if requested a
+// brief message indicating that they have been explicitly omitted.
+func SANsEntriesLine(cert *x509.Certificate, omitSANsEntries bool) string {
+	switch {
+	case omitSANsEntries && len(cert.DNSNames) > 0:
+		return fmt.Sprintf(
+			"SANs entries (%d): Omitted by request",
+			len(cert.DNSNames),
+		)
+
+	case len(cert.DNSNames) > 0:
+		return fmt.Sprintf(
+			"SANs entries (%d): %s",
+			len(cert.DNSNames),
+			cert.DNSNames,
+		)
+
+	default:
+		return "SANs entries: None"
+	}
+}
+
 // GenerateCertChainReport receives the current certificate chain status
 // generates a formatted report suitable for display on the console or
 // (potentially) via Microsoft Teams provided suitable conversion is performed
@@ -1408,26 +1471,6 @@ func GenerateCertChainReport(
 	var certsReport string
 
 	certsTotal := len(certChain)
-
-	sansEntriesLine := func(cert *x509.Certificate) string {
-		switch {
-		case omitSANsEntries && len(cert.DNSNames) > 0:
-			return fmt.Sprintf(
-				"SANs entries (%d): Omitted by request",
-				len(cert.DNSNames),
-			)
-
-		case len(cert.DNSNames) > 0:
-			return fmt.Sprintf(
-				"SANs entries (%d): %s",
-				len(cert.DNSNames),
-				cert.DNSNames,
-			)
-
-		default:
-			return "SANs entries: None"
-		}
-	}
 
 	for idx, certificate := range certChain {
 
@@ -1509,7 +1552,7 @@ func GenerateCertChainReport(
 				nagios.CheckOutputEOL,
 				certificate.Subject,
 				nagios.CheckOutputEOL,
-				sansEntriesLine(certificate),
+				SANsEntriesLine(certificate, omitSANsEntries),
 				nagios.CheckOutputEOL,
 				textutils.BytesToDelimitedHexStr(certificate.SubjectKeyId, ":"),
 				nagios.CheckOutputEOL,
@@ -1549,7 +1592,7 @@ func GenerateCertChainReport(
 				nagios.CheckOutputEOL,
 				certificate.Subject,
 				nagios.CheckOutputEOL,
-				sansEntriesLine(certificate),
+				SANsEntriesLine(certificate, omitSANsEntries),
 				nagios.CheckOutputEOL,
 				certificate.Issuer,
 				nagios.CheckOutputEOL,
