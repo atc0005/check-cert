@@ -296,6 +296,16 @@ type Config struct {
 	// their own branding output.
 	EmitBranding bool
 
+	// EmitPayload controls whether an encoded certificate chain payload is
+	// included at the bottom of plugin output.
+	EmitPayload bool
+
+	// EmitPayloadWithFullChain controls whether an encoded certificate chain
+	// payload (included at the bottom of plugin output) also bundles the full
+	// original certificate chain. If enabled this significantly increases the
+	// payload size.
+	EmitPayloadWithFullChain bool
+
 	// VerboseOutput controls whether detailed certificate metadata is emitted
 	// along with standard certificate details.
 	VerboseOutput bool

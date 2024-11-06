@@ -88,9 +88,10 @@ type ExpirationValidationResult struct {
 	priorityModifier int
 
 	// ageWarningThreshold is the specified age threshold for when
-	// certificates in the chain with an expiration less than this value are
-	// considered to be in a WARNING state. This value is calculated based on
-	// user specified threshold in days.
+	// certificates in the chain with an expiration less than this value (but
+	// greater than the CRITICAL threshold) are considered to be in a WARNING
+	// state. This value is calculated based on user specified threshold in
+	// days.
 	ageWarningThreshold time.Time
 
 	// ageCriticalThreshold is the specified age threshold for when
@@ -823,4 +824,19 @@ func (evr ExpirationValidationResult) ValidationStatus(certChain []*x509.Certifi
 	default:
 		return "successful"
 	}
+}
+
+// AgeWarningThreshold returns the value of the warning threshold based on the
+// user specified value in days. Certificates in the chain with an expiration
+// less than this value (but greater than the CRITICAL threshold) are
+// considered to be in a WARNING state.
+func (evr ExpirationValidationResult) AgeWarningThreshold() time.Time {
+	return evr.ageWarningThreshold
+}
+
+// AgeCriticalThreshold returns the value of the CRITICAL threshold based on
+// the user specified value in days. Certificates in the chain with an
+// expiration less than this value are considered to be in a CRITICAL state.
+func (evr ExpirationValidationResult) AgeCriticalThreshold() time.Time {
+	return evr.ageCriticalThreshold
 }

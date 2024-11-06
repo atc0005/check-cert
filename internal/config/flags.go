@@ -58,6 +58,8 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 
 		appDescription = "Nagios plugin used to monitor & perform validation checks of certificate chains."
 
+		flag.BoolVar(&c.EmitPayload, PayloadFlag, defaultPayload, payloadFlagHelp)
+		flag.BoolVar(&c.EmitPayloadWithFullChain, PayloadWithFullChainFlag, defaultPayloadWithFullChain, payloadWithFullChainFlagHelp)
 		flag.BoolVar(&c.EmitBranding, BrandingFlag, defaultBranding, brandingFlagHelp)
 		flag.BoolVar(
 			&c.IgnoreHostnameVerificationFailureIfEmptySANsList,
