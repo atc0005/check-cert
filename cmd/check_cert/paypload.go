@@ -1,0 +1,384 @@
+// Copyright 2024 Adam Chalkley
+//
+// https://github.com/atc0005/check-cert
+//
+// Licensed under the MIT License. See LICENSE file in the project root for
+// full license information.
+
+package main
+
+import (
+	"crypto/x509"
+	"encoding/json"
+	"fmt"
+	"math"
+
+	payload "github.com/atc0005/cert-payload"
+	"github.com/atc0005/check-cert/internal/certs"
+	"github.com/atc0005/check-cert/internal/config"
+	"github.com/atc0005/go-nagios"
+)
+
+// certExpirationMetadata is a bundle of certificate expiration related
+// metadata used when preparing a certificate payload for inclusion in plugin
+// output.
+type certExpirationMetadata struct {
+	validityPeriodDays     int
+	daysRemainingTruncated int
+	daysRemainingPrecise   float64
+	certLifetimePercent    int
+}
+
+// lookupCertExpMetadata is a helper function used to lookup specific
+// certificate expiration metadata values used when preparing a certificate
+// payload for inclusion in plugin output.
+func lookupCertExpMetadata(cert *x509.Certificate, certNumber int, certChain []*x509.Certificate) (certExpirationMetadata, error) {
+	if cert == nil {
+		return certExpirationMetadata{}, fmt.Errorf(
+			"cert in chain position %d of %d is nil: %w",
+			certNumber,
+			len(certChain),
+			certs.ErrMissingValue,
+		)
+	}
+
+	certLifetime, certLifeTimeErr := certs.LifeRemainingPercentageTruncated(cert)
+	if certLifeTimeErr != nil {
+		return certExpirationMetadata{}, fmt.Errorf(
+			"error calculating lifetime for cert %q: %w",
+			cert.Subject.CommonName,
+			certLifeTimeErr,
+		)
+	}
+
+	daysRemainingTruncated, expLookupErr := certs.ExpiresInDays(cert)
+	if expLookupErr != nil {
+		return certExpirationMetadata{}, fmt.Errorf(
+			"error calculating the number of days until the certificate %q expires: %w",
+			cert.Subject.CommonName,
+			expLookupErr,
+		)
+	}
+
+	daysRemainingPrecise, expLookupErrPrecise := certs.ExpiresInDaysPrecise(cert)
+	if expLookupErrPrecise != nil {
+		return certExpirationMetadata{}, fmt.Errorf(
+			"error calculating the number of days until the certificate %q expires: %w",
+			cert.Subject.CommonName,
+			expLookupErr,
+		)
+	}
+
+	validityPeriodDays, lifespanLookupErr := certs.MaxLifespanInDays(cert)
+	if lifespanLookupErr != nil {
+		return certExpirationMetadata{}, fmt.Errorf(
+			"error calculating the maximum lifespan in days for certificate %q: %w",
+			cert.Subject.CommonName,
+			lifespanLookupErr,
+		)
+	}
+
+	return certExpirationMetadata{
+		certLifetimePercent:    certLifetime,
+		daysRemainingPrecise:   daysRemainingPrecise,
+		daysRemainingTruncated: daysRemainingTruncated,
+		validityPeriodDays:     validityPeriodDays,
+	}, nil
+}
+
+// extractExpValResult is a helper function used to extract the expiration
+// validation result from a collection of previously applied certificate
+// validation check results.
+func extractExpValResult(validationResults certs.CertChainValidationResults) (certs.ExpirationValidationResult, error) {
+	var expirationValidationResult certs.ExpirationValidationResult
+
+	for _, validationResult := range validationResults {
+		if expResult, ok := validationResult.(certs.ExpirationValidationResult); ok {
+			expirationValidationResult = expResult
+			break
+		}
+	}
+
+	// Assert that we're working with a non-zero value.
+	if len(expirationValidationResult.CertChain()) == 0 {
+		// We're working with an uninitialized value; abort!
+		return certs.ExpirationValidationResult{}, fmt.Errorf(
+			"unable to extract expiration validation results"+
+				" from collection of %d values: %w",
+			len(validationResults),
+			certs.ErrMissingValue,
+		)
+	}
+
+	return expirationValidationResult, nil
+}
+
+// extractHostnameValResult is a helper function used to extract the expiration
+// validation result from a collection of previously applied certificate
+// validation check results.
+func extractHostnameValResult(validationResults certs.CertChainValidationResults) (certs.HostnameValidationResult, error) {
+	var hostnameValidationResult certs.HostnameValidationResult
+
+	for _, validationResult := range validationResults {
+		if hostnameResult, ok := validationResult.(certs.HostnameValidationResult); ok {
+			hostnameValidationResult = hostnameResult
+			break
+		}
+	}
+
+	// Assert that we're working with a non-zero value.
+	if len(hostnameValidationResult.CertChain()) == 0 {
+		// We're working with an uninitialized value; abort!
+		return certs.HostnameValidationResult{}, fmt.Errorf(
+			"unable to extract hostname validation results"+
+				" from collection of %d values: %w",
+			len(validationResults),
+			certs.ErrMissingValue,
+		)
+	}
+
+	return hostnameValidationResult, nil
+}
+
+// buildCertSummary is a helper function that coordinates retrieving,
+// collecting, evaluating and encoding certificate metadata as a JSON encoded
+// string for inclusion in plugin output.
+func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValidationResults) (string, error) {
+	expirationValidationResult, expExtractErr := extractExpValResult(validationResults)
+	if expExtractErr != nil {
+		return "", fmt.Errorf(
+			"failed to generate certificate summary: %w",
+			expExtractErr,
+		)
+	}
+
+	hostnameValidationResult, hostnameExtractErr := extractHostnameValResult(validationResults)
+	if hostnameExtractErr != nil {
+		return "", fmt.Errorf(
+			"failed to generate certificate summary: %w",
+			hostnameExtractErr,
+		)
+	}
+
+	certsExpireAgeCritical := expirationValidationResult.AgeCriticalThreshold()
+	certsExpireAgeWarning := expirationValidationResult.AgeWarningThreshold()
+
+	// Question: Should we use the customized certificate chain with any
+	// user-specified certificates to exclude (for whatever reason) removed so
+	// that we do not report on values which are problematic?
+	//
+	// Answer: No, we use the full chain so that any "downstream" reporting
+	// tools retrieving the certificate payload from the monitoring system can
+	// perform their own analysis with the full chain available for review.
+	certChain := expirationValidationResult.FilteredCertificateChain()
+
+	certChainSubset := make([]payload.Certificate, 0, len(certChain))
+	for certNumber, origCert := range certChain {
+		if origCert == nil {
+			return "", fmt.Errorf(
+				"cert in chain position %d of %d is nil: %w",
+				certNumber,
+				len(certChain),
+				certs.ErrMissingValue,
+			)
+		}
+
+		expiresText := certs.ExpirationStatus(
+			origCert,
+			certsExpireAgeCritical,
+			certsExpireAgeWarning,
+			false,
+		)
+
+		certStatus := payload.CertificateStatus{
+			OK:       expirationValidationResult.IsOKState(),
+			Expiring: expirationValidationResult.HasExpiringCerts(),
+			Expired:  expirationValidationResult.HasExpiredCerts(),
+		}
+
+		certExpMeta, lookupErr := lookupCertExpMetadata(origCert, certNumber, certChain)
+		if lookupErr != nil {
+			return "", lookupErr
+		}
+
+		var SANsEntries []string
+		if cfg.OmitSANsEntries {
+			SANsEntries = nil
+		} else {
+			SANsEntries = origCert.DNSNames
+		}
+
+		validityPeriodDescription := lookupValidityPeriodDescription(origCert)
+
+		certSubset := payload.Certificate{
+			Subject:                   origCert.Subject.String(),
+			CommonName:                origCert.Subject.CommonName,
+			SANsEntries:               SANsEntries,
+			Issuer:                    origCert.Issuer.String(),
+			IssuerShort:               origCert.Issuer.CommonName,
+			SerialNumber:              certs.FormatCertSerialNumber(origCert.SerialNumber),
+			IssuedOn:                  origCert.NotBefore,
+			ExpiresOn:                 origCert.NotAfter,
+			DaysRemaining:             certExpMeta.daysRemainingPrecise,
+			DaysRemainingTruncated:    certExpMeta.daysRemainingTruncated,
+			LifetimePercent:           certExpMeta.certLifetimePercent,
+			ValidityPeriodDescription: validityPeriodDescription,
+			ValidityPeriodDays:        certExpMeta.validityPeriodDays,
+			Summary:                   expiresText,
+			Status:                    certStatus,
+			Type:                      certs.ChainPosition(origCert, certChain),
+		}
+
+		certChainSubset = append(certChainSubset, certSubset)
+	}
+
+	hasMissingIntermediateCerts := certs.NumIntermediateCerts(certChain) == 0
+	hasMultipleLeafCerts := certs.NumLeafCerts(certChain) > 1
+	hasExpiredCerts := certs.HasExpiredCert(certChain)
+	hasHostnameMismatch := !hostnameValidationResult.IsOKState()
+	hasMissingSANsEntries := func(certChain []*x509.Certificate) bool {
+		leafCerts := certs.LeafCerts(certChain)
+		for _, leafCert := range leafCerts {
+			if len(leafCert.DNSNames) > 0 {
+				return false
+			}
+		}
+
+		return true
+	}(certChain)
+
+	hasSelfSignedLeaf := func(certChain []*x509.Certificate) bool {
+		leafCerts := certs.LeafCerts(certChain)
+		for _, leafCert := range leafCerts {
+			// NOTE: We may need to perform actual signature verification here for
+			// the most reliable results.
+			if leafCert.Issuer.String() == leafCert.Subject.String() {
+				return true
+			}
+		}
+
+		return false
+	}(certChain)
+
+	certChainIssues := payload.CertificateChainIssues{
+		MissingIntermediateCerts: hasMissingIntermediateCerts,
+		MissingSANsEntries:       hasMissingSANsEntries,
+		MultipleLeafCerts:        hasMultipleLeafCerts,
+		// MisorderedCerts:          false, // FIXME: Placeholder value
+		ExpiredCerts:       hasExpiredCerts,
+		HostnameMismatch:   hasHostnameMismatch,
+		SelfSignedLeafCert: hasSelfSignedLeaf,
+	}
+
+	// Only if the user explicitly requested the full cert payload do we
+	// include it (due to significant payload size increase and risk of
+	// exceeding size constraints).
+	var certChainOriginal []string
+	switch {
+	case cfg.EmitPayloadWithFullChain:
+		pemCertChain, err := payload.CertChainToPEM(certChain)
+		if err != nil {
+			return "", fmt.Errorf("error converting original cert chain to PEM format: %w", err)
+		}
+
+		certChainOriginal = pemCertChain
+
+	default:
+		certChainOriginal = nil
+	}
+
+	payload := payload.CertChainPayload{
+		CertChainOriginal: certChainOriginal,
+		CertChainSubset:   certChainSubset,
+		Server:            cfg.Server,
+		DNSName:           cfg.DNSName,
+		TCPPort:           cfg.Port,
+		Issues:            certChainIssues,
+		ServiceState:      expirationValidationResult.ServiceState().Label,
+	}
+
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf(
+			"error marshaling cert chain payload as JSON: %w",
+			err,
+		)
+	}
+
+	return string(payloadJSON), nil
+}
+
+// addCertChainPayload is a helper function that prepares a certificate chain
+// payload as a JSON encoded value for inclusion in plugin output.
+func addCertChainPayload(plugin *nagios.Plugin, cfg *config.Config, validationResults certs.CertChainValidationResults) {
+	certChainSummary, certSummaryErr := buildCertSummary(cfg, validationResults)
+
+	log := cfg.Log.With().Logger()
+
+	if certSummaryErr != nil {
+		log.Error().
+			Err(certSummaryErr).
+			Msg("failed to generate cert chain summary for encoded payload")
+
+		plugin.Errors = append(plugin.Errors, certSummaryErr)
+
+		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
+		plugin.ServiceOutput = fmt.Sprintf(
+			"%s: Failed to add encoded payload",
+			nagios.StateUNKNOWNLabel,
+		)
+
+		return
+	}
+
+	// fmt.Fprintln(os.Stderr, certChainSummary)
+	log.Debug().Str("json_payload", certChainSummary).Msg("JSON payload before encoding")
+
+	// NOTE: AddPayloadString will NOT return an error if empty input is
+	// provided.
+	if _, err := plugin.AddPayloadString(certChainSummary); err != nil {
+		log.Error().
+			Err(err).
+			Msg("failed to add encoded payload")
+
+		plugin.Errors = append(plugin.Errors, err)
+
+		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
+		plugin.ServiceOutput = fmt.Sprintf(
+			"%s: Failed to add encoded payload",
+			nagios.StateUNKNOWNLabel,
+		)
+
+		return
+	}
+}
+
+// lookupValidityPeriodDescription is a helper function to lookup human
+// readable validity period description for a certificate's maximum lifetime
+// value.
+func lookupValidityPeriodDescription(cert *x509.Certificate) string {
+	maxLifeSpanInDays, err := certs.MaxLifespanInDays(cert)
+	if err != nil {
+		return payload.ValidityPeriodUNKNOWN
+	}
+
+	maxLifeSpanInTruncatedYears := int(math.Trunc(float64(maxLifeSpanInDays) / 365))
+
+	switch {
+	case maxLifeSpanInTruncatedYears >= 1:
+		return fmt.Sprintf("%d year", maxLifeSpanInTruncatedYears)
+
+	default:
+		return fmt.Sprintf("%d days", maxLifeSpanInDays)
+	}
+}
+
+// isBetween is a small helper function to determine whether a given value is
+// between a specified minimum and maximum number (inclusive).
+// func isBetween(val, min, max int) bool {
+// 	if (val >= min) && (val <= max) {
+// 		return true
+// 	}
+//
+// 	return false
+// }

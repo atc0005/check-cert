@@ -310,6 +310,22 @@ accessible to this tool. Use FQDNs in order to retrieve certificates using
 - Optional support for ignoring expired intermediate certificates
 - Optional support for ignoring expiring root certificates
 - Optional support for ignoring expired of root certificates
+- Optional support for omitting Subject Alternate Names (SANs) entries from
+  plugin output
+- Optional support for embedding an encoded certificate metadata payload
+  - disabled by default to retain existing plugin behavior
+  - the intent is to "shuttle" a payload of certificate metadata in structured
+    format from the plugin, to the monitoring system and to downstream tools
+    (e.g., via API call) so that the payload can be retrieved, decoded, &
+    unmarshalled to a supported data structure for further certificate
+    evaluation
+    - see also the <https://github.com/atc0005/cert-payload> and
+      <https://github.com/atc0005/go-nagios> projects for the data structures
+      and supporting logic used in the encoding/decoding process
+- Optional support for embedding an encoded certificate metadata payload *with
+    the original certificate chain included* in PEM encoded format
+  - this is not enabled by default due to the significant increase in plugin
+    output size
 
 ### `lscert`
 
@@ -678,6 +694,8 @@ validation checks and any behavior changes at that time noted.
 | `branding`                                   | No        | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                                                 |
 | `h`, `help`                                  | No        | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                               |
 | `v`, `verbose`                               | No        | `false` | No     | `v`, `verbose`                                                          | Toggles emission of detailed certificate metadata. This level of output is disabled by default.                                                                                                                                                                                                                                                      |
+| `payload`                                    | No        | `false` | No     | `true`, `false`                                                         | Toggles emission of encoded certificate chain payload. This output is disabled by default.                                                                                                                                                                                                                                                           |
+| `payload-with-full-chain`                    | No        | `false` | No     | `true`, `false`                                                         | Toggles emission of encoded certificate chain payload with the full certificate chain included. This option is disabled by default due to the significant increase in payload size.                                                                                                                                                                  |
 | `omit-sans-list`                             | No        | `false` | No     | `true`, `false`                                                         | Toggles listing of SANs entries list items in certificate metadata output. This list is included by default.                                                                                                                                                                                                                                         |
 | `version`                                    | No        | `false` | No     | `version`                                                               | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                        |
 | `c`, `age-critical`                          | No        | 15      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                   |
