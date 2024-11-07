@@ -104,6 +104,7 @@ func printSummaryHighLevel(
 			ageCritical,
 			ageWarning,
 			true,
+			false,
 			validationOptions,
 		)
 

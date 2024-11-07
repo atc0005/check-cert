@@ -1402,6 +1402,7 @@ func GenerateCertChainReport(
 	ageWarningThreshold time.Time,
 	verboseDetails bool,
 	validationOptions CertChainValidationOptions,
+	omitSANsEntries bool,
 ) string {
 
 	var certsReport string
@@ -1409,15 +1410,23 @@ func GenerateCertChainReport(
 	certsTotal := len(certChain)
 
 	sansEntriesLine := func(cert *x509.Certificate) string {
-		if len(cert.DNSNames) > 0 {
+		switch {
+		case omitSANsEntries && len(cert.DNSNames) > 0:
+			return fmt.Sprintf(
+				"SANs entries (%d): Omitted by request",
+				len(cert.DNSNames),
+			)
+
+		case len(cert.DNSNames) > 0:
 			return fmt.Sprintf(
 				"SANs entries (%d): %s",
 				len(cert.DNSNames),
 				cert.DNSNames,
 			)
-		}
 
-		return "SANs entries: None"
+		default:
+			return "SANs entries: None"
+		}
 	}
 
 	for idx, certificate := range certChain {

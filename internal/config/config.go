@@ -300,6 +300,10 @@ type Config struct {
 	// along with standard certificate details.
 	VerboseOutput bool
 
+	// OmitSANsEntries controls whether SANs entry list items from a leaf
+	// certificate are included in certificate details.
+	OmitSANsEntries bool
+
 	// EmitCertText controls whether x509 TLS certificates are printed to
 	// stdout using an OpenSSL-inspired text format. There is a good bit of
 	// output text, so this setting defaults to false.
