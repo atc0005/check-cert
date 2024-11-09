@@ -233,7 +233,6 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 	}
 
 	hasMissingIntermediateCerts := certs.NumIntermediateCerts(certChain) == 0
-	hasMultipleLeafCerts := certs.NumLeafCerts(certChain) > 1
 	hasExpiredCerts := certs.HasExpiredCert(certChain)
 	hasHostnameMismatch := !hostnameValidationResult.IsOKState()
 	hasMissingSANsEntries := func(certChain []*x509.Certificate) bool {
@@ -245,6 +244,22 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 		}
 
 		return true
+	}(certChain)
+
+	hasDuplicateCertsInChain := func(certChain []*x509.Certificate) bool {
+		certIdx := make(map[string]int, len(certChain))
+
+		for _, cert := range certChain {
+			certIdx[certs.FormatCertSerialNumber(cert.SerialNumber)]++
+		}
+
+		for _, v := range certIdx {
+			if v > 1 {
+				return true
+			}
+		}
+
+		return false
 	}(certChain)
 
 	hasSelfSignedLeaf := func(certChain []*x509.Certificate) bool {
@@ -263,7 +278,7 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 	certChainIssues := payload.CertificateChainIssues{
 		MissingIntermediateCerts: hasMissingIntermediateCerts,
 		MissingSANsEntries:       hasMissingSANsEntries,
-		MultipleLeafCerts:        hasMultipleLeafCerts,
+		DuplicateCerts:           hasDuplicateCertsInChain,
 		// MisorderedCerts:          false, // FIXME: Placeholder value
 		ExpiredCerts:       hasExpiredCerts,
 		HostnameMismatch:   hasHostnameMismatch,
