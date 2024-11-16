@@ -227,6 +227,7 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 			ValidityPeriodDays:        certExpMeta.validityPeriodDays,
 			Summary:                   expiresText,
 			Status:                    certStatus,
+			SignatureAlgorithm:        origCert.SignatureAlgorithm.String(),
 			Type:                      certs.ChainPosition(origCert, certChain),
 		}
 
