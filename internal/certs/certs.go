@@ -1545,6 +1545,7 @@ func GenerateCertChainReport(
 					"%s\tSerial: %v"+
 					"%s\tIssued On: %s"+
 					"%s\tExpiration: %s"+
+					"%s\tSignature Algorithm: %s"+
 					"%s\tStatus: %s%s%s",
 				idx+1,
 				certsTotal,
@@ -1572,6 +1573,8 @@ func GenerateCertChainReport(
 				nagios.CheckOutputEOL,
 				certificate.NotAfter.Format(CertValidityDateLayout),
 				nagios.CheckOutputEOL,
+				certificate.SignatureAlgorithm.String(),
+				nagios.CheckOutputEOL,
 				expiresText,
 				nagios.CheckOutputEOL,
 				nagios.CheckOutputEOL,
@@ -1585,6 +1588,7 @@ func GenerateCertChainReport(
 					"%s\tSerial: %v"+
 					"%s\tIssued On: %s"+
 					"%s\tExpiration: %s"+
+					"%s\tSignature Algorithm: %s"+
 					"%s\tStatus: %s%s%s",
 				idx+1,
 				certsTotal,
@@ -1601,6 +1605,8 @@ func GenerateCertChainReport(
 				certificate.NotBefore.Format(CertValidityDateLayout),
 				nagios.CheckOutputEOL,
 				certificate.NotAfter.Format(CertValidityDateLayout),
+				nagios.CheckOutputEOL,
+				certificate.SignatureAlgorithm.String(),
 				nagios.CheckOutputEOL,
 				expiresText,
 				nagios.CheckOutputEOL,
