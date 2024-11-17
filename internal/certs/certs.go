@@ -1149,8 +1149,10 @@ func FormatCertSerialNumber(sn *big.Int) string {
 // context of a given certificate chain) and indicates whether a known weak
 // signature algorithm was found.
 //
-// Root certificates evaluate to false as TLS clients trust them by their
-// identity instead of the signature of their hash.
+// Root certificates evaluate to false (by default) as TLS clients trust them
+// by their identity instead of the signature of their hash.
+//
+// If explicitly requested root certificates are also evaluated.
 //
 // - https://security.googleblog.com/2014/09/gradually-sunsetting-sha-1.html
 // - https://security.googleblog.com/2015/12/an-update-on-sha-1-certificates-in.html
@@ -1158,10 +1160,10 @@ func FormatCertSerialNumber(sn *big.Int) string {
 // - https://developer.mozilla.org/en-US/docs/Web/Security/Weak_Signature_Algorithm
 // - https://www.tenable.com/plugins/nessus/35291
 // - https://docs.ostorlab.co/kb/WEAK_HASHING_ALGO/index.html
-func HasWeakSignatureAlgorithm(cert *x509.Certificate, certChain []*x509.Certificate) bool {
+func HasWeakSignatureAlgorithm(cert *x509.Certificate, certChain []*x509.Certificate, evalRoot bool) bool {
 	chainPos := ChainPosition(cert, certChain)
 
-	if chainPos == certChainPositionRoot {
+	if chainPos == certChainPositionRoot && !evalRoot {
 		return false
 	}
 
@@ -1190,11 +1192,13 @@ func HasWeakSignatureAlgorithm(cert *x509.Certificate, certChain []*x509.Certifi
 // indicates whether certificate with a known weak signature algorithm was
 // found.
 //
-// Root certificates evaluate to false as TLS clients trust them by their
-// identity instead of the signature of their hash.
-func HasCertWithWeakSignatureAlgorithm(certChain []*x509.Certificate) bool {
+// Root certificates evaluate to false (by default) as TLS clients trust them
+// by their identity instead of the signature of their hash.
+//
+// If explicitly requested root certificates are also evaluated.
+func HasCertWithWeakSignatureAlgorithm(certChain []*x509.Certificate, evalRoot bool) bool {
 	for _, cert := range certChain {
-		if HasWeakSignatureAlgorithm(cert, certChain) {
+		if HasWeakSignatureAlgorithm(cert, certChain, evalRoot) {
 			return true
 		}
 	}
@@ -1212,7 +1216,11 @@ func WeakSignatureAlgorithmStatus(cert *x509.Certificate, certChain []*x509.Cert
 	chainPos := ChainPosition(cert, certChain)
 
 	switch {
-	case HasWeakSignatureAlgorithm(cert, certChain):
+	case HasWeakSignatureAlgorithm(cert, certChain, true):
+		if chainPos == certChainPositionRoot {
+			return "[WEAK, IGNORED] " + cert.SignatureAlgorithm.String()
+		}
+
 		return "[WEAK] " + cert.SignatureAlgorithm.String()
 
 	default:
