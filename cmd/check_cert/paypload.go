@@ -279,14 +279,87 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 		return false
 	}(certChain)
 
+	// hasWeakSignatureAlgorithm indicates that the certificate chain has been
+	// signed using a cryptographically weak hashing algorithm (e.g. MD2, MD4,
+	// MD5, or SHA1). These signature algorithms are known to be vulnerable to
+	// collision attacks. An attacker can exploit this to generate another
+	// certificate with the same digital signature, allowing an attacker to
+	// masquerade as the affected service.
+	//
+	// NOTE: This does not apply to trusted root certificates; TLS clients
+	// trust them by their identity instead of the signature of their hash;
+	// client code setting this field would need to exclude root certificates
+	// from the determination whether the chain is vulnerable to weak
+	// signature algorithms.
+	//
+	//   - https://security.googleblog.com/2014/09/gradually-sunsetting-sha-1.html
+	//   - https://security.googleblog.com/2015/12/an-update-on-sha-1-certificates-in.html
+	//   - https://superuser.com/questions/1122069/why-are-root-cas-with-sha1-signatures-not-a-risk
+	//   - https://developer.mozilla.org/en-US/docs/Web/Security/Weak_Signature_Algorithm
+	//   - https://www.tenable.com/plugins/nessus/35291
+	//   - https://docs.ostorlab.co/kb/WEAK_HASHING_ALGO/index.html
+	hasWeakSignatureAlgorithm := func(certChain []*x509.Certificate) bool {
+		nonRootCerts := certs.NonRootCerts(certChain)
+
+		log := cfg.Log.With().Logger()
+
+		log.Debug().Int("num_certs", len(nonRootCerts)).Msg("Evaluating certificates for weak signature algorithm")
+
+		logWeak := func(cert *x509.Certificate) {
+			log.Debug().
+				Bool("cert_signature_algorithm_ok", false).
+				Str("cert_signature_algorithm", cert.SignatureAlgorithm.String()).
+				Str("cert_common_name", cert.Subject.CommonName).
+				Msg("Certificate signature algorithm weak")
+		}
+
+		logOK := func(cert *x509.Certificate) {
+			log.Debug().
+				Bool("cert_signature_algorithm_ok", true).
+				Str("cert_signature_algorithm", cert.SignatureAlgorithm.String()).
+				Str("cert_common_name", cert.Subject.CommonName).
+				Msg("Certificate signature algorithm ok")
+		}
+
+		for _, cert := range nonRootCerts {
+			switch {
+			case cert.SignatureAlgorithm == x509.MD2WithRSA:
+				logWeak(cert)
+
+				return true
+			case cert.SignatureAlgorithm == x509.MD5WithRSA:
+				logWeak(cert)
+
+				return true
+			case cert.SignatureAlgorithm == x509.SHA1WithRSA:
+				logWeak(cert)
+
+				return true
+			case cert.SignatureAlgorithm == x509.DSAWithSHA1:
+				logWeak(cert)
+
+				return true
+			case cert.SignatureAlgorithm == x509.ECDSAWithSHA1:
+				logWeak(cert)
+
+				return true
+			default:
+				logOK(cert)
+			}
+		}
+
+		return false
+	}(certChain)
+
 	certChainIssues := payload.CertificateChainIssues{
 		MissingIntermediateCerts: hasMissingIntermediateCerts,
 		MissingSANsEntries:       hasMissingSANsEntries,
 		DuplicateCerts:           hasDuplicateCertsInChain,
 		// MisorderedCerts:          false, // FIXME: Placeholder value
-		ExpiredCerts:       hasExpiredCerts,
-		HostnameMismatch:   hasHostnameMismatch,
-		SelfSignedLeafCert: hasSelfSignedLeaf,
+		ExpiredCerts:           hasExpiredCerts,
+		HostnameMismatch:       hasHostnameMismatch,
+		SelfSignedLeafCert:     hasSelfSignedLeaf,
+		WeakSignatureAlgorithm: hasWeakSignatureAlgorithm,
 	}
 
 	// Only if the user explicitly requested the full cert payload do we
