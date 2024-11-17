@@ -216,7 +216,7 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 			Subject:                   origCert.Subject.String(),
 			CommonName:                origCert.Subject.CommonName,
 			SANsEntries:               SANsEntries,
-			SANsEntriesCount:          len(SANsEntries),
+			SANsEntriesCount:          len(origCert.DNSNames),
 			Issuer:                    origCert.Issuer.String(),
 			IssuerShort:               origCert.Issuer.CommonName,
 			SerialNumber:              certs.FormatCertSerialNumber(origCert.SerialNumber),
