@@ -336,7 +336,7 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 			// case chainPos == "root":
 			// 	logIgnored(cert)
 
-			case certs.HasWeakSignatureAlgorithm(cert, certChain):
+			case certs.HasWeakSignatureAlgorithm(cert, certChain, false):
 				logWeak(cert)
 
 				return true
