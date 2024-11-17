@@ -323,26 +323,11 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 
 		for _, cert := range nonRootCerts {
 			switch {
-			case cert.SignatureAlgorithm == x509.MD2WithRSA:
+			case certs.HasWeakSignatureAlgorithm(cert):
 				logWeak(cert)
 
 				return true
-			case cert.SignatureAlgorithm == x509.MD5WithRSA:
-				logWeak(cert)
 
-				return true
-			case cert.SignatureAlgorithm == x509.SHA1WithRSA:
-				logWeak(cert)
-
-				return true
-			case cert.SignatureAlgorithm == x509.DSAWithSHA1:
-				logWeak(cert)
-
-				return true
-			case cert.SignatureAlgorithm == x509.ECDSAWithSHA1:
-				logWeak(cert)
-
-				return true
 			default:
 				logOK(cert)
 			}
