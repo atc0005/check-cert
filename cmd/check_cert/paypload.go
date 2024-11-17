@@ -303,7 +303,15 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 
 		log := cfg.Log.With().Logger()
 
-		log.Debug().Int("num_certs", len(nonRootCerts)).Msg("Evaluating certificates for weak signature algorithm")
+		log.Debug().Int("num_certs", len(nonRootCerts)).Msg("Evaluating non-root certificates for weak signature algorithm")
+
+		// logIgnored := func(cert *x509.Certificate) {
+		// 	log.Debug().
+		// 		Bool("cert_signature_algorithm_ok", true).
+		// 		Str("cert_signature_algorithm", cert.SignatureAlgorithm.String()).
+		// 		Str("cert_common_name", cert.Subject.CommonName).
+		// 		Msg("Certificate signature algorithm ignored")
+		// }
 
 		logWeak := func(cert *x509.Certificate) {
 			log.Debug().
@@ -322,8 +330,13 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 		}
 
 		for _, cert := range nonRootCerts {
+			// chainPos := certs.ChainPosition(cert, certChain)
+
 			switch {
-			case certs.HasWeakSignatureAlgorithm(cert):
+			// case chainPos == "root":
+			// 	logIgnored(cert)
+
+			case certs.HasWeakSignatureAlgorithm(cert, certChain):
 				logWeak(cert)
 
 				return true
