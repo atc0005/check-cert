@@ -26,6 +26,25 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.22.0] - 2024-11-17
+
+### Added
+
+- (GH-1070) Add indicator of weak cert signature algorithm
+- (GH-1068) Add WeakSignatureAlgorithm to cert payload
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1059) Go Dependency: Bump github.com/atc0005/cert-payload from 0.5.0 to 0.6.1
+
+### Fixed
+
+- (GH-1074) Explicitly list root cert signature algorithms as ignored
+- (GH-1067) Fix certificate chain payload generation input
+- (GH-1079) Fix SANs entries count payload field logic
+
 ## [v0.21.0] - 2024-11-17
 
 ### Added
@@ -1804,7 +1823,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.22.0...HEAD
+[v0.22.0]: https://github.com/atc0005/check-cert/releases/tag/v0.22.0
 [v0.21.0]: https://github.com/atc0005/check-cert/releases/tag/v0.21.0
 [v0.20.1]: https://github.com/atc0005/check-cert/releases/tag/v0.20.1
 [v0.20.0]: https://github.com/atc0005/check-cert/releases/tag/v0.20.0
