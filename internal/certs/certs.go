@@ -864,6 +864,22 @@ func RootCerts(certChain []*x509.Certificate) []*x509.Certificate {
 	return rootCerts
 }
 
+// NonRootCerts receives a slice of x509 certificates and returns a collection
+// of certificates present in the chain which are not root certificates.
+func NonRootCerts(certChain []*x509.Certificate) []*x509.Certificate {
+	numPresent := NumLeafCerts(certChain) + NumIntermediateCerts(certChain)
+	nonRootCerts := make([]*x509.Certificate, 0, numPresent)
+
+	for _, cert := range certChain {
+		chainPos := ChainPosition(cert, certChain)
+		if chainPos != certChainPositionRoot {
+			nonRootCerts = append(nonRootCerts, cert)
+		}
+	}
+
+	return nonRootCerts
+}
+
 // OldestLeafCert returns the oldest leaf certificate in a given certificate
 // chain. If a leaf certificate is not not present nil is returned.
 func OldestLeafCert(certChain []*x509.Certificate) *x509.Certificate {
