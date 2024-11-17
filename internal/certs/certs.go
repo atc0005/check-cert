@@ -1145,6 +1145,69 @@ func FormatCertSerialNumber(sn *big.Int) string {
 
 }
 
+// HasWeakSignatureAlgorithm evaluates the given certificate and indicates
+// whether a known weak signature algorithm was found.
+//
+// Root certificates evaluate to false as TLS clients trust them by their
+// identity instead of the signature of their hash.
+//
+// - https://security.googleblog.com/2014/09/gradually-sunsetting-sha-1.html
+// - https://security.googleblog.com/2015/12/an-update-on-sha-1-certificates-in.html
+// - https://superuser.com/questions/1122069/why-are-root-cas-with-sha1-signatures-not-a-risk
+// - https://developer.mozilla.org/en-US/docs/Web/Security/Weak_Signature_Algorithm
+// - https://www.tenable.com/plugins/nessus/35291
+// - https://docs.ostorlab.co/kb/WEAK_HASHING_ALGO/index.html
+func HasWeakSignatureAlgorithm(cert *x509.Certificate) bool {
+	switch {
+	case cert.SignatureAlgorithm == x509.MD2WithRSA:
+		return true
+
+	case cert.SignatureAlgorithm == x509.MD5WithRSA:
+		return true
+
+	case cert.SignatureAlgorithm == x509.SHA1WithRSA:
+		return true
+
+	case cert.SignatureAlgorithm == x509.DSAWithSHA1:
+		return true
+
+	case cert.SignatureAlgorithm == x509.ECDSAWithSHA1:
+		return true
+
+	default:
+		return false
+	}
+}
+
+// HasCertWithWeakSignatureAlgorithm evaluates the given certificate chain and
+// indicates whether certificate with a known weak signature algorithm was
+// found.
+//
+// Root certificates evaluate to false as TLS clients trust them by their
+// identity instead of the signature of their hash.
+func HasCertWithWeakSignatureAlgorithm(certChain []*x509.Certificate) bool {
+	for _, cert := range certChain {
+		if HasWeakSignatureAlgorithm(cert) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// WeakSignatureAlgorithmStatus returns a human-readable string indicating the
+// signature algorithm used for the certificate and whether it is known to be
+// cryptographically weak.
+func WeakSignatureAlgorithmStatus(cert *x509.Certificate) string {
+	switch {
+	case HasWeakSignatureAlgorithm(cert):
+		return "[WEAK] " + cert.SignatureAlgorithm.String()
+
+	default:
+		return "[OK] " + cert.SignatureAlgorithm.String()
+	}
+}
+
 // ExpirationStatus receives a certificate and the expiration threshold values
 // for CRITICAL and WARNING states and returns a human-readable string
 // indicating the overall status at a glance. If requested, an expiring or
@@ -1589,7 +1652,7 @@ func GenerateCertChainReport(
 				nagios.CheckOutputEOL,
 				certificate.NotAfter.Format(CertValidityDateLayout),
 				nagios.CheckOutputEOL,
-				certificate.SignatureAlgorithm.String(),
+				WeakSignatureAlgorithmStatus(certificate),
 				nagios.CheckOutputEOL,
 				expiresText,
 				nagios.CheckOutputEOL,
@@ -1622,7 +1685,7 @@ func GenerateCertChainReport(
 				nagios.CheckOutputEOL,
 				certificate.NotAfter.Format(CertValidityDateLayout),
 				nagios.CheckOutputEOL,
-				certificate.SignatureAlgorithm.String(),
+				WeakSignatureAlgorithmStatus(certificate),
 				nagios.CheckOutputEOL,
 				expiresText,
 				nagios.CheckOutputEOL,
