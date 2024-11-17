@@ -167,10 +167,12 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 	// user-specified certificates to exclude (for whatever reason) removed so
 	// that we do not report on values which are problematic?
 	//
+	// certChain := expirationValidationResult.FilteredCertificateChain()
+	//
 	// Answer: No, we use the full chain so that any "downstream" reporting
 	// tools retrieving the certificate payload from the monitoring system can
 	// perform their own analysis with the full chain available for review.
-	certChain := expirationValidationResult.FilteredCertificateChain()
+	certChain := expirationValidationResult.CertChain()
 
 	certChainSubset := make([]payload.Certificate, 0, len(certChain))
 	for certNumber, origCert := range certChain {
