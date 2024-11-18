@@ -67,12 +67,9 @@ func main() {
 	// configuration overrides (to either a user-specified value or Info as an
 	// app default).
 	if zerolog.GlobalLevel() == zerolog.DebugLevel || zerolog.GlobalLevel() == zerolog.TraceLevel {
-		plugin.DebugLoggingEnablePluginOutputSize()
+		// plugin.DebugLoggingEnablePluginOutputSize()
+		plugin.DebugLoggingEnableAll()
 	}
-
-	// Annotate all errors (if any) with remediation advice just before ending
-	// plugin execution.
-	defer annotateErrors(plugin)
 
 	if cfg.EmitBranding {
 		// If enabled, show application details at end of notification
@@ -83,9 +80,53 @@ func main() {
 		Str("expected_sans_entries", cfg.SANsEntries.String()).
 		Logger()
 
-	var certChain []*x509.Certificate
+	// We declare these earlier so that they can be referenced by closures
+	// (e.g., adding certificate metadata payload to plugin).
+	var (
+		certChain       []*x509.Certificate
+		certChainSource string
+		ipAddr          string
+	)
 
-	var certChainSource string
+	// We run this function next to last so that we have access to the latest
+	// state of the plugin, including any errors registered with the plugin
+	// (e.g., after any annotations have been applied).
+	defer func(cc *[]*x509.Certificate, p *nagios.Plugin, c *config.Config, ip *string) {
+		if cfg.EmitPayload || cfg.EmitPayloadWithFullChain {
+			// We intentionally use different var names to prevent capturing
+			// outside variable values at time of deferring this closure.
+			payloadErr := addCertChainPayload(*cc, p, c, *ip)
+			if payloadErr != nil {
+				log.Error().
+					Err(payloadErr).
+					Msg("failed to add encoded payload")
+
+				// addCertChainPayload will record any errors in the generated
+				// payload that were previously registered with the plugin (e.g.,
+				// failure to connect to a service, timeout, etc.). This error is
+				// registered for display in plugin output and not for the payload
+				// (since at this point we failed to create the payload).
+				plugin.Errors = append(plugin.Errors, payloadErr)
+
+				plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
+				plugin.ServiceOutput = fmt.Sprintf(
+					"%s: Failed to add encoded payload",
+					nagios.StateUNKNOWNLabel,
+				)
+
+				return
+			}
+		}
+		// We use pointers so that the deferred function will access the
+		// latest value for the variable at the time of execution (otherwise
+		// it would capture only the value at the time the function is
+		// deferred).
+	}(&certChain, plugin, cfg, &ipAddr)
+
+	// Annotate all errors (if any) with remediation advice just before
+	// generating the certificate metadata payload and ending plugin
+	// execution.
+	defer annotateErrors(plugin)
 
 	// Honor request to parse filename first
 	switch {
@@ -230,7 +271,7 @@ func main() {
 		// Grab first IP Address from the resolved collection. We'll
 		// explicitly use it for cert retrieval and note it in the report
 		// output.
-		ipAddr := expandedHost.Expanded[0]
+		ipAddr = expandedHost.Expanded[0]
 
 		// Server Name Indication (SNI) support is used to request a specific
 		// certificate chain from a remote server.
@@ -421,25 +462,6 @@ func main() {
 		)
 
 		return
-	}
-
-	if cfg.EmitPayload || cfg.EmitPayloadWithFullChain {
-		payloadErr := addCertChainPayload(plugin, cfg, validationResults)
-		if payloadErr != nil {
-			log.Error().
-				Err(payloadErr).
-				Msg("failed to add encoded payload")
-
-			plugin.Errors = append(plugin.Errors, payloadErr)
-
-			plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
-			plugin.ServiceOutput = fmt.Sprintf(
-				"%s: Failed to add encoded payload",
-				nagios.StateUNKNOWNLabel,
-			)
-
-			return
-		}
 	}
 
 	switch {

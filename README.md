@@ -309,7 +309,7 @@ accessible to this tool. Use FQDNs in order to retrieve certificates using
 - Optional support for ignoring expiring intermediate certificates
 - Optional support for ignoring expired intermediate certificates
 - Optional support for ignoring expiring root certificates
-- Optional support for ignoring expired of root certificates
+- Optional support for ignoring expired root certificates
 - Optional support for omitting Subject Alternate Names (SANs) entries from
   plugin output
 - Optional support for embedding an encoded certificate metadata payload
@@ -326,6 +326,8 @@ accessible to this tool. Use FQDNs in order to retrieve certificates using
     the original certificate chain included* in PEM encoded format
   - this is not enabled by default due to the significant increase in plugin
     output size
+- Optional support for overriding the default certificate metadata format
+  version used when generating payloads
 
 ### `lscert`
 
@@ -696,6 +698,7 @@ validation checks and any behavior changes at that time noted.
 | `v`, `verbose`                               | No        | `false` | No     | `v`, `verbose`                                                          | Toggles emission of detailed certificate metadata. This level of output is disabled by default.                                                                                                                                                                                                                                                      |
 | `payload`                                    | No        | `false` | No     | `true`, `false`                                                         | Toggles emission of encoded certificate chain payload. This output is disabled by default.                                                                                                                                                                                                                                                           |
 | `payload-with-full-chain`                    | No        | `false` | No     | `true`, `false`                                                         | Toggles emission of encoded certificate chain payload with the full certificate chain included. This option is disabled by default due to the significant increase in payload size.                                                                                                                                                                  |
+| `payload-format`                             | No        | `false` | No     | *positive whole number for valid payload format version*                | Specifies the format version to use when generating the (optional) certificate metadata payload.                                                                                                                                                                                                                                                     |
 | `omit-sans-list`, `omit-sans-entries`        | No        | `false` | No     | `true`, `false`                                                         | Toggles listing of SANs entries list items in certificate metadata output. This list is included by default.                                                                                                                                                                                                                                         |
 | `version`                                    | No        | `false` | No     | `version`                                                               | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                        |
 | `c`, `age-critical`                          | No        | 15      | No     | *positive whole number of days*                                         | The threshold for the certificate check's `CRITICAL` state. If the certificate expires before this number of days then the service check will be considered in a `CRITICAL` state.                                                                                                                                                                   |
