@@ -273,6 +273,10 @@ type Config struct {
 	// field as a CRITICAL state.
 	AgeCritical int
 
+	// PayloadFormatVersion indicates the chosen format version to use when
+	// creating a certificate metadata payload.
+	PayloadFormatVersion int
+
 	// timeout is the number of seconds allowed before the connection attempt
 	// to a remote certificate-enabled service is abandoned and an error
 	// returned.

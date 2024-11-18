@@ -60,6 +60,8 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 
 		flag.BoolVar(&c.EmitPayload, PayloadFlag, defaultPayload, payloadFlagHelp)
 		flag.BoolVar(&c.EmitPayloadWithFullChain, PayloadWithFullChainFlag, defaultPayloadWithFullChain, payloadWithFullChainFlagHelp)
+		flag.IntVar(&c.PayloadFormatVersion, PayloadFormatVersionFlag, defaultPayloadFormatVersion, payloadFormatVersionFlagHelp)
+
 		flag.BoolVar(&c.EmitBranding, BrandingFlag, defaultBranding, brandingFlagHelp)
 		flag.BoolVar(
 			&c.IgnoreHostnameVerificationFailureIfEmptySANsList,
