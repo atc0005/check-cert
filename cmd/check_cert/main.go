@@ -424,7 +424,20 @@ func main() {
 	}
 
 	if cfg.EmitPayload || cfg.EmitPayloadWithFullChain {
-		addCertChainPayload(plugin, cfg, validationResults)
+		payloadErr := addCertChainPayload(plugin, cfg, validationResults)
+		log.Error().
+			Err(payloadErr).
+			Msg("failed to add encoded payload")
+
+		plugin.Errors = append(plugin.Errors, payloadErr)
+
+		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
+		plugin.ServiceOutput = fmt.Sprintf(
+			"%s: Failed to add encoded payload",
+			nagios.StateUNKNOWNLabel,
+		)
+
+		return
 	}
 
 	switch {
