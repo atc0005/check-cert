@@ -587,10 +587,10 @@ func ExpandHost(hostPattern string) (HostPattern, error) {
 		ipAddrs, lookupErr := net.LookupHost(hostPattern)
 		if lookupErr != nil {
 			return HostPattern{}, fmt.Errorf(
-				"%q invalid; %w: %s",
+				"%q invalid; %w: %w",
 				hostPattern,
 				ErrHostnameFailsNameResolution,
-				lookupErr.Error(),
+				lookupErr,
 			)
 		}
 
