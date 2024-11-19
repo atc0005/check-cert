@@ -400,25 +400,13 @@ func buildCertSummary(cfg *config.Config, validationResults certs.CertChainValid
 
 // addCertChainPayload is a helper function that prepares a certificate chain
 // payload as a JSON encoded value for inclusion in plugin output.
-func addCertChainPayload(plugin *nagios.Plugin, cfg *config.Config, validationResults certs.CertChainValidationResults) {
+func addCertChainPayload(plugin *nagios.Plugin, cfg *config.Config, validationResults certs.CertChainValidationResults) error {
 	certChainSummary, certSummaryErr := buildCertSummary(cfg, validationResults)
 
 	log := cfg.Log.With().Logger()
 
 	if certSummaryErr != nil {
-		log.Error().
-			Err(certSummaryErr).
-			Msg("failed to generate cert chain summary for encoded payload")
-
-		plugin.Errors = append(plugin.Errors, certSummaryErr)
-
-		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
-		plugin.ServiceOutput = fmt.Sprintf(
-			"%s: Failed to add encoded payload",
-			nagios.StateUNKNOWNLabel,
-		)
-
-		return
+		return certSummaryErr
 	}
 
 	// fmt.Fprintln(os.Stderr, certChainSummary)
@@ -427,20 +415,10 @@ func addCertChainPayload(plugin *nagios.Plugin, cfg *config.Config, validationRe
 	// NOTE: AddPayloadString will NOT return an error if empty input is
 	// provided.
 	if _, err := plugin.AddPayloadString(certChainSummary); err != nil {
-		log.Error().
-			Err(err).
-			Msg("failed to add encoded payload")
-
-		plugin.Errors = append(plugin.Errors, err)
-
-		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
-		plugin.ServiceOutput = fmt.Sprintf(
-			"%s: Failed to add encoded payload",
-			nagios.StateUNKNOWNLabel,
-		)
-
-		return
+		return err
 	}
+
+	return nil
 }
 
 // lookupValidityPeriodDescription is a helper function to lookup human
