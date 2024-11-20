@@ -26,6 +26,13 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.22.1] - 2024-11-20
+
+### Fixed
+
+- (GH-1090) Fix errwrap linting error
+- (GH-1089) Rework error handling for cert payload generation
+
 ## [v0.22.0] - 2024-11-17
 
 ### Added
@@ -1823,7 +1830,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.22.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.22.1...HEAD
+[v0.22.1]: https://github.com/atc0005/check-cert/releases/tag/v0.22.1
 [v0.22.0]: https://github.com/atc0005/check-cert/releases/tag/v0.22.0
 [v0.21.0]: https://github.com/atc0005/check-cert/releases/tag/v0.21.0
 [v0.20.1]: https://github.com/atc0005/check-cert/releases/tag/v0.20.1
