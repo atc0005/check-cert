@@ -60,6 +60,20 @@ func validatePort(c Config) error {
 	return nil
 }
 
+func validatePayloadFormatVersion(c Config) error {
+	// Format version 0 is valid, but anything less than that is not; in order
+	// to have the value set to less than zero someone has to explicitly
+	// choose that value (0 is the default).
+	if c.PayloadFormatVersion < 0 {
+		return fmt.Errorf(
+			"invalid certificate metadata payload format version %d",
+			c.PayloadFormatVersion,
+		)
+	}
+
+	return nil
+}
+
 // validate verifies all Config struct fields have been set to an acceptable
 // state. Positional argument handling AND validation is handled earlier in
 // the configuration initialization process.
@@ -178,6 +192,10 @@ func (c Config) validate(appType AppType) error {
 		}
 
 		if err := validatePort(c); err != nil {
+			return err
+		}
+
+		if err := validatePayloadFormatVersion(c); err != nil {
 			return err
 		}
 
