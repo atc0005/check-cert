@@ -26,6 +26,18 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.23.0] - 2024-11-25
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1095) Go Dependency: Bump github.com/atc0005/go-nagios from 0.18.0 to 0.18.1
+
+#### Other
+
+- (GH-1098) Add format version flag & rework payload creation
+
 ## [v0.22.1] - 2024-11-20
 
 ### Fixed
@@ -1830,7 +1842,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.22.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.23.0...HEAD
+[v0.23.0]: https://github.com/atc0005/check-cert/releases/tag/v0.23.0
 [v0.22.1]: https://github.com/atc0005/check-cert/releases/tag/v0.22.1
 [v0.22.0]: https://github.com/atc0005/check-cert/releases/tag/v0.22.0
 [v0.21.0]: https://github.com/atc0005/check-cert/releases/tag/v0.21.0
