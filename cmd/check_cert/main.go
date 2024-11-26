@@ -27,6 +27,8 @@ func main() {
 
 	plugin := nagios.NewPlugin()
 
+	plugin.EnablePluginOutputSizePerfDataMetric()
+
 	// Override default section headers with our custom values.
 	plugin.SetErrorsLabel("VALIDATION ERRORS")
 	plugin.SetDetailedInfoLabel("VALIDATION CHECKS REPORT")
