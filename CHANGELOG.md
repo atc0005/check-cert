@@ -26,6 +26,24 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.24.0] - 2024-11-27
+
+### Added
+
+- (GH-1112) Enable plugin output size metric
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1107) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.16 to go-ci-oldstable-build-v0.21.17 in /dependabot/docker/builds
+- (GH-1101) Go Dependency: Bump github.com/atc0005/cert-payload from 0.7.0-alpha.1 to 0.7.0-alpha.2
+- (GH-1105) Go Dependency: Bump github.com/atc0005/cert-payload from 0.7.0-alpha.2 to 0.7.0-alpha.3
+
+#### Other
+
+- (GH-1109) Note why certs.MaxLifespanInDays truncates result
+
 ## [v0.23.0] - 2024-11-25
 
 ### Changed
@@ -1842,7 +1860,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.23.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.24.0...HEAD
+[v0.24.0]: https://github.com/atc0005/check-cert/releases/tag/v0.24.0
 [v0.23.0]: https://github.com/atc0005/check-cert/releases/tag/v0.23.0
 [v0.22.1]: https://github.com/atc0005/check-cert/releases/tag/v0.22.1
 [v0.22.0]: https://github.com/atc0005/check-cert/releases/tag/v0.22.0
