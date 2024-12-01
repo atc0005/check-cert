@@ -1,5 +1,5 @@
-github.com/atc0005/cert-payload v0.7.0-alpha.3 h1:mnBoCxbx48OP0840g+CvsfpT2OGZVBCT2Tg0WCr35Ho=
-github.com/atc0005/cert-payload v0.7.0-alpha.3/go.mod h1:zgKxu51OfQJvWRgBCdMk4b/LMotprdFeidietjopVgY=
+github.com/atc0005/cert-payload v0.7.0-alpha.4 h1:Rrelu2TwwrkV/V8xklBwIhCs3phC+T+9LmQoLqiWu7s=
+github.com/atc0005/cert-payload v0.7.0-alpha.4/go.mod h1:zgKxu51OfQJvWRgBCdMk4b/LMotprdFeidietjopVgY=
 github.com/atc0005/go-nagios v0.19.0 h1:QMqu4iAKb4SD/kdAJdnMYZjHL4KzfYOSq5Lq30AZc0U=
 github.com/atc0005/go-nagios v0.19.0/go.mod h1:7XhhQHYOD+jZQVrTWXuWzSoPoDb6/FQh60dbGauQ5lQ=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
