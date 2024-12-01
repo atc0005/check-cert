@@ -13,8 +13,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 
 	payload "github.com/atc0005/cert-payload"
 	"github.com/atc0005/cert-payload/input"
@@ -47,21 +45,11 @@ func addCertChainPayload(certChain []*x509.Certificate, plugin *nagios.Plugin, c
 		ServiceState:                         serviceState,
 	}
 
-	availableFormats := payload.AvailableFormatVersions()
-	stableFormats := func() string {
-		items := make([]string, 0, len(availableFormats)-1)
-		for _, format := range availableFormats {
-			if format != 0 {
-				items = append(items, strconv.Itoa(format))
-			}
-		}
-		return strings.Join(items, ",")
-	}()
+	stableFormats := payload.AvailableStableFormatVersions()
 
-	// Advise against using pre-release format if other options are available.
-	if cfg.PayloadFormatVersion == 0 && len(availableFormats) > 1 {
-		log.Warn().Msg("Pre-release payload format version chosen.")
-		log.Warn().Msgf("It is recommended that you use one of payload format versions %s", stableFormats)
+	if cfg.PayloadFormatVersion == payload.UnstablePayloadVersion {
+		log.Warn().Msg("WARNING: Unstable/development payload format version chosen.")
+		log.Warn().Msgf("It is recommended that you use a stable payload format version (available: %v).", stableFormats)
 	}
 
 	certChainSummary, certSummaryErr := payload.Encode(cfg.PayloadFormatVersion, inputData)
