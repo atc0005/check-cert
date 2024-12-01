@@ -28,9 +28,7 @@ const (
 	MaxStablePayloadVersion int = 1
 
 	// MinStablePayloadVersion indicates the oldest stable payload format
-	// version supported by this project. Versions older than this are
-	// considered unstable and associated with early development releases and
-	// are no longer supported.
+	// version supported by this project.
 	MinStablePayloadVersion int = 1
 )
 
@@ -173,6 +171,19 @@ func AvailableFormatVersions() []int {
 		UnstablePayloadVersion,
 		MaxStablePayloadVersion,
 	}
+}
+
+// AvailableStableFormatVersions provides a list of all available stable
+// format versions that client applications may choose from when encoding or
+// decoding certificate metadata payloads.
+func AvailableStableFormatVersions() []int {
+	stableFormats := make([]int, 0, len(AvailableFormatVersions()))
+
+	for i := MinStablePayloadVersion; i <= MaxStablePayloadVersion; i++ {
+		stableFormats = append(stableFormats, i)
+	}
+
+	return stableFormats
 }
 
 // latestVersionEncoder is a helper function that provides the latest format
