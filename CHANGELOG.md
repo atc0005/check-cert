@@ -26,6 +26,20 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.25.0] - 2024-12-02
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1116) Go Dependency: Bump github.com/atc0005/go-nagios from 0.19.0-alpha.1 to 0.19.0
+- (GH-1119) Go Dependency: Bump github.com/atc0005/cert-payload from 0.7.0-alpha.3 to 0.7.0-alpha.4
+- (GH-1120) Go Dependency: Bump github.com/atc0005/cert-payload from 0.7.0-alpha.4 to 0.7.0-alpha.5
+
+#### Other
+
+- (GH-1124) Promote cert metadata format 1 to default
+
 ## [v0.24.0] - 2024-11-27
 
 ### Added
@@ -1860,7 +1874,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.24.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.0...HEAD
+[v0.25.0]: https://github.com/atc0005/check-cert/releases/tag/v0.25.0
 [v0.24.0]: https://github.com/atc0005/check-cert/releases/tag/v0.24.0
 [v0.23.0]: https://github.com/atc0005/check-cert/releases/tag/v0.23.0
 [v0.22.1]: https://github.com/atc0005/check-cert/releases/tag/v0.22.1
