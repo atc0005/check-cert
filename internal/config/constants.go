@@ -42,7 +42,7 @@ const (
 	certExpireAgeWarningFlagHelp                             string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a WARNING state."
 	certExpireAgeCriticalFlagHelp                            string = "The number of days remaining before certificate expiration when this application will will flag the NotAfter certificate field as a CRITICAL state."
 	brandingFlagHelp                                         string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
-	payloadFormatVersionFlagHelp                             string = "Specifies the format version to use when generating the (optional) certificate metadata payload."
+	payloadFormatVersionFlagHelp                             string = "Specifies the format version to use when generating the (optional) certificate metadata payload. Version 0 is unstable."
 	payloadFlagHelp                                          string = "Toggles emission of encoded certificate chain payload. This output is disabled by default."
 	payloadWithFullChainFlagHelp                             string = "Toggles emission of encoded certificate chain payload with the full certificate chain included. This option is disabled by default due to the significant increase in payload size."
 	verboseOutputFlagHelp                                    string = "Toggles emission of detailed certificate metadata. This level of output is disabled by default."
@@ -181,7 +181,7 @@ const (
 	defaultBranding              bool   = false
 	defaultPayload               bool   = false
 	defaultPayloadWithFullChain  bool   = false
-	defaultPayloadFormatVersion  int    = 0
+	defaultPayloadFormatVersion  int    = 1 // corresponds to payload.MinStablePayloadVersion
 	defaultVerboseOutput         bool   = false
 	defaultOmitSANsEntriesList   bool   = false
 	defaultDisplayVersionAndExit bool   = false
