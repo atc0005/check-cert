@@ -343,6 +343,83 @@ const (
 	priorityModifierBaseline int = 0
 )
 
+// chainPositionV1V2Cert relies on a combination of self-signed and literal
+// chain position to help determine the purpose of each v1 and v2 certificate.
+// This is because those certificate versions lack the more descriptive
+// "intention" fields (i.e., "extensions") of v3 certificates.
+func chainPositionV1V2Cert(cert *x509.Certificate, certChain []*x509.Certificate) string {
+	switch {
+	case isSelfSigned(cert):
+		if cert == certChain[0] {
+			return certChainPositionLeafSelfSigned
+		}
+
+		return certChainPositionRoot
+
+	default:
+		if cert == certChain[0] {
+			return certChainPositionLeaf
+		}
+
+		return certChainPositionIntermediate
+	}
+}
+
+// chainPosV3CertKeyUsage evaluates the KeyUsage field for a certificate to
+// determine the chain position for a certificate; the KeyUsage field
+// identifies the set of actions that are valid for a given key.
+func chainPosV3CertKeyUsage(cert *x509.Certificate) string {
+	switch {
+	case isSelfSigned(cert):
+		switch cert.KeyUsage {
+		case cert.KeyUsage | x509.KeyUsageCertSign | x509.KeyUsageCRLSign:
+			return certChainPositionRoot
+		case cert.KeyUsage | x509.KeyUsageCertSign:
+			return certChainPositionRoot
+		default:
+			return certChainPositionLeafSelfSigned
+		}
+	default:
+
+		switch cert.KeyUsage {
+		case cert.KeyUsage | x509.KeyUsageCertSign | x509.KeyUsageCRLSign:
+			return certChainPositionIntermediate
+		case cert.KeyUsage | x509.KeyUsageCertSign:
+			return certChainPositionIntermediate
+		default:
+			return certChainPositionLeaf
+		}
+	}
+}
+
+// chainPositionV3Cert identifies the certificate chain position for a given
+// v3 cert.
+func chainPositionV3Cert(cert *x509.Certificate) string {
+	selfSigned := isSelfSigned(cert)
+
+	// The CA boolean indicates whether the certified public key may be used
+	// to verify certificate signatures.
+	switch {
+	case selfSigned && cert.IsCA:
+		return certChainPositionRoot
+	case cert.IsCA:
+		return certChainPositionIntermediate
+	}
+
+	// The Extended key usage extension indicates one or more purposes for
+	// which the certified public key may be used, in addition to or in place
+	// of the basic purposes indicated in the key usage extension. In general,
+	// this extension will appear only in end entity certificates.
+	switch {
+	case selfSigned && cert.ExtKeyUsage != nil:
+		return certChainPositionLeafSelfSigned
+	case cert.ExtKeyUsage != nil:
+		return certChainPositionLeaf
+	}
+
+	return chainPosV3CertKeyUsage(cert)
+}
+
 // ServiceState accepts a type capable of evaluating its status and uses those
 // results to map to a compatible ServiceState value.
 func ServiceState(val ServiceStater) nagios.ServiceState {
@@ -1347,88 +1424,83 @@ func ShouldCertExpirationBeIgnored(
 	return false
 }
 
+// isSelfSignedMD5WithRSA is a helper function that attempts to validate
+// whether a given certificate is self-signed with the MD5WithRSA signature
+// algorithm by asserting that its signature can be validated with its own
+// public key. Any errors encountered during signature validation are assumed
+// to be an indication that a certificate is not self-signed with the
+// MD5WithRSA signature algorithm.
+func isSelfSignedMD5WithRSA(cert *x509.Certificate) bool {
+	h := md5.New() //nolint:gosec // not using for cryptographic purposes
+
+	// If MD5 hash generation of the raw ASN.1 DER content fails we'll assume
+	// not self-signed.
+	if _, err := h.Write(cert.RawTBSCertificate); err != nil {
+		return false
+	}
+
+	hashedBytes := h.Sum(nil)
+
+	if pub, ok := cert.PublicKey.(*rsa.PublicKey); ok {
+		md5RSASigVerifyErr := rsa.VerifyPKCS1v15(
+			pub, crypto.MD5, hashedBytes, cert.Signature,
+		)
+
+		switch {
+		case md5RSASigVerifyErr != nil:
+			return false
+
+		default:
+			// Self-signed MD5 signature verified, so self-signed.
+			return true
+		}
+	}
+
+	return false
+}
+
 // isSelfSigned is a helper function that attempts to validate whether a given
 // certificate is self-signed by asserting that its signature can be validated
 // with its own public key. Any errors encountered during signature validation
 // are assumed to be an indication that a certificate is not self-signed.
 func isSelfSigned(cert *x509.Certificate) bool {
-
-	if cert.Issuer.String() == cert.Subject.String() {
-
-		sigVerifyErr := cert.CheckSignature(
-			cert.SignatureAlgorithm,
-			cert.RawTBSCertificate,
-			cert.Signature,
-		)
-
-		switch {
-
-		// examine signature verification errors
-		case errors.Is(sigVerifyErr, x509.InsecureAlgorithmError(cert.SignatureAlgorithm)):
-
-			// fmt.Println("errors.Is match")
-
-			// Handle MD5 signature verification ourselves since Go considers
-			// the MD5 algorithm to be insecure (rightly so).
-			if cert.SignatureAlgorithm == x509.MD5WithRSA {
-
-				// fmt.Println("SignatureAlgorithm match")
-
-				// nolint:gosec
-				h := md5.New()
-				if _, err := h.Write(cert.RawTBSCertificate); err != nil {
-					// fmt.Println(
-					// 	"isSelfSigned: failed to generate MD5 hash of RawTBSCertificate:",
-					// 	err,
-					// )
-					return false
-				}
-				hashedBytes := h.Sum(nil)
-
-				if pub, ok := cert.PublicKey.(*rsa.PublicKey); ok {
-
-					// fmt.Println("type assertion for rsa.PublicKey successful")
-
-					md5RSASigVerifyErr := rsa.VerifyPKCS1v15(
-						pub, crypto.MD5, hashedBytes, cert.Signature,
-					)
-
-					switch {
-
-					case md5RSASigVerifyErr != nil:
-						// fmt.Println(
-						// 	"isSelfSigned: failed to validate MD5WithRSA signature:",
-						// 	md5RSASigVerifyErr,
-						// )
-
-						return false
-
-					default:
-						// fmt.Println("MD5 signature verified")
-
-						return true
-					}
-
-				}
-
-			}
-
-			// TODO: Do we need to check this ourselves in Go 1.18?
-			// if cert.SignatureAlgorithm == x509.SHA1WithRSA {
-			// }
-
-			return false
-
-		// no problems verifying self-signed signature
-		case sigVerifyErr == nil:
-
-			return true
-
-		}
-
+	if cert.Issuer.String() != cert.Subject.String() {
+		return false
 	}
 
-	return false
+	sigVerifyErr := cert.CheckSignature(
+		cert.SignatureAlgorithm,
+		cert.RawTBSCertificate,
+		cert.Signature,
+	)
+
+	switch {
+	// No problems verifying self-signed signature; conclusively self-signed.
+	case sigVerifyErr == nil:
+		return true
+
+	// Examine signature verification errors; we could still be dealing with a
+	// self-signed certificate.
+	case errors.Is(sigVerifyErr, x509.InsecureAlgorithmError(cert.SignatureAlgorithm)):
+		// Handle MD5 signature verification ourselves since Go considers
+		// the MD5 algorithm to be insecure (rightly so).
+		if cert.SignatureAlgorithm == x509.MD5WithRSA {
+			return isSelfSignedMD5WithRSA(cert)
+		}
+
+		// TODO: Do we need to check this ourselves in Go 1.18?
+		// if cert.SignatureAlgorithm == x509.SHA1WithRSA {
+		// }
+
+		// We'll default to assuming that insecure algorithm errors indicate a
+		// certificate is not self-signed.
+		return false
+
+	// Some other signature verification error, which we'll interpret as a
+	// failure due to the certificate not being self-signed.
+	default:
+		return false
+	}
 }
 
 // ChainPosition receives a cert and the cert chain that it belongs to and
@@ -1438,109 +1510,21 @@ func isSelfSigned(cert *x509.Certificate) bool {
 // https://en.wikipedia.org/wiki/X.509
 // https://tools.ietf.org/html/rfc5280
 func ChainPosition(cert *x509.Certificate, certChain []*x509.Certificate) string {
-
 	// We require a valid certificate chain. Fail if not provided.
 	if certChain == nil {
 		return certChainPositionUnknown
 	}
 
 	switch cert.Version {
-
-	// Because v1 and v2 certs lack the more descriptive "intention"
-	// fields of v3 certs, we are limited in what checks we can apply. We
-	// rely on a combination of self-signed and literal chain position to
-	// help determine the purpose of each v1 and v2 certificate.
 	case 1, 2:
-
-		switch {
-		case isSelfSigned(cert):
-			if cert == certChain[0] {
-				return certChainPositionLeafSelfSigned
-			}
-
-			return certChainPositionRoot
-
-		default:
-			if cert == certChain[0] {
-				return certChainPositionLeaf
-			}
-
-			return certChainPositionIntermediate
-		}
+		return chainPositionV1V2Cert(cert, certChain)
 
 	case 3:
-
-		switch {
-		case isSelfSigned(cert):
-
-			// FIXME: What pattern to use for self-signed v3 leaf?
-
-			// The cA boolean indicates whether the certified public key may be
-			// used to verify certificate signatures.
-			if cert.IsCA {
-				return certChainPositionRoot
-			}
-
-			// The Extended key usage extension indicates one or more purposes
-			// for which the certified public key may be used, in addition to
-			// or in place of the basic purposes indicated in the key usage
-			// extension. In general, this extension will appear only in end
-			// entity certificates.
-			if cert.ExtKeyUsage != nil {
-				return certChainPositionLeafSelfSigned
-			}
-
-			// CA certs are intended for cert and CRL signing.
-			//
-			// In the majority of cases (all?), the cA boolean field will
-			// already be set if either of these under `X509v3 Basic
-			// Constraints` are specified.
-			switch cert.KeyUsage {
-			case cert.KeyUsage | x509.KeyUsageCertSign | x509.KeyUsageCRLSign:
-				return certChainPositionRoot
-			case cert.KeyUsage | x509.KeyUsageCertSign:
-				return certChainPositionRoot
-			default:
-				return certChainPositionLeafSelfSigned
-			}
-
-		default:
-
-			// The cA boolean indicates whether the certified public key may be
-			// used to verify certificate signatures.
-			if cert.IsCA {
-				return certChainPositionIntermediate
-			}
-
-			// The Extended key usage extension indicates one or more purposes
-			// for which the certified public key may be used, in addition to
-			// or in place of the basic purposes indicated in the key usage
-			// extension. In general, this extension will appear only in end
-			// entity certificates.
-			if cert.ExtKeyUsage != nil {
-				return certChainPositionLeaf
-			}
-
-			// CA certs are intended for cert and CRL signing.
-			//
-			// In the majority (all?) of cases, the cA boolean field will
-			// already be set if either of these under `X509v3 Basic
-			// Constraints` are specified.
-			switch cert.KeyUsage {
-			case cert.KeyUsage | x509.KeyUsageCertSign | x509.KeyUsageCRLSign:
-				return certChainPositionIntermediate
-			case cert.KeyUsage | x509.KeyUsageCertSign:
-				return certChainPositionIntermediate
-			default:
-				return certChainPositionLeaf
-			}
-
-		}
+		return chainPositionV3Cert(cert)
 	}
 
 	// no known match, so position unknown
 	return certChainPositionUnknown
-
 }
 
 // SANsEntriesLine provides a formatted list of SANs entries for a given
