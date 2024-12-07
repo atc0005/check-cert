@@ -16,6 +16,14 @@ import (
 	"github.com/atc0005/go-nagios"
 )
 
+// CertChainValidationResult validation status keywords. These values provide
+// a one word status value for validation check results.
+const (
+	ValidationStatusFailed     string = "failed"
+	ValidationStatusIgnored    string = "ignored"
+	ValidationStatusSuccessful string = "successful"
+)
+
 // CertChainValidationResult represents the result for a validation check
 // associated with a certificate chain. The result can indicate success,
 // failure or if validation was ignored.
@@ -56,6 +64,10 @@ type CertChainValidationResult interface {
 	//
 	// missing: [konrad-test.amazon.com, mp3recs.amazon.com, test-www.amazon.com, www.cdn.amazon.com, www.m.amazon.com, yellowpages.amazon.com], unexpected: [origin-www.amazon.com, buckeye-retail-website.amazon.com, huddles.amazon.com]
 	StatusDetail() string
+
+	// ValidationStatus provides a one word status value for validation check
+	// results (e.g., "failed", "ignored" or "successful").
+	ValidationStatus() string
 
 	// String provides the validation result in human-readable format.
 	//
