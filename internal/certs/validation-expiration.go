@@ -135,7 +135,7 @@ func ValidateExpiration(
 			validationOptions: validationOptions,
 			err: fmt.Errorf(
 				"required certificate chain is empty: %w",
-				ErrMissingValue,
+				ErrIncompleteCertificateChain,
 			),
 			ignored:          validationOptions.IgnoreValidationResultExpiration,
 			priorityModifier: priorityModifierMaximum,

@@ -126,6 +126,10 @@ var (
 	// attempt between an issued certificate and an issuer certificate was
 	// unsuccessful.
 	ErrSignatureVerificationFailed = errors.New("signature verification failed")
+
+	// ErrIncompleteCertificateChain indicates that a certificate chain is
+	// missing one or more certificates (e.g., only leaf cert is present).
+	ErrIncompleteCertificateChain = errors.New("certificate chain incomplete")
 )
 
 // ServiceStater represents a type that is capable of evaluating its overall
