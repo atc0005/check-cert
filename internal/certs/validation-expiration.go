@@ -217,200 +217,346 @@ func ValidateExpiration(
 		RootCerts(certChain),
 	)
 
-	// Process certificates expiration status checks, exit early where viable.
-	var err error
-	priorityModifier := priorityModifierBaseline
-	ignored := validationOptions.IgnoreValidationResultExpiration
+	filteredCerts := filterCertificateChain(certChain, validationOptions, certsExpireAgeCritical, certsExpireAgeWarning)
 
+	// Process certificates expiration status checks.
 	switch {
-
 	case hasExpiredLeafCerts:
-		err = fmt.Errorf(
-			"expiration validation failed: %w",
-			ErrExpiredCertsFound,
-		)
-
-		if !validationOptions.IgnoreValidationResultExpiration {
-			priorityModifier = priorityModifierMaximum
+		return ExpirationValidationResult{
+			certChain:         certChain,
+			filteredCertChain: filteredCerts,
+			err: fmt.Errorf(
+				"expiration validation failed: %w",
+				ErrExpiredCertsFound,
+			),
+			validationOptions:            validationOptions,
+			ignored:                      validationOptions.IgnoreValidationResultExpiration,
+			verboseOutput:                verboseOutput,
+			omitSANsEntries:              omitSANsEntries,
+			ageWarningThreshold:          certsExpireAgeWarning,
+			ageCriticalThreshold:         certsExpireAgeCritical,
+			hasExpiredCerts:              hasExpiredCerts,
+			hasExpiringCerts:             hasExpiringCerts,
+			hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
+			hasExpiredRootCerts:          hasExpiredRootCerts,
+			hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
+			hasExpiringRootCerts:         hasExpiringRootCerts,
+			numExpiredCerts:              numExpiredCerts,
+			numExpiringCerts:             numExpiringCerts,
+			priorityModifier:             priorityModifierMaximum,
 		}
 
 	case hasExpiringLeafCerts:
-		err = fmt.Errorf(
-			"expiration validation failed: %w",
-			ErrExpiringCertsFound,
-		)
-
-		if !validationOptions.IgnoreValidationResultExpiration {
-			priorityModifier = priorityModifierMinimum
+		return ExpirationValidationResult{
+			certChain:         certChain,
+			filteredCertChain: filteredCerts,
+			err: fmt.Errorf(
+				"expiration validation failed: %w",
+				ErrExpiringCertsFound,
+			),
+			validationOptions:            validationOptions,
+			ignored:                      validationOptions.IgnoreValidationResultExpiration,
+			verboseOutput:                verboseOutput,
+			omitSANsEntries:              omitSANsEntries,
+			ageWarningThreshold:          certsExpireAgeWarning,
+			ageCriticalThreshold:         certsExpireAgeCritical,
+			hasExpiredCerts:              hasExpiredCerts,
+			hasExpiringCerts:             hasExpiringCerts,
+			hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
+			hasExpiredRootCerts:          hasExpiredRootCerts,
+			hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
+			hasExpiringRootCerts:         hasExpiringRootCerts,
+			numExpiredCerts:              numExpiredCerts,
+			numExpiringCerts:             numExpiringCerts,
+			priorityModifier:             priorityModifierMinimum,
 		}
 
 	case hasExpiringIntermediateCerts &&
 		!validationOptions.IgnoreExpiringIntermediateCertificates:
-		err = fmt.Errorf(
-			"expiration validation failed: %w",
-			ErrExpiringCertsFound,
-		)
 
-		if !validationOptions.IgnoreValidationResultExpiration {
-			priorityModifier = priorityModifierMinimum
+		return ExpirationValidationResult{
+			certChain:         certChain,
+			filteredCertChain: filteredCerts,
+			err: fmt.Errorf(
+				"expiration validation failed: %w",
+				ErrExpiringCertsFound,
+			),
+			validationOptions:            validationOptions,
+			ignored:                      validationOptions.IgnoreValidationResultExpiration,
+			verboseOutput:                verboseOutput,
+			omitSANsEntries:              omitSANsEntries,
+			ageWarningThreshold:          certsExpireAgeWarning,
+			ageCriticalThreshold:         certsExpireAgeCritical,
+			hasExpiredCerts:              hasExpiredCerts,
+			hasExpiringCerts:             hasExpiringCerts,
+			hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
+			hasExpiredRootCerts:          hasExpiredRootCerts,
+			hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
+			hasExpiringRootCerts:         hasExpiringRootCerts,
+			numExpiredCerts:              numExpiredCerts,
+			numExpiringCerts:             numExpiringCerts,
+			priorityModifier:             priorityModifierMinimum,
 		}
 
 	case hasExpiringRootCerts &&
 		!validationOptions.IgnoreExpiringRootCertificates:
-		err = fmt.Errorf(
-			"expiration validation failed: %w",
-			ErrExpiringCertsFound,
-		)
 
-		if !validationOptions.IgnoreValidationResultExpiration {
-			priorityModifier = priorityModifierMinimum
+		return ExpirationValidationResult{
+			certChain:         certChain,
+			filteredCertChain: filteredCerts,
+			err: fmt.Errorf(
+				"expiration validation failed: %w",
+				ErrExpiringCertsFound,
+			),
+			validationOptions:            validationOptions,
+			ignored:                      validationOptions.IgnoreValidationResultExpiration,
+			verboseOutput:                verboseOutput,
+			omitSANsEntries:              omitSANsEntries,
+			ageWarningThreshold:          certsExpireAgeWarning,
+			ageCriticalThreshold:         certsExpireAgeCritical,
+			hasExpiredCerts:              hasExpiredCerts,
+			hasExpiringCerts:             hasExpiringCerts,
+			hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
+			hasExpiredRootCerts:          hasExpiredRootCerts,
+			hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
+			hasExpiringRootCerts:         hasExpiringRootCerts,
+			numExpiredCerts:              numExpiredCerts,
+			numExpiringCerts:             numExpiringCerts,
+			priorityModifier:             priorityModifierMinimum,
 		}
 
 	case hasExpiredIntermediateCerts &&
 		!validationOptions.IgnoreExpiredIntermediateCertificates:
 
-		err = fmt.Errorf(
-			"expiration validation failed: %w",
-			ErrExpiredCertsFound,
-		)
-
-		if !validationOptions.IgnoreValidationResultExpiration {
-			priorityModifier = priorityModifierMaximum
+		return ExpirationValidationResult{
+			certChain:         certChain,
+			filteredCertChain: filteredCerts,
+			err: fmt.Errorf(
+				"expiration validation failed: %w",
+				ErrExpiredCertsFound,
+			),
+			validationOptions:            validationOptions,
+			ignored:                      validationOptions.IgnoreValidationResultExpiration,
+			verboseOutput:                verboseOutput,
+			omitSANsEntries:              omitSANsEntries,
+			ageWarningThreshold:          certsExpireAgeWarning,
+			ageCriticalThreshold:         certsExpireAgeCritical,
+			hasExpiredCerts:              hasExpiredCerts,
+			hasExpiringCerts:             hasExpiringCerts,
+			hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
+			hasExpiredRootCerts:          hasExpiredRootCerts,
+			hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
+			hasExpiringRootCerts:         hasExpiringRootCerts,
+			numExpiredCerts:              numExpiredCerts,
+			numExpiringCerts:             numExpiringCerts,
+			priorityModifier:             priorityModifierMaximum,
 		}
 
 	case hasExpiredRootCerts &&
 		!validationOptions.IgnoreExpiredRootCertificates:
 
-		err = fmt.Errorf(
-			"expiration validation failed: %w",
-			ErrExpiredCertsFound,
-		)
-
-		if !validationOptions.IgnoreValidationResultExpiration {
-			priorityModifier = priorityModifierMinimum
+		return ExpirationValidationResult{
+			certChain:         certChain,
+			filteredCertChain: filteredCerts,
+			err: fmt.Errorf(
+				"expiration validation failed: %w",
+				ErrExpiredCertsFound,
+			),
+			validationOptions:            validationOptions,
+			ignored:                      validationOptions.IgnoreValidationResultExpiration,
+			verboseOutput:                verboseOutput,
+			omitSANsEntries:              omitSANsEntries,
+			ageWarningThreshold:          certsExpireAgeWarning,
+			ageCriticalThreshold:         certsExpireAgeCritical,
+			hasExpiredCerts:              hasExpiredCerts,
+			hasExpiringCerts:             hasExpiringCerts,
+			hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
+			hasExpiredRootCerts:          hasExpiredRootCerts,
+			hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
+			hasExpiringRootCerts:         hasExpiringRootCerts,
+			numExpiredCerts:              numExpiredCerts,
+			numExpiringCerts:             numExpiringCerts,
+			priorityModifier:             priorityModifierMinimum,
 		}
 
 	case hasExpiredIntermediateCerts &&
 		validationOptions.IgnoreExpiredIntermediateCertificates:
 
-		// Even if we're opting to ignore this validation result, we still
-		// note that expired certificates were found in the chain.
-		err = fmt.Errorf(
-			"expiration validation failed: %w",
-			ErrExpiredCertsFound,
-		)
+		return ExpirationValidationResult{
+			certChain:         certChain,
+			filteredCertChain: filteredCerts,
+			err: fmt.Errorf(
+				"expiration validation failed: %w",
+				ErrExpiredCertsFound,
+			),
+			validationOptions: validationOptions,
 
-		// NOTE:
-		//
-		// Because we set this, we end up flagging the entire expiration
-		// validation check as ignored. This excludes the next expiring
-		// certificate from the ServiceOutput and thus the service check
-		// one-line summary.
-		//
-		// When the *leaf* certificate approaches expiration or is expired
-		// then that will cause the expiration validation check to take
-		// precedence again and no longer be ignored. This seems acceptable
-		// behavior for now.
-		ignored = validationOptions.IgnoreExpiredIntermediateCertificates
-		priorityModifier = priorityModifierBaseline
+			// NOTE:
+			//
+			// Because we set this, we end up flagging the entire expiration
+			// validation check as ignored. This excludes the next expiring
+			// certificate from the ServiceOutput and thus the service check
+			// one-line summary.
+			//
+			// When the *leaf* certificate approaches expiration or is expired
+			// then that will cause the expiration validation check to take
+			// precedence again and no longer be ignored. This seems
+			// acceptable behavior for now.
+			ignored:                      validationOptions.IgnoreExpiredIntermediateCertificates,
+			verboseOutput:                verboseOutput,
+			omitSANsEntries:              omitSANsEntries,
+			ageWarningThreshold:          certsExpireAgeWarning,
+			ageCriticalThreshold:         certsExpireAgeCritical,
+			hasExpiredCerts:              hasExpiredCerts,
+			hasExpiringCerts:             hasExpiringCerts,
+			hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
+			hasExpiredRootCerts:          hasExpiredRootCerts,
+			hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
+			hasExpiringRootCerts:         hasExpiringRootCerts,
+			numExpiredCerts:              numExpiredCerts,
+			numExpiringCerts:             numExpiringCerts,
+			priorityModifier:             priorityModifierBaseline,
+		}
 
 	case hasExpiredRootCerts &&
 		validationOptions.IgnoreExpiredRootCertificates:
 
-		// Even if we're opting to ignore this validation result, we still
-		// note that expired certificates were found in the chain.
-		err = fmt.Errorf(
-			"expiration validation failed: %w",
-			ErrExpiredCertsFound,
-		)
+		return ExpirationValidationResult{
+			certChain:         certChain,
+			filteredCertChain: filteredCerts,
+			err: fmt.Errorf(
+				"expiration validation failed: %w",
+				ErrExpiredCertsFound,
+			),
+			validationOptions: validationOptions,
 
-		// NOTE:
-		//
-		// Because we set this, we end up flagging the entire expiration
-		// validation check as ignored. This excludes the next expiring
-		// certificate from the ServiceOutput and thus the service check
-		// one-line summary.
-		//
-		// When the *leaf* certificate approaches expiration or is expired
-		// then that will cause the expiration validation check to take
-		// precedence again and no longer be ignored. This seems acceptable
-		// behavior for now.
-		ignored = validationOptions.IgnoreExpiredRootCertificates
-		priorityModifier = priorityModifierBaseline
+			// NOTE:
+			//
+			// Because we set this, we end up flagging the entire expiration
+			// validation check as ignored. This excludes the next expiring
+			// certificate from the ServiceOutput and thus the service check
+			// one-line summary.
+			//
+			// When the *leaf* certificate approaches expiration or is expired
+			// then that will cause the expiration validation check to take
+			// precedence again and no longer be ignored. This seems
+			// acceptable behavior for now.
+			ignored:                      validationOptions.IgnoreExpiredRootCertificates,
+			verboseOutput:                verboseOutput,
+			omitSANsEntries:              omitSANsEntries,
+			ageWarningThreshold:          certsExpireAgeWarning,
+			ageCriticalThreshold:         certsExpireAgeCritical,
+			hasExpiredCerts:              hasExpiredCerts,
+			hasExpiringCerts:             hasExpiringCerts,
+			hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
+			hasExpiredRootCerts:          hasExpiredRootCerts,
+			hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
+			hasExpiringRootCerts:         hasExpiringRootCerts,
+			numExpiredCerts:              numExpiredCerts,
+			numExpiringCerts:             numExpiringCerts,
+			priorityModifier:             priorityModifierBaseline,
+		}
 
 	case hasExpiringIntermediateCerts &&
 		validationOptions.IgnoreExpiringIntermediateCertificates:
 
-		// Even if we're opting to ignore this validation result, we still
-		// note that expiring certificates were found in the chain.
-		err = fmt.Errorf(
-			"expiration validation failed: %w",
-			ErrExpiringCertsFound,
-		)
+		return ExpirationValidationResult{
+			certChain:         certChain,
+			filteredCertChain: filteredCerts,
+			err: fmt.Errorf(
+				"expiration validation failed: %w",
+				ErrExpiringCertsFound,
+			),
+			validationOptions: validationOptions,
 
-		// NOTE:
-		//
-		// Because we set this, we end up flagging the entire expiration
-		// validation check as ignored. This excludes the next expiring
-		// certificate from the ServiceOutput and thus the service check
-		// one-line summary.
-		//
-		// When the *leaf* certificate approaches expiration or is expired
-		// then that will cause the expiration validation check to take
-		// precedence again and no longer be ignored. This seems acceptable
-		// behavior for now.
-		ignored = validationOptions.IgnoreExpiringIntermediateCertificates
-		priorityModifier = priorityModifierBaseline
+			// NOTE:
+			//
+			// Because we set this, we end up flagging the entire expiration
+			// validation check as ignored. This excludes the next expiring
+			// certificate from the ServiceOutput and thus the service check
+			// one-line summary.
+			//
+			// When the *leaf* certificate approaches expiration or is expired
+			// then that will cause the expiration validation check to take
+			// precedence again and no longer be ignored. This seems
+			// acceptable behavior for now.
+			ignored:                      validationOptions.IgnoreExpiringIntermediateCertificates,
+			verboseOutput:                verboseOutput,
+			omitSANsEntries:              omitSANsEntries,
+			ageWarningThreshold:          certsExpireAgeWarning,
+			ageCriticalThreshold:         certsExpireAgeCritical,
+			hasExpiredCerts:              hasExpiredCerts,
+			hasExpiringCerts:             hasExpiringCerts,
+			hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
+			hasExpiredRootCerts:          hasExpiredRootCerts,
+			hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
+			hasExpiringRootCerts:         hasExpiringRootCerts,
+			numExpiredCerts:              numExpiredCerts,
+			numExpiringCerts:             numExpiringCerts,
+			priorityModifier:             priorityModifierBaseline,
+		}
 
 	case hasExpiringRootCerts &&
 		validationOptions.IgnoreExpiringRootCertificates:
 
-		// Even if we're opting to ignore this validation result, we still
-		// note that expiring certificates were found in the chain.
-		err = fmt.Errorf(
-			"expiration validation failed: %w",
-			ErrExpiringCertsFound,
-		)
+		return ExpirationValidationResult{
+			certChain:         certChain,
+			filteredCertChain: filteredCerts,
+			err: fmt.Errorf(
+				"expiration validation failed: %w",
+				ErrExpiringCertsFound,
+			),
+			validationOptions: validationOptions,
 
-		// NOTE:
-		//
-		// Because we set this, we end up flagging the entire expiration
-		// validation check as ignored. This excludes the next expiring
-		// certificate from the ServiceOutput and thus the service check
-		// one-line summary.
-		//
-		// When the *leaf* certificate approaches expiration or is expired
-		// then that will cause the expiration validation check to take
-		// precedence again and no longer be ignored. This seems acceptable
-		// behavior for now.
-		ignored = validationOptions.IgnoreExpiringRootCertificates
-		priorityModifier = priorityModifierBaseline
+			// NOTE:
+			//
+			// Because we set this, we end up flagging the entire expiration
+			// validation check as ignored. This excludes the next expiring
+			// certificate from the ServiceOutput and thus the service check
+			// one-line summary.
+			//
+			// When the *leaf* certificate approaches expiration or is expired
+			// then that will cause the expiration validation check to take
+			// precedence again and no longer be ignored. This seems
+			// acceptable behavior for now.
+			ignored:                      validationOptions.IgnoreExpiringRootCertificates,
+			verboseOutput:                verboseOutput,
+			omitSANsEntries:              omitSANsEntries,
+			ageWarningThreshold:          certsExpireAgeWarning,
+			ageCriticalThreshold:         certsExpireAgeCritical,
+			hasExpiredCerts:              hasExpiredCerts,
+			hasExpiringCerts:             hasExpiringCerts,
+			hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
+			hasExpiredRootCerts:          hasExpiredRootCerts,
+			hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
+			hasExpiringRootCerts:         hasExpiringRootCerts,
+			numExpiredCerts:              numExpiredCerts,
+			numExpiringCerts:             numExpiringCerts,
+			priorityModifier:             priorityModifierBaseline,
+		}
 
 	default:
 		// Neither expired nor expiring certificates.
-	}
-
-	filteredCerts := filterCertificateChain(certChain, validationOptions, certsExpireAgeCritical, certsExpireAgeWarning)
-
-	return ExpirationValidationResult{
-		certChain:                    certChain,
-		filteredCertChain:            filteredCerts,
-		err:                          err,
-		validationOptions:            validationOptions,
-		ignored:                      ignored,
-		verboseOutput:                verboseOutput,
-		omitSANsEntries:              omitSANsEntries,
-		ageWarningThreshold:          certsExpireAgeWarning,
-		ageCriticalThreshold:         certsExpireAgeCritical,
-		hasExpiredCerts:              hasExpiredCerts,
-		hasExpiringCerts:             hasExpiringCerts,
-		hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
-		hasExpiredRootCerts:          hasExpiredRootCerts,
-		hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
-		hasExpiringRootCerts:         hasExpiringRootCerts,
-		numExpiredCerts:              numExpiredCerts,
-		numExpiringCerts:             numExpiringCerts,
-		priorityModifier:             priorityModifier,
+		return ExpirationValidationResult{
+			certChain:                    certChain,
+			filteredCertChain:            filteredCerts,
+			err:                          nil,
+			validationOptions:            validationOptions,
+			ignored:                      validationOptions.IgnoreValidationResultExpiration,
+			verboseOutput:                verboseOutput,
+			omitSANsEntries:              omitSANsEntries,
+			ageWarningThreshold:          certsExpireAgeWarning,
+			ageCriticalThreshold:         certsExpireAgeCritical,
+			hasExpiredCerts:              hasExpiredCerts,
+			hasExpiringCerts:             hasExpiringCerts,
+			hasExpiredIntermediateCerts:  hasExpiredIntermediateCerts,
+			hasExpiredRootCerts:          hasExpiredRootCerts,
+			hasExpiringIntermediateCerts: hasExpiringIntermediateCerts,
+			hasExpiringRootCerts:         hasExpiringRootCerts,
+			numExpiredCerts:              numExpiredCerts,
+			numExpiringCerts:             numExpiringCerts,
+			priorityModifier:             priorityModifierBaseline,
+		}
 	}
 
 }
@@ -733,7 +879,7 @@ func (evr ExpirationValidationResult) ValidationStatus() string {
 	case evr.IsIgnored():
 		return ValidationStatusIgnored
 	default:
-		return "successful"
+		return ValidationStatusSuccessful
 	}
 }
 
