@@ -214,7 +214,7 @@ func ValidateHostname(
 				verifyErr,
 			),
 			ignored:          validationOptions.IgnoreValidationResultHostname,
-			priorityModifier: priorityModifierMinimum,
+			priorityModifier: priorityModifierMaximum,
 		}
 
 	// Hostname verification succeeded.
