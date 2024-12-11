@@ -26,6 +26,27 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.25.3] - 2024-12-11
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1163) Go Dependency: Bump github.com/atc0005/cert-payload from 0.7.0 to 0.7.1
+
+#### Other
+
+- (GH-1164) Add ValidationStatus to CertChainValidationResult
+- (GH-1161) Refactor cert chain position logic
+- (GH-1168) Refactor ExpirationValidationResult checks logic
+- (GH-1160) Refactor ExpirationValidationResult status logic
+- (GH-1165) Refactor self-signed signature handling
+- (GH-1167) Return incomplete chain error when chain is empty
+
+### Fixed
+
+- (GH-1159) Bump priority for unhandled hostname verify fail
+
 ## [v0.25.2] - 2024-12-05
 
 ### Changed
@@ -1892,7 +1913,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.3...HEAD
+[v0.25.3]: https://github.com/atc0005/check-cert/releases/tag/v0.25.3
 [v0.25.2]: https://github.com/atc0005/check-cert/releases/tag/v0.25.2
 [v0.25.1]: https://github.com/atc0005/check-cert/releases/tag/v0.25.1
 [v0.25.0]: https://github.com/atc0005/check-cert/releases/tag/v0.25.0
