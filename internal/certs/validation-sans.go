@@ -477,3 +477,16 @@ func (slvr SANsListValidationResult) NumMismatched() int {
 	return len(slvr.unmatchedSANsEntriesFromCert) +
 		len(slvr.unmatchedSANsEntriesFromList)
 }
+
+// ValidationStatus provides a one word status value for hostname validation
+// check results.
+func (slvr SANsListValidationResult) ValidationStatus() string {
+	switch {
+	case slvr.IsFailed():
+		return ValidationStatusFailed
+	case slvr.IsIgnored():
+		return ValidationStatusIgnored
+	default:
+		return ValidationStatusSuccessful
+	}
+}

@@ -727,15 +727,11 @@ func (evr ExpirationValidationResult) FilteredCertificateChain() []*x509.Certifi
 // validation status value is based on the filtered chain, otherwise the
 // original certificate chain is used.
 func (evr ExpirationValidationResult) ValidationStatus() string {
-	filteredCertChain := evr.FilteredCertificateChain()
-
 	switch {
-	case HasExpiredCert(filteredCertChain):
-		return "failed"
-	case HasExpiringCert(filteredCertChain, evr.ageCriticalThreshold, evr.ageWarningThreshold):
-		return "failed"
-	case evr.ignored:
-		return "ignored"
+	case evr.IsFailed():
+		return ValidationStatusFailed
+	case evr.IsIgnored():
+		return ValidationStatusIgnored
 	default:
 		return "successful"
 	}

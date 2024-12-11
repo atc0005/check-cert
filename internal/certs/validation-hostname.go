@@ -544,3 +544,16 @@ func (hnvr HostnameValidationResult) Report() string {
 	}
 
 }
+
+// ValidationStatus provides a one word status value for hostname validation
+// check results.
+func (hnvr HostnameValidationResult) ValidationStatus() string {
+	switch {
+	case hnvr.IsFailed():
+		return ValidationStatusFailed
+	case hnvr.IsIgnored():
+		return ValidationStatusIgnored
+	default:
+		return ValidationStatusSuccessful
+	}
+}
