@@ -106,7 +106,7 @@ func ValidateSANsList(
 	//
 	// NOTE: While configuration validation is expected to prevent this
 	// scenario we explicitly guard against it.
-	case len(requiredEntries) == 0:
+	case len(requiredEntries) == 0 && !validationOptions.IgnoreValidationResultSANs:
 		return SANsListValidationResult{
 			certChain:         certChain,
 			leafCert:          leafCert,
@@ -119,6 +119,17 @@ func ValidateSANsList(
 			priorityModifier: priorityModifierMaximum,
 		}
 
+	// If we're not given a list to process AND we are asked to ignore this,
+	// abort early.
+	case len(requiredEntries) == 0 && validationOptions.IgnoreValidationResultSANs:
+		return SANsListValidationResult{
+			certChain:         certChain,
+			leafCert:          leafCert,
+			validationOptions: validationOptions,
+			err:               nil,
+			ignored:           validationOptions.IgnoreValidationResultSANs,
+			priorityModifier:  priorityModifierBaseline,
+		}
 	}
 
 	// Assuming that the DNSNames slice is NOT already lowercase, so forcing
