@@ -343,6 +343,12 @@ func (ccvr CertChainValidationResults) Total() int {
 // Err returns an error state evaluation of the validation results in the
 // collection. This is a summary only and does not provide specifics regarding
 // which validation errors occurred.
+//
+// NOTE: This method does not directly evaluate whether there is an underlying
+// error recorded for one of the validation results in this collection, but
+// rather whether one of the results is in a problematic, "unhandled" (or
+// non-ignored) state. See the Errs method for access to any potential errors
+// in the results collection.
 func (ccvr CertChainValidationResults) Err() error {
 	switch {
 
