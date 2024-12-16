@@ -426,9 +426,14 @@ func (slvr SANsListValidationResult) String() string {
 		slvr.Overview(),
 	)
 
-	if slvr.StatusDetail() != "" {
-		output += "; " + slvr.StatusDetail()
-	}
+	// This is too verbose for "human-readable" format. We can rely on the
+	// caller to use the StatusDetail() method directly or indirectly via the
+	// Report() method to obtain this.
+	//
+	//
+	// if slvr.StatusDetail() != "" {
+	// 	output += "; " + slvr.StatusDetail()
+	// }
 
 	return output
 
