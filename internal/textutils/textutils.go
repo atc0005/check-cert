@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 // InList is a helper function to emulate Python's `if "x" in list:`
@@ -78,7 +79,8 @@ func LowerCaseStringSlice(xs []string) []string {
 // PrintHeader prints a section header with liberal leading and trailing
 // newlines to help separate otherwise potentially dense blocks of text.
 func PrintHeader(headerText string) {
-	headerBorderStr := strings.Repeat("=", len(headerText))
+	// headerBorderStr := strings.Repeat("=", len(headerText))
+	headerBorderStr := strings.Repeat("=", utf8.RuneCountInString(headerText))
 	fmt.Printf(
 		"\n\n%s\n%s\n%s\n\n",
 		headerBorderStr,
