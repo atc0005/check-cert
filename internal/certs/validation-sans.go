@@ -198,6 +198,7 @@ func ValidateSANsList(
 			// be ignored.
 			ignored:          validationOptions.IgnoreValidationResultSANs,
 			requiredSANsList: requiredEntries,
+			priorityModifier: priorityModifierBaseline,
 		}
 	}
 
