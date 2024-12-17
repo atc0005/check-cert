@@ -155,7 +155,9 @@ type CertChainValidationResult interface {
 	// check performed.
 	//
 	// If the validation check result is flagged as ignored the priority
-	// modifier is also ignored.
+	// modifier is also ignored. In that case, the baseline value for the
+	// specific implementation is used to allow it to sort properly against
+	// other check result implementations which may also be ignored.
 	Priority() int
 
 	// CertChain returns the associated certificate chain which was evaluated.
