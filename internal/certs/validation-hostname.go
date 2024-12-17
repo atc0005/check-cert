@@ -231,7 +231,8 @@ func ValidateHostname(
 			//
 			// A: Yes, *if* the sysadmin explicitly requested that the result
 			// be ignored.
-			ignored: validationOptions.IgnoreValidationResultHostname,
+			ignored:          validationOptions.IgnoreValidationResultHostname,
+			priorityModifier: priorityModifierBaseline,
 		}
 
 	}
