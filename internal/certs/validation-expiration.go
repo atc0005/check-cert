@@ -268,7 +268,7 @@ func ValidateExpiration(
 			hasExpiringRootCerts:         hasExpiringRootCerts,
 			numExpiredCerts:              numExpiredCerts,
 			numExpiringCerts:             numExpiringCerts,
-			priorityModifier:             priorityModifierMinimum,
+			priorityModifier:             priorityModifierMedium,
 		}
 
 	case hasExpiringIntermediateCerts &&
@@ -295,7 +295,7 @@ func ValidateExpiration(
 			hasExpiringRootCerts:         hasExpiringRootCerts,
 			numExpiredCerts:              numExpiredCerts,
 			numExpiringCerts:             numExpiringCerts,
-			priorityModifier:             priorityModifierMinimum,
+			priorityModifier:             priorityModifierMedium,
 		}
 
 	case hasExpiringRootCerts &&
