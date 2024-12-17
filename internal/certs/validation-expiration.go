@@ -672,6 +672,10 @@ func (evr ExpirationValidationResult) ServiceState() nagios.ServiceState {
 func (evr ExpirationValidationResult) Priority() int {
 	switch {
 	case evr.ignored:
+		// Though the result is ignored, we indicate the baseline value for
+		// this check result to allow this result to sort properly against
+		// other check results which may also be ignored. This why we don't
+		// use a value of 0 (or equivalent) here.
 		return baselinePriorityExpirationValidationResult
 	default:
 		return baselinePriorityExpirationValidationResult + evr.priorityModifier

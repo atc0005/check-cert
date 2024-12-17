@@ -292,6 +292,10 @@ func (slvr SANsListValidationResult) ServiceState() nagios.ServiceState {
 func (slvr SANsListValidationResult) Priority() int {
 	switch {
 	case slvr.ignored:
+		// Though the result is ignored, we indicate the baseline value for
+		// this check result to allow this result to sort properly against
+		// other check results which may also be ignored. This why we don't
+		// use a value of 0 (or equivalent) here.
 		return baselinePrioritySANsListValidationResult
 	default:
 		return baselinePrioritySANsListValidationResult + slvr.priorityModifier

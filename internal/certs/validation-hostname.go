@@ -327,6 +327,10 @@ func (hnvr HostnameValidationResult) ServiceState() nagios.ServiceState {
 func (hnvr HostnameValidationResult) Priority() int {
 	switch {
 	case hnvr.ignored:
+		// Though the result is ignored, we indicate the baseline value for
+		// this check result to allow this result to sort properly against
+		// other check results which may also be ignored. This why we don't
+		// use a value of 0 (or equivalent) here.
 		return baselinePriorityHostnameValidationResult
 	default:
 		return baselinePriorityHostnameValidationResult + hnvr.priorityModifier
