@@ -44,6 +44,9 @@ type CertChainValidationResult interface {
 	// Example:
 	//
 	// CRITICAL: Mismatched SANs entries for leaf certificate
+	//
+	// Implementations should not rely on leading and trailing whitespace in
+	// provided output to be retained.
 	Status() string
 
 	// Overview is a high-level overview of the validation result. This can be
@@ -53,6 +56,9 @@ type CertChainValidationResult interface {
 	// Example:
 	//
 	// [EXPIRED: 0, EXPIRING: 1, OK: 2]
+	//
+	// Implementations should not rely on leading and trailing whitespace in
+	// provided output to be retained.
 	Overview() string
 
 	// StatusDetail is provides additional details intended to extend the
@@ -63,6 +69,9 @@ type CertChainValidationResult interface {
 	// Example:
 	//
 	// missing: [konrad-test.amazon.com, mp3recs.amazon.com, test-www.amazon.com, www.cdn.amazon.com, www.m.amazon.com, yellowpages.amazon.com], unexpected: [origin-www.amazon.com, buckeye-retail-website.amazon.com, huddles.amazon.com]
+	//
+	// Implementations should not rely on leading and trailing whitespace in
+	// provided output to be retained.
 	StatusDetail() string
 
 	// ValidationStatus provides a one word status value for validation check
@@ -74,6 +83,9 @@ type CertChainValidationResult interface {
 	// Most implementations will combine the contents of Status() and
 	// Overview(), some implementations may also combine StatusDetail() if the
 	// content is sufficiently brief.
+	//
+	// Implementations should not rely on leading and trailing whitespace in
+	// provided output to be retained.
 	String() string
 
 	// ServiceState maps the validation result to a compatible ServiceState
@@ -85,6 +97,9 @@ type CertChainValidationResult interface {
 	//
 	// Most implementations will likely combine String() and StatusDetail()
 	// along with additional verbose details to provide this output.
+	//
+	// Implementations should not rely on leading and trailing whitespace in
+	// provided output to be retained.
 	Report() string
 
 	// IsWarningState indicates whether the results for a validation check
@@ -746,9 +761,10 @@ func (ccvr CertChainValidationResults) Report() string {
 				_, _ = fmt.Fprintf(
 					&summary,
 					// "\xE2\x9B\x94 [!!] %s%s",
-					"%s[!!] %s%s",
+					"%s[!!] %s%s%s",
 					nagios.CheckOutputEOL,
-					result.Report(),
+					strings.TrimSpace(result.Report()),
+					nagios.CheckOutputEOL,
 					nagios.CheckOutputEOL,
 				)
 			}
@@ -777,9 +793,10 @@ func (ccvr CertChainValidationResults) Report() string {
 				_, _ = fmt.Fprintf(
 					&summary,
 					// "\u23ED\uFE0F [--] %s%s",
-					"%s[--] %s%s",
+					"%s[--] %s%s%s",
 					nagios.CheckOutputEOL,
-					result.Report(),
+					strings.TrimSpace(result.Report()),
+					nagios.CheckOutputEOL,
 					nagios.CheckOutputEOL,
 				)
 			}
@@ -808,9 +825,10 @@ func (ccvr CertChainValidationResults) Report() string {
 				_, _ = fmt.Fprintf(
 					&summary,
 					// "\xE2\x9C\x85 [OK] %s%s",
-					"%s[OK] %s%s",
+					"%s[OK] %s%s%s",
 					nagios.CheckOutputEOL,
-					result.Report(),
+					strings.TrimSpace(result.Report()),
+					nagios.CheckOutputEOL,
 					nagios.CheckOutputEOL,
 				)
 			}
