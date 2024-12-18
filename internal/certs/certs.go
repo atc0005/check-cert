@@ -4,6 +4,12 @@
 //
 // Licensed under the MIT License. See LICENSE file in the project root for
 // full license information.
+//
+// Code in this file inspired by or generated with the help of:
+//
+// - ChatGPT, OpenAI
+// - Google Gemini
+// - Claude (Anthropic AI assistant)
 
 package certs
 
@@ -14,6 +20,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/md5" //nolint:gosec // used for MD5WithRSA signature verification
 	"crypto/sha256"
+	"crypto/x509/pkix"
 
 	"crypto/sha1" //nolint:gosec // used for SHA1 fingerprints and signature verification
 	"crypto/sha512"
@@ -130,6 +137,10 @@ var (
 	// ErrIncompleteCertificateChain indicates that a certificate chain is
 	// missing one or more certificates (e.g., only leaf cert is present).
 	ErrIncompleteCertificateChain = errors.New("certificate chain incomplete")
+
+	// ErrMisorderedCertificateChain indicates that a certificate chain is not
+	// in the correct order.
+	ErrMisorderedCertificateChain = errors.New("certificate chain misordered")
 )
 
 // ServiceStater represents a type that is capable of evaluating its overall
@@ -165,9 +176,14 @@ type CertChainValidationOptions struct {
 	IgnoreValidationResultHostname bool
 
 	// IgnoreValidationResultSANs tracks whether a request was made to ignore
-	// validation check results result from performing a Subject Alternate
-	// Names (SANs) validation against a leaf certificate in a chain.
+	// validation check results from performing a Subject Alternate Names
+	// (SANs) validation against a leaf certificate in a chain.
 	IgnoreValidationResultSANs bool
+
+	// IgnoreValidationResultChainOrder tracks whether a request was made to
+	// ignore validation check results from performing a chain elements order
+	// validation against certificates in a chain.
+	IgnoreValidationResultChainOrder bool
 
 	// IgnoreExpiringIntermediateCertificates tracks whether a request was
 	// made to ignore validation check results for certificate expiration
@@ -310,13 +326,30 @@ const (
 	checkNameExpirationValidationResult string = "Expiration"
 	checkNameHostnameValidationResult   string = "Hostname"
 	checkNameSANsListValidationResult   string = "SANs List"
+	checkNameChainOrderValidationResult string = "Chain Order"
 )
 
 // Baseline priority values for validation results. Higher values indicate
 // higher priority.
 const (
+	// baselinePrioritySANsListValidationResult is considered the lowest
+	// priority when compared to the severity of other validation issues.
 	baselinePrioritySANsListValidationResult int = iota + 1
+
+	// baselinePriorityChainOrderValidationResult is a problem, but
+	// historically has been a common issue that has been ignored with only
+	// minor impact; browsers and other clients tend to automatically resolve
+	// chain ordering issues provided that the correct certificates are
+	// provided in the chain.
+	baselinePriorityChainOrderValidationResult
+
+	// baselinePriorityHostnameValidationResult is considered the next most
+	// severe validation problem when compared to expiring (or expired)
+	// certificates.
 	baselinePriorityHostnameValidationResult
+
+	// baselinePriorityExpirationValidationResult is considered the most
+	// severe validation issue.
 	baselinePriorityExpirationValidationResult
 )
 
@@ -348,6 +381,127 @@ const (
 	// validation check is used (NOOP; e.g., for an OK result).
 	priorityModifierBaseline int = 0
 )
+
+// reverseCertChain reverses the elements of the given certificate chain in
+// place.
+func reverseCertChain(certChain []*x509.Certificate) {
+	for i, j := 0, len(certChain)-1; i < j; i, j = i+1, j-1 {
+		certChain[i], certChain[j] = certChain[j], certChain[i]
+	}
+}
+
+// dedupeCerts returns a copy of the given certificate chain in the original
+// order minus any duplicated certificates (based on serial number). The
+// deduplicated certificate chain is not sorted.
+//
+// A copy of the given certificate chain is returned as-is if fewer than two
+// certificates are present in the given chain.
+func dedupeCerts(certChain []*x509.Certificate) []*x509.Certificate {
+	if len(certChain) < 2 {
+		return certChain
+	}
+
+	dedupedChain := make([]*x509.Certificate, 0, len(certChain))
+	uniqCerts := make(map[string]int)
+
+	for _, cert := range certChain {
+		sn := FormatCertSerialNumber(cert.SerialNumber)
+
+		uniqCerts[sn]++
+
+		if count := uniqCerts[sn]; count == 1 {
+			dedupedChain = append(dedupedChain, cert)
+		}
+	}
+
+	return dedupedChain
+}
+
+// orderCertChain attempts to return a sorted copy of the given certificate
+// chain in the correct order based on subject / issuer distinguished name
+// comparison.
+//
+// If duplicate certificates are present in the given certificate chain they
+// are omitted in the returned chain.
+//
+// The given certificate chain is returned as-is if fewer than two
+// certificates are present in the given chain. The first non-expired leaf
+// certificate is used; any remaining leaf certificates in the chain are
+// omitted.
+func orderCertChain(certChain []*x509.Certificate) []*x509.Certificate {
+	if len(certChain) < 2 {
+		return certChain
+	}
+
+	dedupedCerts := dedupeCerts(certChain)
+
+	// We'll create a copy to avoid modifying the original slice.
+	var sortedCerts []*x509.Certificate
+
+	switch {
+	case HasLeafCert(dedupedCerts):
+		var leafCert *x509.Certificate
+
+		sortedCerts = make([]*x509.Certificate, 0, len(dedupedCerts))
+
+		leafCerts := LeafCerts(dedupedCerts)
+
+		// Attempt to use the first non-expired leaf cert.
+		for _, cert := range leafCerts {
+			if !IsExpiredCert(cert) {
+				leafCert = cert
+
+				break
+			}
+		}
+
+		// Fallback to the first leaf cert if a non-expired leaf cert was not
+		// found in the collection.
+		if leafCert == nil {
+			leafCert = leafCerts[0]
+		}
+
+		sortedCerts = append(sortedCerts, leafCert)
+
+		for _, cert := range dedupedCerts {
+			if !IsLeafCert(cert, certChain) {
+				sortedCerts = append(sortedCerts, cert)
+			}
+		}
+
+		// The implemented sort order is root first chaining to the leaf cert.
+		sort.Slice(sortedCerts, func(i, j int) bool {
+			// Check if cert[j] is a CA for cert[i].
+			return pkixNameEqual(sortedCerts[j].Issuer, sortedCerts[i].Subject)
+		})
+
+		// We reverse the sort order, placing the leaf cert first followed by
+		// the intermediate certificate that signed it and continuing from
+		// there to the root certificate. We accomplish this by excluding the
+		// first entry in the slice (leaf) and reversing the sort order of the
+		// remaining elements.
+		reverseCertChain(sortedCerts[1:])
+
+	default:
+		sortedCerts = make([]*x509.Certificate, len(dedupedCerts))
+
+		copy(sortedCerts, dedupedCerts)
+
+		// The implemented sort order is root first chaining to the leaf cert.
+		sort.Slice(sortedCerts, func(i, j int) bool {
+			// Check if cert[j] is a CA for cert[i].
+			return pkixNameEqual(sortedCerts[j].Issuer, sortedCerts[i].Subject)
+		})
+
+		// We reverse the sort order, placing the certificate without an
+		// issuing certificate (i.e., self-signed root) last in the chain and
+		// the certificate that was signed by it just ahead of it. This
+		// continues for the remaining certificates in the chain.
+		reverseCertChain(sortedCerts)
+	}
+
+	return sortedCerts
+}
 
 // chainPositionV1V2Cert relies on a combination of self-signed and literal
 // chain position to help determine the purpose of each v1 and v2 certificate.
@@ -803,6 +957,102 @@ func NumExpiringCerts(certChain []*x509.Certificate, ageCritical time.Time, ageW
 
 	return expiringCertsCount
 
+}
+
+// NumMisorderedCerts receives a slice of x509 certificates and returns a
+// count of how many certificates are in an incorrect order.
+func NumMisorderedCerts(certChain []*x509.Certificate) int {
+	if len(certChain) == 0 {
+		return 0
+	}
+
+	var numMisorderedCerts int
+
+	for i := 0; i < len(certChain)-1; i++ {
+		currentCert := certChain[i]
+		nextCert := certChain[i+1]
+
+		switch {
+		// Check if the issuer of the current certificate matches the subject
+		// of the next certificate. If not, the certs are out of order.
+		case !pkixNameEqual(currentCert.Issuer, nextCert.Subject):
+			numMisorderedCerts++
+
+		// Verify the current certificate is signed by the next certificate's
+		// public key. We attempt to handle insecure algorithm errors and
+		// treat unhandled verification errors as an indication that the cert
+		// chain is misordered.
+		case verifySignature(currentCert, nextCert) != nil:
+			numMisorderedCerts++
+
+		default:
+			continue
+		}
+	}
+
+	return numMisorderedCerts
+}
+
+// NumOrderedCerts receives a slice of x509 certificates and returns a count
+// of how many certificates are in the correct order.
+func NumOrderedCerts(certChain []*x509.Certificate) int {
+	if len(certChain) == 0 {
+		return 0
+	}
+
+	numMisorderedCerts := NumMisorderedCerts(certChain)
+
+	numOrderedCerts := len(certChain) - numMisorderedCerts
+	if numOrderedCerts < 0 {
+		numOrderedCerts = 0
+	}
+
+	return numOrderedCerts
+}
+
+// HasMisorderedCerts asserts that a given certificate chain contains
+// certificates out of the expected order.
+func HasMisorderedCerts(certChain []*x509.Certificate) bool {
+	if len(certChain) == 0 {
+		return false
+	}
+
+	for i := 0; i < len(certChain)-1; i++ {
+		currentCert := certChain[i]
+		nextCert := certChain[i+1]
+
+		// fmt.Printf("Comparing %s against %s\n", currentCert.Subject, nextCert.Subject)
+		switch {
+		// Check if the issuer of the current certificate matches the subject
+		// of the next certificate. If not, the certs are out of order.
+		case !pkixNameEqual(currentCert.Issuer, nextCert.Subject):
+			// return fmt.Errorf("certificate at index %d is not signed by the certificate at index %d", i, i+1)
+			return true
+
+		// Verify the current certificate is signed by the next certificate's
+		// public key. We attempt to handle insecure algorithm errors and
+		// treat unhandled verification errors as an indication that the cert
+		// chain is misordered.
+		case verifySignature(currentCert, nextCert) != nil:
+			// return fmt.Errorf("signature verification failed between certificate at index %d and %d: %w", i, i+1, err)
+			return true
+
+		default:
+			continue
+		}
+	}
+
+	return false
+}
+
+// pkixNameEqual compares two pkix.Name values for equality.
+func pkixNameEqual(name1 pkix.Name, name2 pkix.Name) bool {
+	return name1.CommonName == name2.CommonName &&
+		strings.Join(name1.Organization, ",") == strings.Join(name2.Organization, ",") &&
+		strings.Join(name1.OrganizationalUnit, ",") == strings.Join(name2.OrganizationalUnit, ",") &&
+		strings.Join(name1.Locality, ",") == strings.Join(name2.Locality, ",") &&
+		strings.Join(name1.Province, ",") == strings.Join(name2.Province, ",") &&
+		strings.Join(name1.Country, ",") == strings.Join(name2.Country, ",")
 }
 
 // verifySignatureMD5WithRSA is a helper function that attempts to validate a

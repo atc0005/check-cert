@@ -347,6 +347,12 @@ func TestApplyIgnoreDecision(t *testing.T) {
 			applyResults: false,
 		},
 		{
+			name:         "DefaultValidateChainOrderResults",
+			cfg:          Config{},
+			validateFunc: Config.ApplyCertChainOrderValidationResults,
+			applyResults: defaultApplyCertChainOrderValidationResults,
+		},
+		{
 			name: "DefaultValidateSANsListResultsWithSANsEntries",
 			cfg: Config{
 				SANsEntries: []string{"tacos.example.com"},
@@ -368,6 +374,22 @@ func TestApplyIgnoreDecision(t *testing.T) {
 				applyValidationResults: []string{ValidationKeywordSANsList},
 			},
 			validateFunc: Config.ApplyCertSANsListValidationResults,
+			applyResults: true,
+		},
+		{
+			name: "IgnoreValidateChainOrderResults",
+			cfg: Config{
+				ignoreValidationResults: []string{ValidationKeywordChainOrder},
+			},
+			validateFunc: Config.ApplyCertChainOrderValidationResults,
+			applyResults: false,
+		},
+		{
+			name: "ApplyValidateChainOrderResults",
+			cfg: Config{
+				applyValidationResults: []string{ValidationKeywordChainOrder},
+			},
+			validateFunc: Config.ApplyCertChainOrderValidationResults,
 			applyResults: true,
 		},
 	}

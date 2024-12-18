@@ -139,6 +139,42 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 
 	}
 
+	chainOrderValidationOptions := certs.CertChainValidationOptions{
+		IgnoreValidationResultChainOrder: !cfg.ApplyCertChainOrderValidationResults(),
+	}
+
+	log.Debug().
+		Interface("validation_options", chainOrderValidationOptions).
+		Msg("Chain Order Validation Options")
+
+	chainOrderValidationResult := certs.ValidateChainOrder(
+		certChain,
+		cfg.VerboseOutput,
+		cfg.OmitSANsEntries,
+		chainOrderValidationOptions,
+	)
+	validationResults.Add(chainOrderValidationResult)
+
+	switch {
+	case chainOrderValidationResult.IsFailed():
+		log.Debug().
+			Err(chainOrderValidationResult.Err()).
+			Int("chain_entries_ordered", chainOrderValidationResult.NumOrderedCerts()).
+			Int("chain_entries_misordered", chainOrderValidationResult.NumMisorderedCerts()).
+			Int("chain_entries_total", chainOrderValidationResult.TotalCerts()).
+			Msgf("%s validation failure", chainOrderValidationResult.CheckName())
+
+	case chainOrderValidationResult.IsIgnored():
+		log.Debug().
+			Msgf("%s validation ignored", chainOrderValidationResult.CheckName())
+
+	default:
+		log.Debug().
+			Int("chain_entries_ordered", chainOrderValidationResult.NumOrderedCerts()).
+			Int("chain_entries_misordered", chainOrderValidationResult.NumMisorderedCerts()).
+			Msgf("%s validation successful", chainOrderValidationResult.CheckName())
+	}
+
 	return validationResults
 
 }
