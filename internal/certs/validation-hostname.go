@@ -293,7 +293,7 @@ func (hnvr HostnameValidationResult) IsIgnored() bool {
 // IsSucceeded indicates whether this validation check result is not flagged
 // as ignored and no problems with the certificate chain were identified.
 func (hnvr HostnameValidationResult) IsSucceeded() bool {
-	return hnvr.IsOKState() && !hnvr.IsIgnored()
+	return !hnvr.IsIgnored() && hnvr.Err() == nil
 }
 
 // IsFailed indicates whether this validation check result is not flagged as

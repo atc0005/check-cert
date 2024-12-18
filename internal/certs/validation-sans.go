@@ -258,7 +258,7 @@ func (slvr SANsListValidationResult) IsIgnored() bool {
 // IsSucceeded indicates whether this validation check result is not flagged
 // as ignored and no problems with the certificate chain were identified.
 func (slvr SANsListValidationResult) IsSucceeded() bool {
-	return slvr.IsOKState() && !slvr.IsIgnored()
+	return !slvr.IsIgnored() && slvr.Err() == nil
 }
 
 // IsFailed indicates whether this validation check result is not flagged as
