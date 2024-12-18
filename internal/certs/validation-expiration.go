@@ -638,7 +638,7 @@ func (evr ExpirationValidationResult) IsIgnored() bool {
 // IsSucceeded indicates whether this validation check result is not flagged
 // as ignored and no problems with the certificate chain were identified.
 func (evr ExpirationValidationResult) IsSucceeded() bool {
-	return evr.IsOKState() && !evr.IsIgnored()
+	return !evr.IsIgnored() && evr.Err() == nil
 }
 
 // IsFailed indicates whether this validation check result is not flagged as
