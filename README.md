@@ -95,6 +95,9 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
     - [Partial range, CIDR range and a single IP Address](#partial-range-cidr-range-and-a-single-ip-address)
     - [Single IP Address and a FQDN](#single-ip-address-and-a-fqdn)
     - [Show all scan results](#show-all-scan-results)
+- [Troubleshooting](#troubleshooting)
+  - [General](#general)
+  - [Encoded payloads](#encoded-payloads)
 - [License](#license)
 - [References](#references)
 
@@ -2636,6 +2639,61 @@ Host (Name/FQDN)        IP Addr         Port    Subject or SANs                 
 expired.badssl.com      104.154.89.105  443     *.badssl.com                                    ⛔ (leaf)               [EXPIRED] 2570d 11h ago         4A:E7:95:49:FA:9A:BE:3F:10:0F:17:A4:78:E1:69:09
 expired.badssl.com      104.154.89.105  443     COMODO RSA Domain Validation Secure Server CA   ✅ (intermediate)       [OK] 2483d 12h remaining        2B:2E:6E:EA:D9:75:36:6C:14:8A:6E:DB:A3:7C:8C:07
 expired.badssl.com      104.154.89.105  443     COMODO RSA Certification Authority              ⛔ (intermediate)       [EXPIRED] 696d 0h ago           27:66:EE:56:EB:49:F3:8E:AB:D7:70:A2:FC:84:DE:22
+```
+
+## Troubleshooting
+
+### General
+
+General troubleshooting suggestions:
+
+- enable debug logging
+- test *from* the monitoring system using the plugin directly
+  - while testing locally can be useful, it is likely that your org has
+    already added required firewall/security rules to permit your monitoring
+    system to successfully reach target systems
+- save a copy of the certificate chain locally (see `cpcert`) and use the
+  `--filename` flag to evaluate the chain using either `lscert` or the
+  `check_cert` plugin
+
+### Encoded payloads
+
+The current encoding format used for the certificate metadata payload is
+`Ascii85`.
+
+While the character set used by this encoding complies with Nagios character
+set restrictions and in general doesn't cause issues (either when consumed by
+monitoring systems when emitted as part of plugin output or downstream systems
+consuming notifications) there is one notable exception.
+
+When Nagios notifications are sent to a Mailman mailing list the applies
+heuristics may incorrectly detect an email notification with an embedded
+payload as (entirely) binary. The hotfix for that situation for a Nagios XI
+instance running on RHEL 8 was:
+
+1. Install the `mutt` email CLI package
+1. Update Nagios to use `/usr/bin/mutt` in place of `/bin/mail` (provided by
+   the `mailx` package)
+1. Explicitly add a `Content-Type` header with value of `text/plain`
+
+Prior to those changes the custom `notify-service-by-email-verbose` command
+definition was:
+
+`/usr/bin/printf "%b" "\n***** Nagios Monitor XI Alert *****\n\nNotification Type: $NOTIFICATIONTYPE$\n\nService: $SERVICEDESC$\nHost: $HOSTNAME$\nHost Description: $HOSTALIAS$\nHost Notes: $HOSTNOTES$\nService Notes: $SERVICENOTES$\nAddress: $HOSTADDRESS$\nState: $SERVICESTATE$\n\nDate/Time: $LONGDATETIME$\n\nService Output:\n\n$SERVICEOUTPUT$\n\nAdditional Service Output (if available):\n\n$LONGSERVICEOUTPUT$\n" | /bin/mail -r "sender@example.com" -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$`
+
+This replaced the stock `notify-service-by-email` command which did not expose
+`LongServiceOutput` details.
+
+After swapping `/bin/mail` for `/usr/bin/mutt` the command definition looks
+like:
+
+`/usr/bin/printf "%b" "\n***** Nagios Monitor XI Alert *****\n\nNotification Type: $NOTIFICATIONTYPE$\n\nService: $SERVICEDESC$\nHost: $HOSTNAME$\nHost Description: $HOSTALIAS$\nHost Notes: $HOSTNOTES$\nService Notes: $SERVICENOTES$\nAddress: $HOSTADDRESS$\nState: $SERVICESTATE$\n\nDate/Time: $LONGDATETIME$\n\nService Output:\n\n$SERVICEOUTPUT$\n\nAdditional Service Output (if available):\n\n$LONGSERVICEOUTPUT$\n" | /usr/bin/mutt -e 'my_hdr From:sender@example.com' -e 'set content_type=text/plain' -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$`
+
+Specifically, this is the replacement command for `/bin/mail`:
+
+```diff
+-/bin/mail -r "sender@example.com" -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$
++/usr/bin/mutt -e 'my_hdr From:sender@example.com' -e 'set content_type=text/plain' -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$
 ```
 
 ## License
