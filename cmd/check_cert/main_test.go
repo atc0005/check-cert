@@ -326,6 +326,37 @@ func TestApplyValidationResults(t *testing.T) {
 			validateFunc: config.Config.ApplyCertSANsListValidationResults,
 			applyResults: true,
 		},
+
+		{
+			name:                   "DefaultChainOrderResults",
+			server:                 "www.example.com",
+			validateFlagsAndValues: []string{},
+			validateFunc:           config.Config.ApplyCertChainOrderValidationResults,
+
+			// This validation is not part of the original set and has to be
+			// opted into.
+			applyResults: false,
+		},
+		{
+			name:   "IgnoreValidateChainOrderResults",
+			server: "www.example.com",
+			validateFlagsAndValues: []string{
+				"--" + config.IgnoreValidationResultFlag,
+				config.ValidationKeywordChainOrder,
+			},
+			validateFunc: config.Config.ApplyCertChainOrderValidationResults,
+			applyResults: false,
+		},
+		{
+			name:   "ApplyValidateChainOrderResults",
+			server: "www.example.com",
+			validateFlagsAndValues: []string{
+				"--" + config.ApplyValidationResultFlag,
+				config.ValidationKeywordChainOrder,
+			},
+			validateFunc: config.Config.ApplyCertChainOrderValidationResults,
+			applyResults: true,
+		},
 	}
 
 	for _, tt := range tests {

@@ -67,6 +67,9 @@ func getPerfData(certChain []*x509.Certificate, ageCritical int, ageWarning int)
 	certsPresentRoot := strconv.Itoa(certs.NumRootCerts(certChain))
 	certsPresentUnknown := strconv.Itoa(certs.NumUnknownCerts(certChain))
 
+	certChainMisOrdered := strconv.Itoa(certs.NumMisorderedCerts(certChain))
+	certChainOrdered := strconv.Itoa(certs.NumOrderedCerts(certChain))
+
 	pd := []nagios.PerformanceData{
 		{
 			Label:             "expires_leaf",
@@ -97,6 +100,14 @@ func getPerfData(certChain []*x509.Certificate, ageCritical int, ageWarning int)
 		{
 			Label: "certs_present_unknown",
 			Value: certsPresentUnknown,
+		},
+		{
+			Label: "certs_ordered",
+			Value: certChainOrdered,
+		},
+		{
+			Label: "certs_misordered",
+			Value: certChainMisOrdered,
 		},
 		{
 			Label:             "life_remaining_leaf",

@@ -23,8 +23,81 @@ import (
 	"github.com/atc0005/check-cert/internal/config"
 	"github.com/atc0005/check-cert/internal/netutils"
 	"github.com/atc0005/check-cert/internal/textutils"
-	"github.com/atc0005/go-nagios"
 )
+
+// Lead-in or prefix markers for listed summary items. These are intended to
+// help the sysadmin tell at a glance whether a valid result was a positive,
+// neutral or negative outcome.
+//
+// NOTE: All of these fit within the UTF8MB3 character set and should be safe
+// for consumption by older MySQL "UTF8" databases (which lack the more
+// complete UTF8 character set implementation used by newer MySQL/MariaDB
+// versions).
+const (
+	PrefixStateOK       string = "✅"
+	PrefixStateIgnored  string = "➖"
+	PrefixStateWarning  string = "⚠️"
+	PrefixStateCritical string = "❌"
+	PrefixStateUnknown  string = "❔"
+	PrefixAdviceEntry   string = "➡️"
+)
+
+// NOTE: These seem to work fairly well for plaintext, Windows 10 compatible
+// output.
+//
+// const (
+// 	PrefixStateOK       string = "OK   :"
+// 	PrefixStateIgnored  string = "IGN  :"
+// 	PrefixStateWarning  string = "WARN :"
+// 	PrefixStateCritical string = "FAIL :"
+// 	PrefixStateUnknown  string = "??   :"
+// 	PrefixAdviceEntry   string = "**"
+// )
+
+// NOTE: Seems too noisy to include the parenthesis.
+//
+// const (
+// 	PrefixStateOK       string = "(✅)"
+// 	PrefixStateIgnored  string = "(➖)"
+// 	PrefixStateWarning  string = "(❌)"
+// 	PrefixStateCritical string = "(❌)"
+// 	PrefixStateUnknown  string = "(❌)"
+// )
+
+// NOTE: An attempt to blend the two for "fallback" behavior. Seems too noisy.
+//
+// const (
+// 	PrefixStateOK       string = "✅ (OK)"
+// 	PrefixStateIgnored  string = "➖ (--)"
+// 	PrefixStateWarning  string = "❌ (!!)"
+// 	PrefixStateCritical string = "❌ (!!)"
+// 	PrefixStateUnknown  string = "❌ (!!)"
+// )
+
+// NOTE: Not supported on Windows 10.
+//
+// const (
+// 	PrefixStateOK       string = "✅"
+// 	PrefixStateIgnored  string = "➖"
+// 	PrefixStateWarning  string = "❌"
+// 	PrefixStateCritical string = "❌"
+// 	PrefixStateUnknown  string = "❌"
+// )
+
+func stateToPrefix(ccvr certs.CertChainValidationResult) string {
+	switch {
+	case ccvr.IsSucceeded():
+		return PrefixStateOK
+	case ccvr.IsIgnored():
+		return PrefixStateIgnored
+	case ccvr.IsWarningState():
+		return PrefixStateWarning
+	case ccvr.IsCriticalState():
+		return PrefixStateCritical
+	default:
+		return PrefixStateUnknown
+	}
+}
 
 func main() {
 
@@ -204,7 +277,7 @@ func main() {
 
 	}
 
-	textutils.PrintHeader("CERTIFICATES | SUMMARY")
+	textutils.PrintHeader("CERTIFICATE CHAIN | SUMMARY")
 
 	switch {
 	case len(certChain) == 0:
@@ -217,18 +290,29 @@ func main() {
 		var template string
 		switch {
 		case cfg.InputFilename != "":
-			template = "- %s: %d certs found in %s\n"
+			template = "\n%s %d certs found in %s\n"
 		default:
-			template = "- %s: %d certs retrieved for %s\n"
+			template = "\n%s %d certs retrieved for %s\n"
 		}
 
 		fmt.Printf(
 			template,
-			nagios.StateOKLabel,
+			PrefixStateOK,
 			len(certChain),
 			certChainSource,
 		)
 	}
+
+	// Create "bucket" to collect validation results. The initial size is
+	// close to the number of planned validation checks.
+	validationResults := make(certs.CertChainValidationResults, 0, 5)
+
+	// The check_cert plugin "turns on" validation checks based on
+	// configurable flag values. This application lacks many of those knobs;
+	// instead of relying on default values we explicitly enable the checks
+	// (using `certs.CertChainValidationOptions`) if equivalent flag values
+	// for those checks can be inferred using from values that are available
+	// (e.g., we enable SANs List validation if SANs entries are specified).
 
 	hasLeafCert := certs.HasLeafCert(certChain)
 	hostnameValidationResult := certs.ValidateHostname(
@@ -237,10 +321,12 @@ func main() {
 		cfg.DNSName,
 		config.IgnoreHostnameVerificationFailureIfEmptySANsListFlag,
 		certs.CertChainValidationOptions{
-			IgnoreHostnameVerificationFailureIfEmptySANsList: cfg.IgnoreHostnameVerificationFailureIfEmptySANsList,
+			// IgnoreHostnameVerificationFailureIfEmptySANsList: cfg.IgnoreHostnameVerificationFailureIfEmptySANsList,
+			IgnoreHostnameVerificationFailureIfEmptySANsList: false,
 			IgnoreValidationResultHostname:                   !hasLeafCert || cfg.DNSName == "",
 		},
 	)
+	validationResults.Add(hostnameValidationResult)
 
 	switch {
 	case hostnameValidationResult.IsFailed():
@@ -249,8 +335,8 @@ func main() {
 			Msgf("%s validation failure", hostnameValidationResult.CheckName())
 
 		fmt.Printf(
-			"- %s: %s %s\n",
-			hostnameValidationResult.ServiceState().Label,
+			"\n%s %s %s\n",
+			stateToPrefix(hostnameValidationResult),
 			hostnameValidationResult.Status(),
 			hostnameValidationResult.Overview(),
 		)
@@ -260,8 +346,8 @@ func main() {
 			Msgf("%s validation ignored", hostnameValidationResult.CheckName())
 
 		fmt.Printf(
-			"- %s: %s %s%s\n",
-			hostnameValidationResult.ServiceState().Label,
+			"\n%s %s %s%s\n",
+			stateToPrefix(hostnameValidationResult),
 			hostnameValidationResult.Status(),
 			hostnameValidationResult.Overview(),
 			func() string {
@@ -281,8 +367,8 @@ func main() {
 		log.Debug().Msg("Hostname validation successful")
 
 		fmt.Printf(
-			"- %s: %s %s\n",
-			hostnameValidationResult.ServiceState().Label,
+			"\n%s %s %s\n",
+			stateToPrefix(hostnameValidationResult),
 			hostnameValidationResult.Status(),
 			hostnameValidationResult.Overview(),
 		)
@@ -292,9 +378,12 @@ func main() {
 		certChain,
 		cfg.SANsEntries,
 		certs.CertChainValidationOptions{
-			IgnoreValidationResultSANs: !cfg.ApplyCertSANsListValidationResults(),
+			// IgnoreValidationResultSANs: !cfg.ApplyCertSANsListValidationResults(),
+			IgnoreValidationResultSANs: len(cfg.SANsEntries) == 0,
 		},
 	)
+	validationResults.Add(sansValidationResult)
+
 	switch {
 	case sansValidationResult.IsFailed():
 		log.Debug().
@@ -305,8 +394,8 @@ func main() {
 			Msg("SANs entries mismatch")
 
 		fmt.Printf(
-			"- %s: %s\n",
-			sansValidationResult.ServiceState().Label,
+			"\n%s %s\n",
+			stateToPrefix(sansValidationResult),
 			sansValidationResult.String(),
 		)
 
@@ -315,8 +404,8 @@ func main() {
 			Msgf("%s validation ignored", sansValidationResult.CheckName())
 
 		fmt.Printf(
-			"- %s: %s\n",
-			sansValidationResult.ServiceState().Label,
+			"\n%s %s\n",
+			stateToPrefix(sansValidationResult),
 			sansValidationResult.String(),
 		)
 
@@ -327,8 +416,8 @@ func main() {
 			Msgf("%s validation successful", sansValidationResult.CheckName())
 
 		fmt.Printf(
-			"- %s: %s\n",
-			sansValidationResult.ServiceState().Label,
+			"\n%s %s\n",
+			stateToPrefix(sansValidationResult),
 			sansValidationResult.String(),
 		)
 	}
@@ -340,11 +429,20 @@ func main() {
 		cfg.VerboseOutput,
 		cfg.OmitSANsEntries,
 		certs.CertChainValidationOptions{
-			IgnoreExpiredIntermediateCertificates: cfg.IgnoreExpiredIntermediateCertificates,
-			IgnoreExpiredRootCertificates:         cfg.IgnoreExpiredRootCertificates,
-			IgnoreValidationResultExpiration:      !cfg.ApplyCertExpirationValidationResults(),
+			// IgnoreExpiredIntermediateCertificates: cfg.IgnoreExpiredIntermediateCertificates,
+			// IgnoreExpiredRootCertificates:         cfg.IgnoreExpiredRootCertificates,
+			// IgnoreValidationResultExpiration:      !cfg.ApplyCertExpirationValidationResults(),
+			IgnoreExpiredIntermediateCertificates: false,
+			IgnoreExpiredRootCertificates:         false,
+			IgnoreValidationResultExpiration:      false,
 		},
 	)
+
+	// We intentionally do not add this to the collection as we call it
+	// explicitly later.
+	//
+	// validationResults.Add(expirationValidationResult)
+
 	switch {
 	case expirationValidationResult.IsFailed():
 		log.Debug().
@@ -358,8 +456,8 @@ func main() {
 			Msgf("%s validation failure", expirationValidationResult.CheckName())
 
 		fmt.Printf(
-			"- %s: %s %s\n",
-			expirationValidationResult.ServiceState().Label,
+			"\n%s %s %s\n",
+			stateToPrefix(expirationValidationResult),
 			expirationValidationResult.Status(),
 			expirationValidationResult.Overview(),
 		)
@@ -369,8 +467,8 @@ func main() {
 			Msgf("%s validation ignored", expirationValidationResult.CheckName())
 
 		fmt.Printf(
-			"- %s: %s\n",
-			expirationValidationResult.ServiceState().Label,
+			"\n%s %s\n",
+			stateToPrefix(expirationValidationResult),
 			expirationValidationResult.String(),
 		)
 
@@ -385,15 +483,64 @@ func main() {
 			Msgf("%s validation successful", expirationValidationResult.CheckName())
 
 		fmt.Printf(
-			"- %s: %s %s\n",
-			expirationValidationResult.ServiceState().Label,
+			"\n%s %s %s\n",
+			stateToPrefix(expirationValidationResult),
 			expirationValidationResult.Status(),
 			expirationValidationResult.Overview(),
 		)
 
 	}
 
-	textutils.PrintHeader("CERTIFICATES | CHAIN DETAILS")
+	chainOrderValidationResult := certs.ValidateChainOrder(
+		certChain,
+		cfg.VerboseOutput,
+		cfg.OmitSANsEntries,
+		certs.CertChainValidationOptions{
+			// IgnoreValidationResultChainOrder: !cfg.ApplyCertChainOrderValidationResults(),
+			IgnoreValidationResultChainOrder: false,
+		},
+	)
+	validationResults.Add(chainOrderValidationResult)
+
+	switch {
+	case chainOrderValidationResult.IsFailed():
+		log.Debug().
+			Err(chainOrderValidationResult.Err()).
+			Int("chain_entries_ordered", chainOrderValidationResult.NumOrderedCerts()).
+			Int("chain_entries_misordered", chainOrderValidationResult.NumMisorderedCerts()).
+			Int("chain_entries_total", chainOrderValidationResult.TotalCerts()).
+			Msg("Chain misordered")
+
+		fmt.Printf(
+			"\n%s %s\n",
+			stateToPrefix(chainOrderValidationResult),
+			chainOrderValidationResult.String(),
+		)
+
+	case chainOrderValidationResult.IsIgnored():
+		log.Debug().
+			Msgf("%s validation ignored", chainOrderValidationResult.CheckName())
+
+		fmt.Printf(
+			"\n%s %s\n",
+			stateToPrefix(chainOrderValidationResult),
+			chainOrderValidationResult.String(),
+		)
+
+	default:
+		log.Debug().
+			Int("chain_entries_ordered", chainOrderValidationResult.NumOrderedCerts()).
+			Int("chain_entries_misordered", chainOrderValidationResult.NumMisorderedCerts()).
+			Msgf("%s validation successful", chainOrderValidationResult.CheckName())
+
+		fmt.Printf(
+			"\n%s %s\n",
+			stateToPrefix(chainOrderValidationResult),
+			chainOrderValidationResult.String(),
+		)
+	}
+
+	textutils.PrintHeader("CERTIFICATE CHAIN | DETAILS")
 
 	// We request these details even if the user opted to disable expiration
 	// validation since this info provides an overview of the certificate
@@ -402,7 +549,7 @@ func main() {
 
 	// Generate text version of the certificate if requested.
 	if cfg.EmitCertText {
-		textutils.PrintHeader("CERTIFICATES | OpenSSL Text Format")
+		textutils.PrintHeader("CERTIFICATE CHAIN | OpenSSL Text Format")
 
 		for idx, certificate := range certChain {
 			certText, err := certinfo.CertificateText(certificate)
@@ -420,7 +567,7 @@ func main() {
 	}
 
 	if len(parseAttemptLeftovers) > 0 {
-		textutils.PrintHeader("CERTIFICATES | UNKNOWN data in cert file")
+		textutils.PrintHeader("CERTIFICATE CHAIN | UNKNOWN data in cert file")
 
 		fmt.Printf(
 			"The following data (converted to text) was found in the %q input"+
@@ -430,6 +577,33 @@ func main() {
 		)
 
 		fmt.Println(string(parseAttemptLeftovers))
+	}
+
+	if validationResults.Errs(true) != nil && validationResults.HasFailed() {
+		textutils.PrintHeader("CERTIFICATE CHAIN | ADDITIONAL INFO")
+
+		validationResults.Sort()
+
+		for _, validationResult := range validationResults {
+			switch {
+			case validationResult.Err() != nil && !validationResult.IsIgnored():
+				details := validationResult.StatusDetail()
+				if details == "" {
+					details = validationResult.Err().Error()
+				}
+
+				fmt.Printf(
+					"%s %s\n\n%s\n\n",
+					PrefixAdviceEntry,
+					validationResult.CheckName(),
+					details,
+				)
+
+			default:
+				// nothing for now
+			}
+
+		}
 	}
 
 }

@@ -1,0 +1,17 @@
+It looks like you are using a certificate provided by Sectigo (InCommon).
+
+If this is correct, these are the download options available to you in the
+"Enrollment Successful - Your SSL certificate for host1.example.com is ready"
+email notification you received:
+
+1. "as Certificate only, PEM encoded"
+2. "as Certificate (w/ issuer after), PEM encoded"
+3. "as Certificate (w/ chain), PEM encoded"
+4. "Issuing CA certificates only > as Root/Intermediate(s) only, PEM encoded"
+5. "Issuing CA certificates only > as Intermediate(s)/Root only, PEM encoded"
+
+While these options can be confusing, they can be summarized as:
+
+❌ FAIL: Option 4 when paired with Option 1 forms a misordered certificate chain.
+➖ GOOD: Option 4 appended to Option 1 provides a usable chain.
+✅ BEST: Option 2 is what sysadmins should use for best results.

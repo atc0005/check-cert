@@ -178,6 +178,29 @@ func (c Config) ApplyCertSANsListValidationResults() bool {
 
 }
 
+// ApplyCertChainOrderValidationResults indicates whether certificate chain
+// order check results should be applied when performing final plugin state
+// evaluation. Precedence is given for explicit request to ignore this
+// validation result.
+func (c Config) ApplyCertChainOrderValidationResults() bool {
+	ignoreRequested := textutils.InList(
+		ValidationKeywordChainOrder, c.ignoreValidationResults, true,
+	)
+
+	applyRequested := textutils.InList(
+		ValidationKeywordChainOrder, c.applyValidationResults, true,
+	)
+
+	switch {
+	case ignoreRequested:
+		return false
+	case applyRequested:
+		return true
+	default:
+		return defaultApplyCertChainOrderValidationResults
+	}
+}
+
 // supportedValidationCheckResultKeywords returns a list of valid validation
 // check keywords used by plugin type applications in this project.
 func supportedValidationCheckResultKeywords() []string {
@@ -185,6 +208,7 @@ func supportedValidationCheckResultKeywords() []string {
 		ValidationKeywordHostname,
 		ValidationKeywordExpiration,
 		ValidationKeywordSANsList,
+		ValidationKeywordChainOrder,
 	}
 }
 
