@@ -193,7 +193,7 @@ const (
 	defaultCertExpireAgeCritical int = 15
 
 	// Default timeout (in seconds) used when retrieving a certificate from a
-	// specified TCP port previously discovered to be open.
+	// specified TCP port.
 	defaultConnectTimeout int = 10
 
 	// Default choice of whether Go 1.17+ behavior of failing hostname
