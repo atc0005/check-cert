@@ -538,11 +538,79 @@ func (ccvr CertChainValidationResults) SucceededResults() CertChainValidationRes
 	return results
 }
 
+// SummaryFailed provides a high-level overview of the validation results
+// collection entries which have a failed status. This can be used when
+// composing lead-out text for a one-line summary/overview, or as part of a
+// summary block sandwiched between lead-in text and a more detailed status
+// report.
+func (ccvr CertChainValidationResults) SummaryFailed() string {
+	var listTmpl string
+	switch {
+	case ccvr.NumFailed() > 0:
+		listTmpl = "%d FAILED (%s)"
+
+	default:
+		listTmpl = "%d FAILED%s"
+	}
+	summary := fmt.Sprintf(
+		listTmpl,
+		ccvr.NumFailed(),
+		strings.Join(ccvr.NotOKCheckNames(), ", "),
+	)
+
+	return summary
+}
+
+// SummaryIgnored provides a high-level overview of the validation results
+// collection entries which have an ignored status. This can be used when
+// composing lead-out text for a one-line summary/overview, or as part of a
+// summary block sandwiched between lead-in text and a more detailed status
+// report.
+func (ccvr CertChainValidationResults) SummaryIgnored() string {
+	var listTmpl string
+	switch {
+	case ccvr.NumIgnored() > 0:
+		listTmpl = "%d IGNORED (%s)"
+
+	default:
+		listTmpl = "%d IGNORED%s"
+	}
+	summary := fmt.Sprintf(
+		listTmpl,
+		ccvr.NumIgnored(),
+		strings.Join(ccvr.IgnoredCheckNames(), ", "),
+	)
+
+	return summary
+}
+
+// SummarySucceeded provides a high-level overview of the validation results
+// collection entries which have a succeeded status. This can be used when
+// composing lead-out text for a one-line summary/overview, or as part of a
+// summary block sandwiched between lead-in text and a more detailed status
+// report.
+func (ccvr CertChainValidationResults) SummarySucceeded() string {
+	var listTmpl string
+	switch {
+	case ccvr.NumSucceeded() > 0:
+		listTmpl = "%d SUCCESSFUL (%s)"
+
+	default:
+		listTmpl = "%d SUCCESSFUL%s"
+	}
+	summary := fmt.Sprintf(
+		listTmpl,
+		ccvr.NumSucceeded(),
+		strings.Join(ccvr.SuccessCheckNames(), ", "),
+	)
+
+	return summary
+}
+
 // Overview is a high-level overview of the validation results collection.
 // This can be used as lead-out text for a one-line summary/overview, or
 // sandwiched between lead-in text and a more detailed status report.
 func (ccvr CertChainValidationResults) Overview() string {
-
 	// For the purposes of calculating "OK" and "NOT OK" checks, ignored
 	// checks are considered as a subset of "OK" status so we instead focus on
 	// the three distinct "buckets" perceived as the most useful for an
@@ -552,51 +620,11 @@ func (ccvr CertChainValidationResults) Overview() string {
 	// 2) Ignored
 	// 3) Successful
 
-	var failedListTmpl string
-	switch {
-	case ccvr.NumFailed() > 0:
-		failedListTmpl = "%d FAILED (%s)"
-
-	default:
-		failedListTmpl = "%d FAILED%s"
-	}
-	failedList := fmt.Sprintf(
-		failedListTmpl,
-		ccvr.NumFailed(),
-		strings.Join(ccvr.NotOKCheckNames(), ", "),
-	)
-
-	var ignoredListTmpl string
-	switch {
-	case ccvr.NumIgnored() > 0:
-		ignoredListTmpl = "%d IGNORED (%s)"
-	default:
-		ignoredListTmpl = "%d IGNORED%s"
-	}
-	ignoredList := fmt.Sprintf(
-		ignoredListTmpl,
-		ccvr.NumIgnored(),
-		strings.Join(ccvr.IgnoredCheckNames(), ", "),
-	)
-
-	var successListTmpl string
-	switch {
-	case ccvr.NumSucceeded() > 0:
-		successListTmpl = "%d SUCCESSFUL (%s)"
-	default:
-		successListTmpl = "%d SUCCESSFUL%s"
-	}
-	successList := fmt.Sprintf(
-		successListTmpl,
-		ccvr.NumSucceeded(),
-		strings.Join(ccvr.SuccessCheckNames(), ", "),
-	)
-
 	return fmt.Sprintf(
 		"[checks: %s, %s, %s]",
-		ignoredList,
-		failedList,
-		successList,
+		ccvr.SummaryIgnored(),
+		ccvr.SummaryFailed(),
+		ccvr.SummarySucceeded(),
 	)
 }
 
@@ -714,11 +742,16 @@ func (ccvr CertChainValidationResults) Status() string {
 // validation results suitable for display and notification purposes. Not all
 // validation results may be mentioned directly in the one-line summary text.
 func (ccvr CertChainValidationResults) OneLineSummary() string {
-	return fmt.Sprintf(
-		"%s %s",
-		ccvr.Status(),
-		ccvr.Overview(),
-	)
+	// As we add additional validation checks this seems to be too "noisy" to
+	// include as part of a one-line summary.
+	//
+	// return fmt.Sprintf(
+	// 	"%s %s",
+	// 	ccvr.Status(),
+	// 	ccvr.Overview(),
+	// )
+
+	return ccvr.Status()
 }
 
 // Report returns a formatted report suitable for display and notification
@@ -737,6 +770,21 @@ func (ccvr CertChainValidationResults) Report() string {
 	}
 
 	var summary strings.Builder
+
+	_, _ = fmt.Fprintf(
+		&summary,
+		"%s%sValidation Results Summary: %s%s  - %s%s  - %s%s  - %s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		ccvr.SummaryFailed(),
+		nagios.CheckOutputEOL,
+		ccvr.SummaryIgnored(),
+		nagios.CheckOutputEOL,
+		ccvr.SummarySucceeded(),
+		nagios.CheckOutputEOL,
+	)
 
 	// Ensure results are sorted prior to generated report output.
 	ccvr.Sort()
