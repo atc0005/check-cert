@@ -494,7 +494,6 @@ func main() {
 	chainOrderValidationResult := certs.ValidateChainOrder(
 		certChain,
 		cfg.VerboseOutput,
-		cfg.OmitSANsEntries,
 		certs.CertChainValidationOptions{
 			// IgnoreValidationResultChainOrder: !cfg.ApplyCertChainOrderValidationResults(),
 			IgnoreValidationResultChainOrder: false,

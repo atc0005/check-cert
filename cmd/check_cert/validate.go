@@ -150,7 +150,6 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 	chainOrderValidationResult := certs.ValidateChainOrder(
 		certChain,
 		cfg.VerboseOutput,
-		cfg.OmitSANsEntries,
 		chainOrderValidationOptions,
 	)
 	validationResults.Add(chainOrderValidationResult)

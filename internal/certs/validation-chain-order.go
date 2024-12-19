@@ -53,10 +53,6 @@ type ChainOrderValidationResult struct {
 	// results output.
 	verboseOutput bool
 
-	// omitSANsEntries indicates that SANs entries should be omitted in
-	// certificate report details.
-	omitSANsEntries bool
-
 	// numOrderedCerts is the number of certificates in the evaluated
 	// certificate chain which were found to be in the correct order.
 	numOrderedCerts int
@@ -87,7 +83,6 @@ type ChainOrderValidationResult struct {
 func ValidateChainOrder(
 	certChain []*x509.Certificate,
 	verboseOutput bool,
-	omitSANsEntries bool,
 	validationOptions CertChainValidationOptions,
 ) ChainOrderValidationResult {
 
@@ -148,7 +143,6 @@ func ValidateChainOrder(
 			ignored:            validationOptions.IgnoreValidationResultChainOrder,
 			validationOptions:  validationOptions,
 			verboseOutput:      verboseOutput,
-			omitSANsEntries:    omitSANsEntries,
 			numOrderedCerts:    numOrderedCerts,
 			numMisorderedCerts: numMisorderedCerts,
 			priorityModifier:   priorityModifierMedium,
@@ -162,7 +156,6 @@ func ValidateChainOrder(
 			ignored:            validationOptions.IgnoreValidationResultChainOrder,
 			validationOptions:  validationOptions,
 			verboseOutput:      verboseOutput,
-			omitSANsEntries:    omitSANsEntries,
 			numOrderedCerts:    numOrderedCerts,
 			numMisorderedCerts: numMisorderedCerts,
 			priorityModifier:   priorityModifierBaseline,
