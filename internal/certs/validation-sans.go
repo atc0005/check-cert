@@ -95,7 +95,7 @@ func ValidateSANsList(
 			validationOptions: validationOptions,
 			err: fmt.Errorf(
 				"required certificate chain is empty: %w",
-				ErrIncompleteCertificateChain,
+				ErrNoCertsFound,
 			),
 			ignored:          validationOptions.IgnoreValidationResultSANs,
 			priorityModifier: priorityModifierMaximum,
