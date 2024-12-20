@@ -174,6 +174,40 @@ func runValidationChecks(cfg *config.Config, certChain []*x509.Certificate, log 
 			Msgf("%s validation successful", chainOrderValidationResult.CheckName())
 	}
 
+	rootValidationOptions := certs.CertChainValidationOptions{
+		IgnoreValidationResultRoot: !cfg.ApplyCertRootValidationResults(),
+	}
+
+	log.Debug().
+		Interface("validation_options", rootValidationOptions).
+		Msg("Omit Root Validation Options")
+
+	rootValidationResult := certs.ValidateRoot(
+		certChain,
+		cfg.VerboseOutput,
+		rootValidationOptions,
+	)
+	validationResults.Add(rootValidationResult)
+
+	switch {
+	case rootValidationResult.IsFailed():
+		log.Debug().
+			Err(rootValidationResult.Err()).
+			Int("root_certs", rootValidationResult.NumRootCerts()).
+			Int("total_certs", rootValidationResult.TotalCerts()).
+			Msgf("%s validation failure", rootValidationResult.CheckName())
+
+	case rootValidationResult.IsIgnored():
+		log.Debug().
+			Msgf("%s validation ignored", rootValidationResult.CheckName())
+
+	default:
+		log.Debug().
+			Int("root_certs", rootValidationResult.NumRootCerts()).
+			Int("total_certs", rootValidationResult.TotalCerts()).
+			Msgf("%s validation successful", rootValidationResult.CheckName())
+	}
+
 	return validationResults
 
 }

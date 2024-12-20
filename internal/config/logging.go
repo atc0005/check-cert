@@ -138,6 +138,7 @@ func (c *Config) setupLogging(appType AppType) error {
 			Bool("apply_expiration_validation_results", c.ApplyCertExpirationValidationResults()).
 			Bool("apply_sans_list_validation_results", c.ApplyCertSANsListValidationResults()).
 			Bool("apply_chain_order_validation_results", c.ApplyCertChainOrderValidationResults()).
+			Bool("apply_got_root_validation_results", c.ApplyCertRootValidationResults()).
 			// TODO: Extend with further validation check names.
 			Logger()
 

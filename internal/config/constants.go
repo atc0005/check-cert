@@ -160,6 +160,7 @@ const (
 	ValidationKeywordHostname   string = "hostname"
 	ValidationKeywordSANsList   string = "sans"
 	ValidationKeywordChainOrder string = "order"
+	ValidationKeywordRoot       string = "root"
 )
 
 // Certificate type keywords used when filtering specific certificate types
@@ -252,6 +253,19 @@ const (
 	// has been made and sufficient time has passed to allow sysadmins to
 	// explicitly opt out.
 	defaultApplyCertChainOrderValidationResults bool = false
+
+	// Whether negative root presence assertion check results should be
+	// applied when determining overall validation state of a certificate
+	// chain by default.
+	//
+	// This is set based on existing behavior in prior stable releases; since
+	// this validation type did not exist in early stable releases we
+	// introduce this validation type with validation ignored by default.
+	//
+	// NOTE: A future version may enable this by default after an announcement
+	// has been made and sufficient time has passed to allow sysadmins to
+	// explicitly opt out.
+	defaultApplyCertRootValidationResults bool = false
 )
 
 // Constants specific to the copier app.

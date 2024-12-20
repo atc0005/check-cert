@@ -1,1 +1,1 @@
-NOTE: A root cert was provided; including a root cert is *usually* not a problem, but be aware that some platforms object to this.
+⚠️ WARNING: A root cert was provided; while including a root cert is *usually* not a problem, be aware that some platforms object to this.
