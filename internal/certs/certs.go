@@ -141,6 +141,10 @@ var (
 	// ErrMisorderedCertificateChain indicates that a certificate chain is not
 	// in the correct order.
 	ErrMisorderedCertificateChain = errors.New("certificate chain misordered")
+
+	// ErrRootCertsFound indicates that one or more root certificates were
+	// found when evaluating a certificate chain.
+	ErrRootCertsFound = errors.New("root certificates found")
 )
 
 // ServiceStater represents a type that is capable of evaluating its overall
@@ -184,6 +188,11 @@ type CertChainValidationOptions struct {
 	// ignore validation check results from performing a chain elements order
 	// validation against certificates in a chain.
 	IgnoreValidationResultChainOrder bool
+
+	// IgnoreValidationResultRoot tracks whether a request was made to
+	// ignore validation check results from asserting that a root certificate
+	// is not present in a certificate chain.
+	IgnoreValidationResultRoot bool
 
 	// IgnoreExpiringIntermediateCertificates tracks whether a request was
 	// made to ignore validation check results for certificate expiration
@@ -316,25 +325,31 @@ const ExpirationValidationOneLineSummaryExpiredTmpl string = "%s validation %s: 
 const X509CertReliesOnCommonName string = "x509: certificate relies on legacy Common Name field, use SANs instead"
 
 // Names of certificate chain validation checks.
+//
+// Goals:
+//
+//   - Clearly indicate what is being checked
+//   - Avoid implying a preferred state
+//   - Be concise
+//   - Consistency
 const (
-	// checkNameExpirationValidationResult string = "Certificate Chain Expiration"
-	// checkNameHostnameValidationResult   string = "Leaf Certificate Hostname"
-	// checkNameSANsListValidationResult   string = "Leaf Certificate SANs List"
-	// checkNameExpirationValidationResult string = "Expiration Validation"
-	// checkNameHostnameValidationResult   string = "Hostname Validation"
-	// checkNameSANsListValidationResult   string = "SANs List Validation"
 	checkNameExpirationValidationResult string = "Expiration"
 	checkNameHostnameValidationResult   string = "Hostname"
 	checkNameSANsListValidationResult   string = "SANs List"
 	checkNameChainOrderValidationResult string = "Chain Order"
+	checkNameRootValidationResult       string = "Root"
 )
 
 // Baseline priority values for validation results. Higher values indicate
 // higher priority.
 const (
-	// baselinePrioritySANsListValidationResult is considered the lowest
+	// baselinePriorityRootValidationResult is considered the lowest
 	// priority when compared to the severity of other validation issues.
-	baselinePrioritySANsListValidationResult int = iota + 1
+	baselinePriorityRootValidationResult int = iota + 1
+
+	// baselinePrioritySANsListValidationResult is considered the next lowest
+	// priority when compared to the severity of other validation issues.
+	baselinePrioritySANsListValidationResult
 
 	// baselinePriorityChainOrderValidationResult is a problem, but
 	// historically has been a common issue that has been ignored with only

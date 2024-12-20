@@ -21,14 +21,11 @@ import (
 // implementation isn't correct.
 var _ CertChainValidationResult = (*ChainOrderValidationResult)(nil)
 
-// Advice for sysadmins resolving chain order issues saved in external files
+// Advice for sysadmins resolving cert chain issues saved in external files
 // for easier maintenance.
 var (
 	//go:embed advice/sectigo-email-download-links.txt
 	sectigoEmailAdvice string
-
-	//go:embed advice/root-cert-found.txt
-	rootCertFoundAdvice string
 )
 
 // ChainOrderValidationResult is the validation result from performing
@@ -137,7 +134,8 @@ func ValidateChainOrder(
 		return ChainOrderValidationResult{
 			certChain: certChain,
 			err: fmt.Errorf(
-				"chain order validation failed: %w",
+				"%s validation failed: %w",
+				strings.ToLower(checkNameChainOrderValidationResult),
 				ErrMisorderedCertificateChain,
 			),
 			ignored:            validationOptions.IgnoreValidationResultChainOrder,
@@ -230,6 +228,9 @@ func (covr ChainOrderValidationResult) IsCriticalState() bool {
 		return true
 
 	case errors.Is(covr.err, ErrIncompleteCertificateChain):
+		//
+		// FIXME: Move this to an "Intermediates" specific check (GH-364).
+		//
 		// An incomplete certificate chain is considered a CRITICAL state
 		// because required certificates are not present; because some
 		// modern/current clients will not automatically fetch missing
@@ -405,7 +406,8 @@ func (covr ChainOrderValidationResult) StatusDetail() string {
 	case covr.err != nil:
 		detail.WriteString(
 			fmt.Sprintf(
-				"An unexpected error occurred while performing chain order validation!%s",
+				"An unexpected error occurred while performing %s validation!%s",
+				strings.ToLower(covr.CheckName()),
 				nagios.CheckOutputEOL,
 			),
 		)
@@ -596,164 +598,6 @@ func reorderChainAdvice(certChain []*x509.Certificate) string {
 	)
 
 	advice.WriteString(certDownloadLinksAdvice(certChain))
-
-	// FIXME: Move this somewhere it can be used regardless of any actual
-	// chain ordering issue; ideally this would be noted if all chain elements
-	// are in the correct order but a root certificate is provided.
-	//
-	// This may fit best as a default check/note within a new validation check
-	// dedicated to looking for inclusion of the root cert, or later as an
-	// error condition once it becomes more unusual for cert chains to contain
-	// a root.
-	if HasRootCert(certChain) {
-		advice.WriteString(
-			fmt.Sprintf(
-				"%s%s%s",
-				nagios.CheckOutputEOL,
-				strings.TrimSpace(rootCertFoundAdvice),
-				nagios.CheckOutputEOL,
-			),
-		)
-	}
-
-	return advice.String()
-}
-
-// incompleteChainAdvice provides advice for the sysadmin when a cert chain is
-// found to be incomplete.
-func incompleteChainAdvice(certChain []*x509.Certificate) string {
-	if len(certChain) == 0 {
-		return ""
-	}
-
-	var advice strings.Builder
-
-	advice.WriteString(
-		fmt.Sprintf(
-			"This issue often occurs with Windows Servers when (newer) intermediates are missing from the certificate stores.%s",
-			nagios.CheckOutputEOL,
-		),
-	)
-
-	hostValRef := func(chain []*x509.Certificate) string {
-		switch {
-		case chain[0].Subject.CommonName != "":
-			return fmt.Sprintf(
-				" for %s ",
-				chain[0].Subject.CommonName,
-			)
-
-		case len(chain[0].DNSNames) > 0:
-			return fmt.Sprintf(
-				" for %s ",
-				chain[0].DNSNames[0],
-			)
-
-		default:
-			return ""
-		}
-	}
-
-	firstCertType := ChainPosition(certChain[0], certChain)
-
-	isMissingIntermediates := !HasIntermediateCert(certChain)
-
-	switch {
-	case firstCertType == certChainPositionLeafSelfSigned:
-		advice.WriteString(
-			fmt.Sprintf(
-				"It is recommended that you replace the %s certificate with a valid certificate chain.%s",
-				certChainPositionLeafSelfSigned,
-				nagios.CheckOutputEOL,
-			),
-		)
-
-	case isMissingIntermediates:
-		advice.WriteString(
-			fmt.Sprintf(
-				"It is recommended that you configure the service%sto include the missing intermediates.%s",
-				hostValRef(certChain),
-				nagios.CheckOutputEOL,
-			),
-		)
-
-		advice.WriteString(certDownloadLinksAdvice(certChain))
-
-	default:
-
-		// Any advice for this scenario?
-	}
-
-	return advice.String()
-}
-
-// certDownloadLinksAdvice attempts to provide sysadmins advice for what
-// download links to use when repairing reported certificate chain issues.
-func certDownloadLinksAdvice(certChain []*x509.Certificate) string {
-	if len(certChain) == 0 {
-		return ""
-	}
-
-	var advice strings.Builder
-
-	if !HasLeafCert(certChain) {
-		advice.WriteString(
-			"NOTE: No leaf certs detected in given certificate chain;" +
-				" is this an intermediates bundle that is being monitored?",
-		)
-	}
-
-	type adviceMapEntry struct {
-		CA           string
-		CASubstrings []string
-		Description  string
-		Advice       string
-	}
-
-	adviceMappings := []adviceMapEntry{
-		{
-			CASubstrings: []string{
-				"InCommon",
-				"USERTrust",
-				"COMODO",
-				"Sectigo",
-			},
-			Description: "Known CA name prefixes used by Sectigo",
-			Advice:      strings.TrimSpace(sectigoEmailAdvice),
-		},
-	}
-
-outerLoop:
-	for _, cert := range certChain {
-		for _, adviceEntry := range adviceMappings {
-			for _, pattern := range adviceEntry.CASubstrings {
-				lowerCasePattern := strings.ToLower(pattern)
-
-				issuerContainsCAPrefix := strings.Contains(
-					strings.ToLower(cert.Issuer.CommonName),
-					lowerCasePattern,
-				)
-
-				issuedContainsCAPrefix := strings.Contains(
-					strings.ToLower(cert.Subject.CommonName),
-					lowerCasePattern,
-				)
-
-				if issuerContainsCAPrefix || issuedContainsCAPrefix {
-					advice.WriteString(
-						fmt.Sprintf(
-							"%s%s%s",
-							nagios.CheckOutputEOL,
-							adviceEntry.Advice,
-							nagios.CheckOutputEOL,
-						),
-					)
-
-					break outerLoop
-				}
-			}
-		}
-	}
 
 	return advice.String()
 }

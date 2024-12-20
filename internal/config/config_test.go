@@ -347,12 +347,6 @@ func TestApplyIgnoreDecision(t *testing.T) {
 			applyResults: false,
 		},
 		{
-			name:         "DefaultValidateChainOrderResults",
-			cfg:          Config{},
-			validateFunc: Config.ApplyCertChainOrderValidationResults,
-			applyResults: defaultApplyCertChainOrderValidationResults,
-		},
-		{
 			name: "DefaultValidateSANsListResultsWithSANsEntries",
 			cfg: Config{
 				SANsEntries: []string{"tacos.example.com"},
@@ -377,6 +371,12 @@ func TestApplyIgnoreDecision(t *testing.T) {
 			applyResults: true,
 		},
 		{
+			name:         "DefaultValidateChainOrderResults",
+			cfg:          Config{},
+			validateFunc: Config.ApplyCertChainOrderValidationResults,
+			applyResults: defaultApplyCertChainOrderValidationResults,
+		},
+		{
 			name: "IgnoreValidateChainOrderResults",
 			cfg: Config{
 				ignoreValidationResults: []string{ValidationKeywordChainOrder},
@@ -390,6 +390,28 @@ func TestApplyIgnoreDecision(t *testing.T) {
 				applyValidationResults: []string{ValidationKeywordChainOrder},
 			},
 			validateFunc: Config.ApplyCertChainOrderValidationResults,
+			applyResults: true,
+		},
+		{
+			name:         "DefaultValidateRootResults",
+			cfg:          Config{},
+			validateFunc: Config.ApplyCertRootValidationResults,
+			applyResults: defaultApplyCertRootValidationResults,
+		},
+		{
+			name: "IgnoreValidateRootResults",
+			cfg: Config{
+				ignoreValidationResults: []string{ValidationKeywordRoot},
+			},
+			validateFunc: Config.ApplyCertRootValidationResults,
+			applyResults: false,
+		},
+		{
+			name: "ApplyValidateRootResults",
+			cfg: Config{
+				applyValidationResults: []string{ValidationKeywordRoot},
+			},
+			validateFunc: Config.ApplyCertRootValidationResults,
 			applyResults: true,
 		},
 	}

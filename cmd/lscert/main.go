@@ -539,6 +539,54 @@ func main() {
 		)
 	}
 
+	rootValidationResult := certs.ValidateRoot(
+		certChain,
+		cfg.VerboseOutput,
+		certs.CertChainValidationOptions{
+			// IgnoreValidationResultRoot: !cfg.ApplyCertRootValidationResults(),
+			IgnoreValidationResultRoot: false,
+		},
+	)
+	validationResults.Add(rootValidationResult)
+
+	switch {
+	case rootValidationResult.IsFailed():
+		log.Debug().
+			Err(rootValidationResult.Err()).
+			Int("root_certs", rootValidationResult.NumRootCerts()).
+			Int("total_certs", rootValidationResult.TotalCerts()).
+			Int("chain_entries_total", rootValidationResult.TotalCerts()).
+			Msg("Chain misordered")
+
+		fmt.Printf(
+			"\n%s %s\n",
+			stateToPrefix(rootValidationResult),
+			rootValidationResult.String(),
+		)
+
+	case rootValidationResult.IsIgnored():
+		log.Debug().
+			Msgf("%s validation ignored", rootValidationResult.CheckName())
+
+		fmt.Printf(
+			"\n%s %s\n",
+			stateToPrefix(rootValidationResult),
+			rootValidationResult.String(),
+		)
+
+	default:
+		log.Debug().
+			Int("root_certs", rootValidationResult.NumRootCerts()).
+			Int("total_certs", rootValidationResult.TotalCerts()).
+			Msgf("%s validation successful", rootValidationResult.CheckName())
+
+		fmt.Printf(
+			"\n%s %s\n",
+			stateToPrefix(rootValidationResult),
+			rootValidationResult.String(),
+		)
+	}
+
 	textutils.PrintHeader("CERTIFICATE CHAIN | DETAILS")
 
 	// We request these details even if the user opted to disable expiration

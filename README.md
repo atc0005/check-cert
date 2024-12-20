@@ -295,35 +295,33 @@ accessible to this tool. Use FQDNs in order to retrieve certificates using
   - issuer
 
 - Multiple certificate validation checks
-  - Expiration status for all certificates in a chain
+  - `Expiration` status for all certificates in a chain
     - not expired
     - expiring "soon"
       - warning threshold
       - critical threshold
-  - Hostname value for the leaf certificate in a chain
+  - `Hostname` value for the leaf certificate in a chain
     - see subsection for skipping hostname verification when the leaf
       certificate is missing SANs entries in the [configuration
       options](#configuration-options) section for details
-  - Subject Alternate Names (SANs) for the leaf certificate in a chain
+  - `Subject Alternate Names (SANs)` for the leaf certificate in a chain
     - if `SKIPSANSCHECKS` keyword is supplied as the value no SANs entry
       checks will be performed; this keyword is useful for defining a shared
       Nagios check command and service check where SANs list validation may
       not be desired for some certificate chains (e.g., those with a very long
       list of entries)
-  - Chain Order for the order of certificates in a chain
+  - `Chain Order` for the order of certificates in a chain
     - assert that leaf certificate is first in chain, followed by the
       intermediate which signed it, a potential second intermediate which
       signed the former and so on
     - current implementation objects to a single leaf cert in a chain, though
       this behavior may be moved to a separate validation check specific to
       intermediates
-    - current implementation notes the presence of a root certificate and
-      cautions that some platforms will object to this, though this behavior
-      may be moved to a separate validation check in the future
     - offers advice for replacing a certificate chain when specific CA vendors
       are matched
       - currently only Sectigo/InCommon is supported, though the plan is to
         support multiple CAs once further feedback is gathered
+  - `Root` for the presence of root certificates in a chain
 
 - Optional support for skipping hostname verification for a certificate when
   the SANs list is empty
@@ -369,10 +367,11 @@ accessible to this tool. Use FQDNs in order to retrieve certificates using
   - issuer
 
 - Multiple certificate validation checks
-  - Expiration status for all certificates in a chain
-  - Hostname value for the leaf certificate in a chain
-  - Subject Alternate Names (SANs) for the leaf certificate in a chain
-  - Chain Order for the order of certificates in a chain
+  - `Expiration` status for all certificates in a chain
+  - `Hostname` value for the leaf certificate in a chain
+  - `Subject Alternate Names (SANs)` for the leaf certificate in a chain
+  - `Chain Order` for the order of certificates in a chain
+  - `Root` for the presence of a root certificate in a chain
 
 ### `cpcert`
 
@@ -674,6 +673,7 @@ configuration settings are applied. Some are ignored by default.
 | `Hostname`              | Yes                | Server or DNS Name values |
 | `SANs list`             | Yes`*`             | SANs entries              |
 | `Chain Order`           | No                 |                           |
+| `Root`                  | No                 |                           |
 
 The certificate expiration validation check is applied using default
 thresholds if not specified by the sysadmin. The hostname verification check
@@ -686,14 +686,15 @@ state); without SANs entries to validate the SANs list validation check result
 is of limited value. If explicitly requested and SANs entries are not provided
 a configuration error is emitted and the plugin terminates.
 
-The Chain Order validation is is not applied by default; this validation check
-was not present in early releases of the plugin and enabling it by default
-would potentially be an unwelcome change.
+The `Chain Order` and `Root` validations are is not applied by default; these
+validation checks were not present in early releases of the plugin and
+enabling them by default would potentially be an unwelcome change.
 
 > [!NOTE]
 >
-> A future version *may* enable the `Chain Order` validation check by default.
-> You may opt out at any time by explicitly ignoring this validation type.
+> A future version *may* enable the `Chain Order` and `Root` validation checks
+> by default. You may opt out at any time by explicitly ignoring these
+> validation types.
 
 #### `lscert` CLI tool
 
@@ -746,8 +747,8 @@ validation checks and any behavior changes at that time noted.
 | `ignore-expired-root-certs`                  | No        | `false` | No     | `true`, `false`                                                         | Whether expired root certificates should be ignored.                                                                                                                                                                                                                                                                                                 |
 | `ignore-expiring-intermediate-certs`         | No        | `false` | No     | `true`, `false`                                                         | Whether expiring intermediate certificates should be ignored.                                                                                                                                                                                                                                                                                        |
 | `ignore-expiring-root-certs`                 | No        | `false` | No     | `true`, `false`                                                         | Whether expiring root certificates should be ignored.                                                                                                                                                                                                                                                                                                |
-| `ignore-validation-result`                   | No        |         | No     | `sans`, `expiration`, `hostname`, `order`                               | List of keywords for certificate chain validation check result that should be explicitly ignored and not used to determine final validation state.                                                                                                                                                                                                   |
-| `apply-validation-result`                    | No        |         | No     | `sans`, `expiration`, `hostname`, `order`                               | List of keywords for certificate chain validation check results that should be explicitly applied and used to determine final validation state.                                                                                                                                                                                                      |
+| `ignore-validation-result`                   | No        |         | No     | `sans`, `expiration`, `hostname`, `order`, `root`                       | List of keywords for certificate chain validation check result that should be explicitly ignored and not used to determine final validation state.                                                                                                                                                                                                   |
+| `apply-validation-result`                    | No        |         | No     | `sans`, `expiration`, `hostname`, `order`, `root`                       | List of keywords for certificate chain validation check results that should be explicitly applied and used to determine final validation state.                                                                                                                                                                                                      |
 | `list-ignored-errors`                        | No        | `false` | No     | `true`, `false`                                                         | Toggles emission of ignored validation check result errors. Disabled by default to reduce confusion.                                                                                                                                                                                                                                                 |
 
 #### `lscert`

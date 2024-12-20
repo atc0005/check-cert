@@ -201,6 +201,29 @@ func (c Config) ApplyCertChainOrderValidationResults() bool {
 	}
 }
 
+// ApplyCertRootValidationResults indicates whether negative root presence
+// assertion check results should be applied when performing final plugin
+// state evaluation. Precedence is given for explicit request to ignore this
+// validation result.
+func (c Config) ApplyCertRootValidationResults() bool {
+	ignoreRequested := textutils.InList(
+		ValidationKeywordRoot, c.ignoreValidationResults, true,
+	)
+
+	applyRequested := textutils.InList(
+		ValidationKeywordRoot, c.applyValidationResults, true,
+	)
+
+	switch {
+	case ignoreRequested:
+		return false
+	case applyRequested:
+		return true
+	default:
+		return defaultApplyCertRootValidationResults
+	}
+}
+
 // supportedValidationCheckResultKeywords returns a list of valid validation
 // check keywords used by plugin type applications in this project.
 func supportedValidationCheckResultKeywords() []string {
@@ -209,6 +232,7 @@ func supportedValidationCheckResultKeywords() []string {
 		ValidationKeywordExpiration,
 		ValidationKeywordSANsList,
 		ValidationKeywordChainOrder,
+		ValidationKeywordRoot,
 	}
 }
 
