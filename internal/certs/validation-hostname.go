@@ -127,7 +127,7 @@ func ValidateHostname(
 			ignoreIfSANsEmptyFlagName: ignoreIfSANsEmptyFlagName,
 			err: fmt.Errorf(
 				"required certificate chain is empty: %w",
-				ErrIncompleteCertificateChain,
+				ErrNoCertsFound,
 			),
 			ignored:          validationOptions.IgnoreValidationResultHostname,
 			priorityModifier: priorityModifierMaximum,

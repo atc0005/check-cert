@@ -100,7 +100,7 @@ func ValidateChainOrder(
 			validationOptions: validationOptions,
 			err: fmt.Errorf(
 				"required certificate chain is empty: %w",
-				ErrIncompleteCertificateChain,
+				ErrNoCertsFound,
 			),
 			ignored:          validationOptions.IgnoreValidationResultChainOrder,
 			priorityModifier: priorityModifierMaximum,
