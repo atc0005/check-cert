@@ -75,8 +75,6 @@ type ChainOrderValidationResult struct {
 // of the expected order (leaf first followed by one or more intermediates).
 // If specified, a flag is set to generate verbose validation output.
 //
-// If requested, SANs entries on a leaf certificate are omitted.
-//
 // NOTE: This validation type objects to incorrect certificate entries (e.g.,
 // duplicate leaf certs) as it causes the chain to not be in the correct
 // order.
@@ -118,6 +116,8 @@ func ValidateChainOrder(
 		// valid leaf certificate (signed by a trusted intermediate), we also
 		// (currently) assume that self-signed certificates are an ordering
 		// issue that requires resolution.
+
+		// FIXME: Move this to an "Intermediates" specific check (GH-364).
 
 		certType := ChainPosition(certChain[0], certChain)
 
@@ -181,29 +181,29 @@ func (covr ChainOrderValidationResult) TotalCerts() int {
 
 // IsWarningState indicates whether this validation check result is in a
 // WARNING state. This returns false if the validation check resulted in an OK
-// or CRITICAL state, or is flagged as ignored. True is returned otherwise.
+// or CRITICAL state, or is flagged as ignored.
 func (covr ChainOrderValidationResult) IsWarningState() bool {
-	if covr.IsIgnored() {
-		return false
-	}
-
-	// A "misordered" certificate chain is considered a WARNING state and not
-	// CRITICAL because the majority of modern clients (e.g., browsers) will
-	// automatically rearrange a given certificate chain into an valid order,
-	// provided that the leaf and intermediate certificates are present.
 	switch {
+	case covr.IsIgnored():
+		return false
+
+	case covr.IsOKState():
+		return false
+
+	case covr.IsCriticalState():
+		return false
+
 	case errors.Is(covr.err, ErrMisorderedCertificateChain):
+		// A "misordered" certificate chain is considered a WARNING state and
+		// not CRITICAL because the majority of modern clients (e.g.,
+		// browsers) will automatically rearrange a given certificate chain
+		// into an valid order, provided that the leaf and intermediate
+		// certificates are present.
+		//
 		// We explicitly handle this specific error type vs letting a more
 		// general match handle "anything not incomplete error chain error".
 		// This is as much to document the intent as to provide a hook for
 		// future use.
-		return true
-
-	// An incomplete certificate chain is considered a CRITICAL state; if any
-	// other error has occurred we'll consider that a WARNING state.
-	case covr.err != nil &&
-		!errors.Is(covr.err, ErrIncompleteCertificateChain):
-
 		return true
 
 	default:
@@ -213,19 +213,29 @@ func (covr ChainOrderValidationResult) IsWarningState() bool {
 
 // IsCriticalState indicates whether this validation check result is in a
 // CRITICAL state. This returns false if the validation check resulted in an
-// OK or WARNING state, or is flagged as ignored. True is returned otherwise.
+// OK or WARNING state, or is flagged as ignored.
 func (covr ChainOrderValidationResult) IsCriticalState() bool {
-	if covr.IsIgnored() {
-		return false
-	}
-
-	// An incomplete certificate chain is considered a CRITICAL state because
-	// required certificates are not present; because some modern/current
-	// clients will not automatically fetch missing intermediates to resolve
-	// the chain users are more likely to be impacted by this problem than
-	// they would be if the chain were misordered.
 	switch {
+	case covr.IsIgnored():
+		return false
+
+	case errors.Is(covr.err, ErrNoCertsFound):
+		// A certificate chain missing all certificates is considered a
+		// CRITICAL state because required certificates are not present. There
+		// isn't anything we can reasonably check in this situation.
+		//
+		// We match on this error type to provide a hook for later potential
+		// use and to explicitly document how this validation check should
+		// behave for this scenario.
+		return true
+
 	case errors.Is(covr.err, ErrIncompleteCertificateChain):
+		// An incomplete certificate chain is considered a CRITICAL state
+		// because required certificates are not present; because some
+		// modern/current clients will not automatically fetch missing
+		// intermediates to resolve the chain users are more likely to be
+		// impacted by this problem than they would be if the chain were
+		// misordered.
 		return true
 
 	default:

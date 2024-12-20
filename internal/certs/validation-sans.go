@@ -222,7 +222,7 @@ func (slvr SANsListValidationResult) TotalCerts() int {
 
 // IsWarningState indicates whether this validation check result is in a
 // WARNING state. This returns false if the validation check resulted in an OK
-// or CRITICAL state, or is flagged as ignored. True is returned otherwise.
+// or CRITICAL state, or is flagged as ignored.
 func (slvr SANsListValidationResult) IsWarningState() bool {
 	// This state is not used for this certificate validation check.
 	return false
@@ -230,9 +230,28 @@ func (slvr SANsListValidationResult) IsWarningState() bool {
 
 // IsCriticalState indicates whether this validation check result is in a
 // CRITICAL state. This returns false if the validation check resulted in an
-// OK or WARNING state, or is flagged as ignored. True is returned otherwise.
+// OK or WARNING state, or is flagged as ignored.
 func (slvr SANsListValidationResult) IsCriticalState() bool {
-	return slvr.err != nil && !slvr.IsIgnored()
+	switch {
+	case slvr.IsIgnored():
+		return false
+
+	case errors.Is(slvr.err, ErrNoCertsFound):
+		// A certificate chain missing all certificates is considered a
+		// CRITICAL state because required certificates are not present. There
+		// isn't anything we can reasonably check in this situation.
+		//
+		// We match on this error type to provide a hook for later potential
+		// use and to explicitly document how this validation check should
+		// behave for this scenario.
+		return true
+
+	case slvr.err != nil:
+		return true
+
+	default:
+		return false
+	}
 }
 
 // IsUnknownState indicates whether this validation check result is in an

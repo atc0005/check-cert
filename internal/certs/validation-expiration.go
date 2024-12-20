@@ -9,6 +9,7 @@ package certs
 
 import (
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"time"
 
@@ -579,40 +580,53 @@ func (evr ExpirationValidationResult) TotalCerts() int {
 
 // IsWarningState indicates whether this validation check result is in a
 // WARNING state. This returns false if the validation check resulted in an OK
-// or CRITICAL state, or is flagged as ignored. True is returned otherwise.
+// or CRITICAL state, or is flagged as ignored.
 func (evr ExpirationValidationResult) IsWarningState() bool {
+	switch {
+	case evr.IsIgnored():
+		return false
 
-	if evr.IsIgnored() {
+	case evr.IsOKState():
+		return false
+
+	case evr.IsCriticalState():
+		return false
+
+	case HasExpiringCert(evr.FilteredCertificateChain(), evr.ageWarningThreshold):
+		return true
+
+	default:
 		return false
 	}
-
-	// for _, cert := range evr.certChain {
-	for _, cert := range evr.FilteredCertificateChain() {
-		if IsExpiringCert(cert, evr.ageCriticalThreshold, evr.ageWarningThreshold) {
-			return true
-		}
-	}
-
-	return false
 }
 
 // IsCriticalState indicates whether this validation check result is in a
 // CRITICAL state. This returns false if the validation check resulted in an
-// OK or WARNING state, or is flagged as ignored. True is returned otherwise.
+// OK or WARNING state, or is flagged as ignored.
 func (evr ExpirationValidationResult) IsCriticalState() bool {
+	switch {
+	case evr.IsIgnored():
+		return false
 
-	if evr.IsIgnored() {
+	case errors.Is(evr.err, ErrNoCertsFound):
+		// A certificate chain missing all certificates is considered a
+		// CRITICAL state because required certificates are not present. There
+		// isn't anything we can reasonably check in this situation.
+		//
+		// We match on this error type to provide a hook for later potential
+		// use and to explicitly document how this validation check should
+		// behave for this scenario.
+		//
+		// FIXME: This is potentially new behavior.
+		//
+		return true
+
+	case HasExpiringCert(evr.FilteredCertificateChain(), evr.ageCriticalThreshold):
+		return true
+
+	default:
 		return false
 	}
-
-	// for _, cert := range evr.certChain {
-	for _, cert := range evr.FilteredCertificateChain() {
-		if IsExpiredCert(cert) || cert.NotAfter.Before(evr.ageCriticalThreshold) {
-			return true
-		}
-	}
-
-	return false
 }
 
 // IsUnknownState indicates whether this validation check result is in an
