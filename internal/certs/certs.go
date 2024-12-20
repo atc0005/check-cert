@@ -904,23 +904,24 @@ func HasExpiredCert(certChain []*x509.Certificate) bool {
 
 }
 
-// HasExpiringCert receives a slice of x509 certificates, CRITICAL age
-// threshold and WARNING age threshold values and ignoring any certificates
-// already expired, uses the provided thresholds to determine if any
-// certificates are about to expire. A boolean value is returned to indicate
-// the results of this check.
-func HasExpiringCert(certChain []*x509.Certificate, ageCritical time.Time, ageWarning time.Time) bool {
-	for idx := range certChain {
-		switch {
-		case !IsExpiredCert(certChain[idx]) && certChain[idx].NotAfter.Before(ageCritical):
-			return true
-		case !IsExpiredCert(certChain[idx]) && certChain[idx].NotAfter.Before(ageWarning):
-			return true
+// HasExpiringCert receives a slice of x509 certificates, one or more age
+// threshold values. Ignoring any certificates already expired, the slice of
+// certificates is evaluated using the given threshold values to determine if
+// any are about to expire. A boolean value is returned to indicate the
+// results of this check.
+func HasExpiringCert(certChain []*x509.Certificate, ageThresholds ...time.Time) bool {
+	for _, cert := range certChain {
+		for _, ageThreshold := range ageThresholds {
+			switch {
+			case IsExpiredCert(cert):
+				continue
+			case cert.NotAfter.Before(ageThreshold):
+				return true
+			}
 		}
 	}
 
 	return false
-
 }
 
 // NumExpiredCerts receives a slice of x509 certificates and returns a count
