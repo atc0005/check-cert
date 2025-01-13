@@ -13,8 +13,8 @@ github.com/atc0005/go-nagios
 # github.com/grantae/certinfo v0.0.0-20170412194111-59d56a35515b
 ## explicit
 github.com/grantae/certinfo
-# github.com/mattn/go-colorable v0.1.13
-## explicit; go 1.15
+# github.com/mattn/go-colorable v0.1.14
+## explicit; go 1.18
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
@@ -28,3 +28,4 @@ github.com/rs/zerolog/log
 # golang.org/x/sys v0.29.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
+golang.org/x/sys/windows
