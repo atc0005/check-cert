@@ -621,6 +621,9 @@ func (evr ExpirationValidationResult) IsCriticalState() bool {
 		//
 		return true
 
+	case HasExpiredCert(evr.FilteredCertificateChain()):
+		return true
+
 	case HasExpiringCert(evr.FilteredCertificateChain(), evr.ageCriticalThreshold):
 		return true
 
