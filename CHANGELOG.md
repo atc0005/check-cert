@@ -26,6 +26,25 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.25.4] - 2025-01-17
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1200) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.18 to go-ci-oldstable-build-v0.21.19 in /dependabot/docker/builds
+- (GH-1212) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.19 to go-ci-oldstable-build-v0.22.0 in /dependabot/docker/builds
+- (GH-1213) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.22.0 to go-ci-oldstable-build-v0.22.1 in /dependabot/docker/builds
+- (GH-1220) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.22.1 to go-ci-oldstable-build-v0.22.2 in /dependabot/docker/builds
+- (GH-1204) Go Dependency: Bump github.com/mattn/go-colorable from 0.1.13 to 0.1.14
+- (GH-1202) Go Dependency: Bump golang.org/x/sys from 0.28.0 to 0.29.0
+- (GH-1216) Go Runtime: Bump golang from 1.22.10 to 1.22.11 in /dependabot/docker/go
+
+#### Other
+
+- (GH-1186) Add general and content-type troubleshooting info
+- (GH-1188) Update doc comments for default connection timeout
+
 ## [v0.25.3] - 2024-12-11
 
 ### Changed
@@ -1913,7 +1932,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.4...HEAD
+[v0.25.4]: https://github.com/atc0005/check-cert/releases/tag/v0.25.4
 [v0.25.3]: https://github.com/atc0005/check-cert/releases/tag/v0.25.3
 [v0.25.2]: https://github.com/atc0005/check-cert/releases/tag/v0.25.2
 [v0.25.1]: https://github.com/atc0005/check-cert/releases/tag/v0.25.1
