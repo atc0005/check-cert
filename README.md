@@ -14,13 +14,13 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
 
 - [Project home](#project-home)
 - [Overview](#overview)
-  - [`check_certs`](#check_certs)
+  - [`check_cert`](#check_cert)
     - [Performance Data](#performance-data)
   - [`lscert`](#lscert)
   - [`cpcert`](#cpcert)
   - [`certsum`](#certsum)
 - [Features](#features)
-  - [`check_cert`](#check_cert)
+  - [`check_cert`](#check_cert-1)
   - [`lscert`](#lscert-1)
   - [`cpcert`](#cpcert-1)
   - [`certsum`](#certsum-1)
@@ -44,7 +44,7 @@ Go-based tooling to check/verify certs (e.g., as part of a Nagios service check)
     - [`cpcert` CLI tool](#cpcert-cli-tool)
     - [`certsum` CLI tool](#certsum-cli-tool)
   - [Command-line arguments](#command-line-arguments)
-    - [`check_cert`](#check_cert-1)
+    - [`check_cert`](#check_cert-2)
     - [`lscert`](#lscert-2)
       - [Flags](#flags)
       - [Positional Argument](#positional-argument)
@@ -111,14 +111,14 @@ submit improvements for review and potential inclusion into the project.
 This repo contains various tools used to review, copy, monitor & validate
 certificates.
 
-| Tool Name     | Description                                                                                                                |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `check_certs` | Nagios plugin used to monitor & validate certificate chains.                                                               |
-| `lscert`      | CLI app used to generate a summary of certificate chain metadata and validation results.                                   |
-| `cpcert`      | CLI app used to copy and manipulate certificates.                                                                          |
-| `certsum`     | CLI app used to scan one or more given IP ranges or collection of name/FQDN values for certs and provide a summary report. |
+| Tool Name    | Description                                                                                                                |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `check_cert` | Nagios plugin used to monitor & validate certificate chains.                                                               |
+| `lscert`     | CLI app used to generate a summary of certificate chain metadata and validation results.                                   |
+| `cpcert`     | CLI app used to copy and manipulate certificates.                                                                          |
+| `certsum`    | CLI app used to scan one or more given IP ranges or collection of name/FQDN values for certs and provide a summary report. |
 
-### `check_certs`
+### `check_cert`
 
 Nagios plugin used to monitor & perform validation checks of certificate
 chains.
