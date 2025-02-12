@@ -727,7 +727,7 @@ func (evr ExpirationValidationResult) Status() string {
 
 	// but if it is, use the first SubjectAlternateName field in its place
 	if nextCertToExpire.Subject.CommonName == "" {
-		if len(nextCertToExpire.DNSNames[0]) > 0 {
+		if len(nextCertToExpire.DNSNames) > 0 {
 			nextCertToExpireServerName = nextCertToExpire.DNSNames[0]
 		}
 	}
