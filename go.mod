@@ -1,6 +1,6 @@
 module github.com/atc0005/check-cert
 
-go 1.20
+go 1.23.0
 
 require (
 	github.com/atc0005/cert-payload v0.7.1
