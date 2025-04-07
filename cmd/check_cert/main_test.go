@@ -153,10 +153,12 @@ func TestApplyIgnoreValidationFlagsForConfigValidationErrors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		// Make scopelint linter happy
 		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
-		tt := tt
+		//
+		// NOTE: Not needed as of Go 1.22.
+		//
+		// tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			// Save old command-line arguments so that we can restore them later
@@ -329,10 +331,12 @@ func TestApplyValidationResults(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		// Make scopelint linter happy
 		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
-		tt := tt
+		//
+		// NOTE: Not needed as of Go 1.22.
+		//
+		// tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 
