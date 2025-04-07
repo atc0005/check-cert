@@ -6,7 +6,7 @@ require (
 	github.com/atc0005/cert-payload v0.7.1
 	github.com/atc0005/go-nagios v0.19.0
 	github.com/grantae/certinfo v0.0.0-20170412194111-59d56a35515b
-	github.com/rs/zerolog v1.33.0
+	github.com/rs/zerolog v1.34.0
 )
 
 // Allow for testing local changes before they're published.
