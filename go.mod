@@ -2,6 +2,30 @@ module github.com/atc0005/check-cert
 
 go 1.23.0
 
+godebug (
+	// Go 1.23 changed the default TLS cipher suites used by clients and
+	// servers when not explicitly configured, removing 3DES cipher suites. We
+	// revert this behavior to support retrieving certificates from older
+	// systems.
+	//
+	// See also: https://pkg.go.dev/crypto/tls#Config.CipherSuites
+	tls3des=1
+
+	// Go 1.22 changed the default TLS cipher suites used by clients and
+	// servers when not explicitly configured, removing the cipher suites
+	// which used RSA based key exchange. We revert this behavior to support
+	// retrieving certificates from older systems.
+	//
+	// NOTE: This has been confirmed as needed for Microsoft Windows Server
+	// 2012 R2 systems (covered by Azure Arc).
+	//
+	// See also:
+	//
+	//   - https://pkg.go.dev/crypto/tls#Config.CipherSuites
+	//   - https://github.com/golang/go/issues/63413
+	tlsrsakex=1
+)
+
 require (
 	github.com/atc0005/cert-payload v0.7.1
 	github.com/atc0005/go-nagios v0.19.0

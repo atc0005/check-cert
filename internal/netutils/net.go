@@ -248,6 +248,10 @@ func GetCerts(host string, ipAddr string, port int, timeout time.Duration, logge
 
 	logger.Debug().Msg("Connecting to remote server")
 	tlsConfig := tls.Config{
+		// Permit all known cipher suites for maximum compatibility with
+		// evaluated systems/services in order to evaluate certificate chains.
+		CipherSuites: SupportedCipherSuiteIDs(),
+
 		// Permit insecure connection.
 		//
 		// This is needed so that we can examine not only valid certificates,
@@ -266,6 +270,18 @@ func GetCerts(host string, ipAddr string, port int, timeout time.Duration, logge
 		// specific IP Address while also retrieving a certificate chain for a
 		// specific host value.
 		ServerName: host,
+
+		// Tools provided by this project may need to connect to older
+		// systems so allow the oldest still support TLS version.
+		//
+		// See also:
+		//
+		//  - https://github.com/golang/go/issues/45428
+		//  - https://github.com/golang/go/commit/035963c7f5d82b5bf1501f407919031f815bd038
+		//  - https://github.com/golang/go/issues/62459
+		//  - https://github.com/golang/go/commit/362bf4fc6d3b456429e998582b15a2765e640741
+		//  - https://www.skeema.io/blog/2025/02/06/mysql57-golang-ssl/
+		MinVersion: tls.VersionTLS10,
 	}
 
 	// Create custom dialer with user-specified timeout value
@@ -635,4 +651,22 @@ func DedupeHosts(hosts []HostPattern) []HostPattern {
 	}
 
 	return uniqHosts
+}
+
+// SupportedCipherSuiteIDs provides the cipher suite IDs for all cipher suites
+// currently implemented by the by the [crypto/tls] package.
+func SupportedCipherSuiteIDs() []uint16 {
+	currentCipherSuites := tls.CipherSuites()
+	insecureCipherSuites := tls.InsecureCipherSuites()
+
+	cipherSuites := make([]uint16, 0, len(currentCipherSuites)+len(insecureCipherSuites))
+
+	for _, suite := range currentCipherSuites {
+		cipherSuites = append(cipherSuites, suite.ID)
+	}
+	for _, suite := range insecureCipherSuites {
+		cipherSuites = append(cipherSuites, suite.ID)
+	}
+
+	return cipherSuites
 }
