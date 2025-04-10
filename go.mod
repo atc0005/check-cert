@@ -24,6 +24,13 @@ godebug (
 	//   - https://pkg.go.dev/crypto/tls#Config.CipherSuites
 	//   - https://github.com/golang/go/issues/63413
 	tlsrsakex=1
+
+	// Go 1.23 removed default support for parsing certificates with negative
+	// serial numbers. We need this support for parsing older certificates
+	// (e.g., older roots).
+	//
+	// See also: https://pkg.go.dev/crypto/x509#ParseCertificate
+	x509negativeserial=1
 )
 
 require (
