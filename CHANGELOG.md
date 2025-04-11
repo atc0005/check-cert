@@ -26,6 +26,27 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.25.6] - 2025-04-11
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-241) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.22.3 to go-ci-oldstable-build-v0.22.9 in /dependabot/docker/builds
+- (GH-243) Disable Dependabot automatic PR rebasing
+- (GH-237) Go Dependency: Bump github.com/rs/zerolog from 1.33.0 to 1.34.0
+- (GH-246) Go Dependency: Bump golang.org/x/sys from 0.30.0 to 0.32.0
+- (GH-240) Go Runtime: Bump golang from 1.22.12 to 1.23.8 in /dependabot/docker/go
+- (GH-232) go.mod: update minimum Go version to 1.23.0
+- (GH-218) Update project to Go 1.23 series
+
+#### Fixed
+
+- (GH-225) README: Fix `sans-entries` flag coverage
+- (GH-248) Fix `copyloopvar` linting errors
+- (GH-255) Enable insecure TLS ciphers and protocol versions
+- (GH-257) Enable support for negative cert serial numbers
+
 ## [v0.25.5] - 2025-02-12
 
 ### Changed
@@ -1947,7 +1968,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.5...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.6...HEAD
+[v0.25.6]: https://github.com/atc0005/check-cert/releases/tag/v0.25.6
 [v0.25.5]: https://github.com/atc0005/check-cert/releases/tag/v0.25.5
 [v0.25.4]: https://github.com/atc0005/check-cert/releases/tag/v0.25.4
 [v0.25.3]: https://github.com/atc0005/check-cert/releases/tag/v0.25.3
