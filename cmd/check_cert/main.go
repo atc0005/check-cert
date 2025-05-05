@@ -27,8 +27,6 @@ func main() {
 
 	plugin := nagios.NewPlugin()
 
-	plugin.EnablePluginOutputSizePerfDataMetric()
-
 	// Override default section headers with our custom values.
 	plugin.SetErrorsLabel("VALIDATION ERRORS")
 	plugin.SetDetailedInfoLabel("VALIDATION CHECKS REPORT")
@@ -63,6 +61,8 @@ func main() {
 
 		return
 	}
+
+	plugin.EnablePluginOutputSizePerfDataMetric()
 
 	// Enable this setting *after* we initialize the plugin configuration;
 	// Debug level is the default global logging level which our initialized
