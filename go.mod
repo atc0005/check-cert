@@ -1,6 +1,6 @@
 module github.com/atc0005/check-cert
 
-go 1.23.0
+go 1.24.0
 
 godebug (
 	// Go 1.23 changed the default TLS cipher suites used by clients and
@@ -47,5 +47,5 @@ require (
 require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
 )
