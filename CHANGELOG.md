@@ -26,6 +26,24 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.25.8] - 2026-03-19
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-339) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.22.10 to go-ci-oldstable-build-v0.23.16 in /dependabot/docker/builds
+- (GH-322) CI Dependency: Bump actions/checkout from 4 to 6
+- (GH-307) CI Dependency: Bump github/codeql-action from 3 to 4
+- (GH-345) Go Dependency: Bump github.com/atc0005/cert-payload from 0.7.1 to 0.8.0
+- (GH-335) Go Dependency: Bump golang.org/x/sys from 0.33.0 to 0.42.0
+- (GH-342) go.mod: update minimum Go version to 1.25.0
+- (GH-338) Remove "canary" Go version tracking
+
+#### Fixed
+
+- (GH-344) Apply staticcheck quickfix QF1002
+
 ## [v0.25.7] - 2025-05-23
 
 ### Changed
@@ -1983,7 +2001,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.7...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.8...HEAD
+[v0.25.8]: https://github.com/atc0005/check-cert/releases/tag/v0.25.8
 [v0.25.7]: https://github.com/atc0005/check-cert/releases/tag/v0.25.7
 [v0.25.6]: https://github.com/atc0005/check-cert/releases/tag/v0.25.6
 [v0.25.5]: https://github.com/atc0005/check-cert/releases/tag/v0.25.5
