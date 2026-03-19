@@ -316,49 +316,29 @@ func (rvr RootValidationResult) StatusDetail() string {
 
 	switch {
 	case errors.Is(rvr.err, ErrRootCertsFound):
-		detail.WriteString(
-			fmt.Sprintf(
-				"A root certificate in the chain was found!%s",
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&detail, "A root certificate in the chain was found!%s",
+			nagios.CheckOutputEOL)
 
-		detail.WriteString(
-			fmt.Sprintf(
-				"%s%s%s",
-				nagios.CheckOutputEOL,
-				strings.TrimSpace(rootCertFoundAdvice),
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&detail, "%s%s%s",
+			nagios.CheckOutputEOL,
+			strings.TrimSpace(rootCertFoundAdvice),
+			nagios.CheckOutputEOL)
 
 		// detail.WriteString(reorderChainAdvice(rvr.certChain))
 
 	// Catchall error handling
 	case rvr.err != nil:
-		detail.WriteString(
-			fmt.Sprintf(
-				"An unexpected error occurred while performing %s validation!%s",
-				strings.ToLower(rvr.CheckName()),
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&detail, "An unexpected error occurred while performing %s validation!%s",
+			strings.ToLower(rvr.CheckName()),
+			nagios.CheckOutputEOL)
 
-		detail.WriteString(
-			fmt.Sprintf(
-				"Please report the following error and provide a copy of your certificate chain for evaluation (e.g., see cpcert tool in this project).%s%s",
-				nagios.CheckOutputEOL,
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&detail, "Please report the following error and provide a copy of your certificate chain for evaluation (e.g., see cpcert tool in this project).%s%s",
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL)
 
-		detail.WriteString(
-			fmt.Sprintf(
-				"Error: %q%s",
-				rvr.err.Error(),
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&detail, "Error: %q%s",
+			rvr.err.Error(),
+			nagios.CheckOutputEOL)
 
 	// Success / OK scenario
 	default:

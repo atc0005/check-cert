@@ -381,52 +381,32 @@ func (covr ChainOrderValidationResult) StatusDetail() string {
 
 	switch {
 	case errors.Is(covr.err, ErrMisorderedCertificateChain):
-		detail.WriteString(
-			fmt.Sprintf(
-				"A misordered certificate chain was found!%s",
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&detail, "A misordered certificate chain was found!%s",
+			nagios.CheckOutputEOL)
 
 		detail.WriteString(reorderChainAdvice(covr.certChain))
 
 	case errors.Is(covr.err, ErrIncompleteCertificateChain):
-		detail.WriteString(
-			fmt.Sprintf(
-				"An incomplete certificate chain was found (%d certs total).%s%s",
-				covr.TotalCerts(),
-				nagios.CheckOutputEOL,
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&detail, "An incomplete certificate chain was found (%d certs total).%s%s",
+			covr.TotalCerts(),
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL)
 
 		detail.WriteString(incompleteChainAdvice(covr.certChain))
 
 	// Catchall error handling
 	case covr.err != nil:
-		detail.WriteString(
-			fmt.Sprintf(
-				"An unexpected error occurred while performing %s validation!%s",
-				strings.ToLower(covr.CheckName()),
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&detail, "An unexpected error occurred while performing %s validation!%s",
+			strings.ToLower(covr.CheckName()),
+			nagios.CheckOutputEOL)
 
-		detail.WriteString(
-			fmt.Sprintf(
-				"Please report the following error and provide a copy of your certificate chain for evaluation (e.g., see cpcert tool in this project).%s%s",
-				nagios.CheckOutputEOL,
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&detail, "Please report the following error and provide a copy of your certificate chain for evaluation (e.g., see cpcert tool in this project).%s%s",
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL)
 
-		detail.WriteString(
-			fmt.Sprintf(
-				"Error: %q%s",
-				covr.err.Error(),
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&detail, "Error: %q%s",
+			covr.err.Error(),
+			nagios.CheckOutputEOL)
 
 	// Success / OK scenario
 	default:
@@ -531,15 +511,11 @@ func summarizeChainOrder(certChain []*x509.Certificate) string {
 
 	for idx, cert := range certChain {
 		chainPos := ChainPosition(cert, certChain)
-		chainOrderList.WriteString(
-			fmt.Sprintf(
-				template,
-				idx,
-				hostVal(cert),
-				chainPos,
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&chainOrderList, template,
+			idx,
+			hostVal(cert),
+			chainPos,
+			nagios.CheckOutputEOL)
 	}
 
 	return chainOrderList.String()
@@ -562,40 +538,24 @@ func reorderChainAdvice(certChain []*x509.Certificate) string {
 
 	var advice strings.Builder
 
-	advice.WriteString(
-		fmt.Sprintf(
-			"This issue is often caused by using the incorrect intermediates bundle (with reversed entries).%s",
-			nagios.CheckOutputEOL,
-		),
-	)
+	fmt.Fprintf(&advice, "This issue is often caused by using the incorrect intermediates bundle (with reversed entries).%s",
+		nagios.CheckOutputEOL)
 
-	advice.WriteString(
-		fmt.Sprintf(
-			"It is recommended that you reorder the certificate chain to resolve this issue.%s%s",
-			nagios.CheckOutputEOL,
-			nagios.CheckOutputEOL,
-		),
-	)
+	fmt.Fprintf(&advice, "It is recommended that you reorder the certificate chain to resolve this issue.%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL)
 
-	advice.WriteString(
-		fmt.Sprintf(
-			"Current chain order:%s%s%s%s",
-			nagios.CheckOutputEOL,
-			nagios.CheckOutputEOL,
-			summarizeChainOrder(certChain),
-			nagios.CheckOutputEOL,
-		),
-	)
+	fmt.Fprintf(&advice, "Current chain order:%s%s%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		summarizeChainOrder(certChain),
+		nagios.CheckOutputEOL)
 
-	advice.WriteString(
-		fmt.Sprintf(
-			"Recommended chain order:%s%s%s%s",
-			nagios.CheckOutputEOL,
-			nagios.CheckOutputEOL,
-			summarizeFixedChainOrder(certChain),
-			nagios.CheckOutputEOL,
-		),
-	)
+	fmt.Fprintf(&advice, "Recommended chain order:%s%s%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		summarizeFixedChainOrder(certChain),
+		nagios.CheckOutputEOL)
 
 	advice.WriteString(certDownloadLinksAdvice(certChain))
 

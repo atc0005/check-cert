@@ -549,8 +549,8 @@ func (hnvr HostnameValidationResult) String() string {
 func (hnvr HostnameValidationResult) Report() string {
 
 	detail := hnvr.StatusDetail()
-	switch {
-	case detail == "":
+	switch detail {
+	case "":
 		return fmt.Sprintf(
 			"%s %s",
 			hnvr.Status(),

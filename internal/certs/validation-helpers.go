@@ -24,12 +24,8 @@ func incompleteChainAdvice(certChain []*x509.Certificate) string {
 
 	var advice strings.Builder
 
-	advice.WriteString(
-		fmt.Sprintf(
-			"This issue often occurs with Windows Servers when (newer) intermediates are missing from the certificate stores.%s",
-			nagios.CheckOutputEOL,
-		),
-	)
+	fmt.Fprintf(&advice, "This issue often occurs with Windows Servers when (newer) intermediates are missing from the certificate stores.%s",
+		nagios.CheckOutputEOL)
 
 	hostValRef := func(chain []*x509.Certificate) string {
 		switch {
@@ -57,13 +53,9 @@ func incompleteChainAdvice(certChain []*x509.Certificate) string {
 
 	switch {
 	case firstCertType == certChainPositionLeafSelfSigned:
-		advice.WriteString(
-			fmt.Sprintf(
-				"It is recommended that you replace the %s certificate with a valid certificate chain.%s",
-				certChainPositionLeafSelfSigned,
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&advice, "It is recommended that you replace the %s certificate with a valid certificate chain.%s",
+			certChainPositionLeafSelfSigned,
+			nagios.CheckOutputEOL)
 
 		// TODO: We'd need to consider how this advice would come across for a
 		// cert check which monitors an intermediates bundle; intermediate
@@ -81,13 +73,9 @@ func incompleteChainAdvice(certChain []*x509.Certificate) string {
 		// 		advice.WriteString(certDownloadLinksAdvice(certChain))
 
 	case isMissingIntermediates:
-		advice.WriteString(
-			fmt.Sprintf(
-				"It is recommended that you configure the service%sto include the missing intermediates.%s",
-				hostValRef(certChain),
-				nagios.CheckOutputEOL,
-			),
-		)
+		fmt.Fprintf(&advice, "It is recommended that you configure the service%sto include the missing intermediates.%s",
+			hostValRef(certChain),
+			nagios.CheckOutputEOL)
 
 		advice.WriteString(certDownloadLinksAdvice(certChain))
 
@@ -152,14 +140,10 @@ outerLoop:
 				)
 
 				if issuerContainsCAPrefix || issuedContainsCAPrefix {
-					advice.WriteString(
-						fmt.Sprintf(
-							"%s%s%s",
-							nagios.CheckOutputEOL,
-							adviceEntry.Advice,
-							nagios.CheckOutputEOL,
-						),
-					)
+					fmt.Fprintf(&advice, "%s%s%s",
+						nagios.CheckOutputEOL,
+						adviceEntry.Advice,
+						nagios.CheckOutputEOL)
 
 					break outerLoop
 				}
