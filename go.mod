@@ -1,6 +1,6 @@
 module github.com/atc0005/check-cert
 
-go 1.23.0
+go 1.25.0
 
 godebug (
 	// Go 1.23 changed the default TLS cipher suites used by clients and
