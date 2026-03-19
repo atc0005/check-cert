@@ -428,8 +428,8 @@ func (slvr SANsListValidationResult) String() string {
 func (slvr SANsListValidationResult) Report() string {
 
 	detail := slvr.StatusDetail()
-	switch {
-	case detail == "":
+	switch detail {
+	case "":
 		return fmt.Sprintf(
 			"%s %s",
 			slvr.Status(),
