@@ -447,30 +447,43 @@ func (hnvr HostnameValidationResult) StatusDetail() string {
 	case hnvr.IsIgnored():
 
 		// Add a specific warning or FYI message for sysadmin when the flag to
-		// ignore hostname validation when a leaf cet has an empty SANs list.
+		// ignore hostname validation when a leaf cert has an empty SANs list.
 		if hnvr.validationOptions.IgnoreHostnameVerificationFailureIfEmptySANsList {
-			detail.WriteString("NOTE: The option to ignore hostname verification when" +
-				" certificate Subject Alternate Names (SANs) list is empty" +
-				" has been specified." +
-				nagios.CheckOutputEOL +
-				nagios.CheckOutputEOL +
-				"While viable as a short-term workaround for certificates" +
-				" missing SANs list entries, this is not recommended as a" +
-				" long-term fix. Instead, certificates missing SANs entries" +
-				" should be replaced in order to avoid hostname verification" +
-				" errors. For example, web browsers have deprecated using" +
-				" the CommonName field of certificates missing SANs entries" +
-				" for hostname verification." +
-				nagios.CheckOutputEOL +
-				nagios.CheckOutputEOL +
-				"See these resources for additional information: " +
-				nagios.CheckOutputEOL +
-				nagios.CheckOutputEOL +
-				" - https://github.com/atc0005/check-cert/issues/276" +
-				nagios.CheckOutputEOL +
-				" - https://chromestatus.com/feature/4981025180483584" +
-				nagios.CheckOutputEOL +
-				" - https://bugzilla.mozilla.org/show_bug.cgi?id=1245280")
+			_, _ = fmt.Fprintf(
+				&detail,
+				"NOTE: The option has been specified to ignore hostname verification when certificate Subject Alternate Names (SANs) list is empty.%s%s",
+				nagios.CheckOutputEOL,
+				nagios.CheckOutputEOL,
+			)
+
+			_, _ = fmt.Fprint(
+				&detail,
+				"While viable as a short-term workaround for certificates missing SANs list entries, this is not recommended as a long-term fix. ", // trailing space intentional
+			)
+
+			_, _ = fmt.Fprint(
+				&detail,
+				"Instead, certificates missing SANs entries should be replaced in order to avoid hostname verification errors. ", // trailing space intentional
+			)
+
+			_, _ = fmt.Fprintf(
+				&detail,
+				"For example, web browsers have deprecated using the CommonName field of certificates missing SANs entries for hostname verification.%s%s",
+				nagios.CheckOutputEOL,
+				nagios.CheckOutputEOL,
+			)
+
+			_, _ = fmt.Fprintf(
+				&detail,
+				"See these resources for additional information: %s%s - %s%s - %s%s%s",
+				nagios.CheckOutputEOL,
+				nagios.CheckOutputEOL,
+				"https://chromestatus.com/feature/4981025180483584",
+				nagios.CheckOutputEOL,
+				"https://bugzilla.mozilla.org/show_bug.cgi?id=1245280",
+				nagios.CheckOutputEOL,
+				nagios.CheckOutputEOL,
+			)
 		}
 
 	// Go 1.17 removed support for the legacy behavior of treating the
@@ -482,48 +495,45 @@ func (hnvr HostnameValidationResult) StatusDetail() string {
 	// We attempt to detect this situation in order to supply additional
 	// troubleshooting information and guidance to resolve the issue.
 	case errors.Is(hnvr.err, ErrX509CertReliesOnCommonName):
+		_, _ = fmt.Fprintf(
+			&detail,
+			"This certificate does not contain Subject Alternate Names (SANs) and should be replaced.%s%s",
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+		)
 
-		detail.WriteString("This certificate does not contain Subject Alternate Names (SANs)" +
-			" and should be replaced." +
-			nagios.CheckOutputEOL +
-			nagios.CheckOutputEOL +
-			"As a temporary workaround you can:" +
-			nagios.CheckOutputEOL +
-			"  1. set the GODEBUG environment variable to" +
-			" 'GODEBUG=x509ignoreCN=0' AND either deploy v0.5.3 of" +
-			" this plugin or rebuild this plugin using Go 1.16" +
-			nagios.CheckOutputEOL +
-			"  2. specify the '" + hnvr.ignoreIfSANsEmptyFlagName + "'" +
-			" flag to skip hostname verification if the" +
-			" SANs list is found to be empty" +
-			nagios.CheckOutputEOL +
-			nagios.CheckOutputEOL +
-			"See these resources for additional information: " +
-			nagios.CheckOutputEOL +
-			nagios.CheckOutputEOL +
-			" - https://github.com/atc0005/check-cert/issues/276" +
-			nagios.CheckOutputEOL +
-			" - https://chromestatus.com/feature/4981025180483584" +
-			nagios.CheckOutputEOL +
-			" - https://bugzilla.mozilla.org/show_bug.cgi?id=1245280" +
-			nagios.CheckOutputEOL +
-			nagios.CheckOutputEOL +
-			"Here is an example of building the plugin using the last" +
-			" Go 1.16 Docker image:" +
-			nagios.CheckOutputEOL +
-			"docker container run -it --rm -v $PWD:$PWD" +
-			" -w $PWD golang:1.16 go build ./cmd/check_cert/")
+		_, _ = fmt.Fprintf(
+			&detail,
+			"As a temporary workaround you can specify the '%s' flag to skip hostname verification if the SANs list is found to be empty.%s%s",
+			hnvr.ignoreIfSANsEmptyFlagName,
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+		)
+
+		_, _ = fmt.Fprintf(
+			&detail,
+			"See these resources for additional information: %s%s - %s%s - %s%s%s",
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+			"https://chromestatus.com/feature/4981025180483584",
+			nagios.CheckOutputEOL,
+			"https://bugzilla.mozilla.org/show_bug.cgi?id=1245280",
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+		)
 
 	// Hostname verification failed for another reason aside from an empty
 	// SANs list.
 	case hnvr.err != nil:
-		detail.WriteString("Consider updating the service check or command " +
-			"definition to specify the website FQDN instead of " +
-			"the host FQDN using the DNS Name or server flags. " +
-			"E.g., use 'www.example.org' instead of " +
-			"'host7.example.com' in order to allow the remote " +
-			"server to select the correct certificate instead " +
-			"of using the default certificate.")
+		_, _ = fmt.Fprint(
+			&detail,
+			"Consider updating the service check or command definition to specify the website FQDN instead of the host FQDN using the DNS Name or server flags. ", // trailing space intentional
+		)
+
+		_, _ = fmt.Fprint(
+			&detail,
+			"E.g., use 'www.example.org' instead of 'host7.example.com' in order to allow the remote server to select the correct certificate instead of using the default certificate.",
+		)
 
 	// No validation errors occurred.
 	default:
