@@ -104,7 +104,7 @@ func InsertDelimiter(s string, delimiter string, pos int) string {
 	// to track position in string
 	var ctr int
 
-	var delimitedStr string
+	var delimitedStr strings.Builder
 	for i, v := range r {
 		c := string(v)
 		ctr++
@@ -112,14 +112,14 @@ func InsertDelimiter(s string, delimiter string, pos int) string {
 		// add delimiter when we have reached the specified position in the
 		// string, provided that we've not reached the end of the string.
 		if (ctr == pos) && (i+1 != len(r)) {
-			delimitedStr += c + delimiter
+			_, _ = fmt.Fprintf(&delimitedStr, "%s%s", c, delimiter)
 			ctr = 0
 			continue
 		}
-		delimitedStr += c
+		_, _ = fmt.Fprintf(&delimitedStr, "%s", c)
 	}
 
-	return delimitedStr
+	return delimitedStr.String()
 }
 
 // BytesToDelimitedHexStr converts a byte slice to a delimited hex string.
