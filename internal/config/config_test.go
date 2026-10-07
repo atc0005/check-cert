@@ -15,6 +15,11 @@ import (
 	"testing"
 )
 
+const (
+	webserverExampleFQDN   string = "www.example.com"
+	sansEntriesExampleFQDN string = "tacos.example.com"
+)
+
 func TestExpirationAgeThresholds(t *testing.T) {
 
 	const appName string = "check_cert"
@@ -81,7 +86,7 @@ func TestExpirationAgeThresholds(t *testing.T) {
 
 			flagsAndValuesInOrder := []string{
 				appName,
-				"--server", "www.example.com",
+				"--server", webserverExampleFQDN,
 				"--port", "443",
 				"--age-critical", tt.ageCritical,
 				"--age-warning", tt.ageWarning,
@@ -135,7 +140,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 			cfg: Config{
 				Port:         443,
 				LoggingLevel: defaultLogLevel,
-				Server:       "www.example.com",
+				Server:       webserverExampleFQDN,
 				AgeWarning:   defaultCertExpireAgeWarning,
 				AgeCritical:  defaultCertExpireAgeCritical,
 			},
@@ -146,7 +151,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 			cfg: Config{
 				Port:                    443,
 				LoggingLevel:            defaultLogLevel,
-				Server:                  "www.example.com",
+				Server:                  webserverExampleFQDN,
 				AgeWarning:              defaultCertExpireAgeWarning,
 				AgeCritical:             defaultCertExpireAgeCritical,
 				ignoreValidationResults: []string{ValidationKeywordExpiration},
@@ -158,7 +163,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 			cfg: Config{
 				Port:                   443,
 				LoggingLevel:           defaultLogLevel,
-				Server:                 "www.example.com",
+				Server:                 webserverExampleFQDN,
 				AgeWarning:             defaultCertExpireAgeWarning,
 				AgeCritical:            defaultCertExpireAgeCritical,
 				applyValidationResults: []string{ValidationKeywordExpiration},
@@ -170,7 +175,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 			cfg: Config{
 				Port:         443,
 				LoggingLevel: defaultLogLevel,
-				Server:       "www.example.com",
+				Server:       webserverExampleFQDN,
 				AgeWarning:   defaultCertExpireAgeWarning,
 				AgeCritical:  defaultCertExpireAgeCritical,
 			},
@@ -181,7 +186,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 			cfg: Config{
 				Port:                    443,
 				LoggingLevel:            defaultLogLevel,
-				Server:                  "www.example.com",
+				Server:                  webserverExampleFQDN,
 				AgeWarning:              defaultCertExpireAgeWarning,
 				AgeCritical:             defaultCertExpireAgeCritical,
 				ignoreValidationResults: []string{ValidationKeywordHostname},
@@ -193,7 +198,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 			cfg: Config{
 				Port:                   443,
 				LoggingLevel:           defaultLogLevel,
-				Server:                 "www.example.com",
+				Server:                 webserverExampleFQDN,
 				AgeWarning:             defaultCertExpireAgeWarning,
 				AgeCritical:            defaultCertExpireAgeCritical,
 				applyValidationResults: []string{ValidationKeywordHostname},
@@ -205,7 +210,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 			cfg: Config{
 				Port:         443,
 				LoggingLevel: defaultLogLevel,
-				Server:       "www.example.com",
+				Server:       webserverExampleFQDN,
 				AgeWarning:   defaultCertExpireAgeWarning,
 				AgeCritical:  defaultCertExpireAgeCritical,
 			},
@@ -216,10 +221,10 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 			cfg: Config{
 				Port:         443,
 				LoggingLevel: defaultLogLevel,
-				Server:       "www.example.com",
+				Server:       webserverExampleFQDN,
 				AgeWarning:   defaultCertExpireAgeWarning,
 				AgeCritical:  defaultCertExpireAgeCritical,
-				SANsEntries:  []string{"tacos.example.com"},
+				SANsEntries:  []string{sansEntriesExampleFQDN},
 			},
 			errExpected: false,
 		},
@@ -228,7 +233,7 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 			cfg: Config{
 				Port:                    443,
 				LoggingLevel:            defaultLogLevel,
-				Server:                  "www.example.com",
+				Server:                  webserverExampleFQDN,
 				AgeWarning:              defaultCertExpireAgeWarning,
 				AgeCritical:             defaultCertExpireAgeCritical,
 				ignoreValidationResults: []string{ValidationKeywordSANsList},
@@ -240,11 +245,11 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 			cfg: Config{
 				Port:                   443,
 				LoggingLevel:           defaultLogLevel,
-				Server:                 "www.example.com",
+				Server:                 webserverExampleFQDN,
 				AgeWarning:             defaultCertExpireAgeWarning,
 				AgeCritical:            defaultCertExpireAgeCritical,
 				applyValidationResults: []string{ValidationKeywordSANsList},
-				SANsEntries:            []string{"tacos.example.com"},
+				SANsEntries:            []string{sansEntriesExampleFQDN},
 			},
 			errExpected: false,
 		},
@@ -253,11 +258,11 @@ func TestConfigValidationForCheckResultsFlags(t *testing.T) {
 			cfg: Config{
 				Port:                   443,
 				LoggingLevel:           defaultLogLevel,
-				Server:                 "www.example.com",
+				Server:                 webserverExampleFQDN,
 				AgeWarning:             defaultCertExpireAgeWarning,
 				AgeCritical:            defaultCertExpireAgeCritical,
 				applyValidationResults: []string{ValidationKeywordSANsList},
-				// SANsEntries:            []string{"tacos.example.com"},
+				// SANsEntries:            []string{sansEntriesExampleFQDN},
 			},
 			errExpected: true,
 		},
@@ -353,7 +358,7 @@ func TestApplyIgnoreDecision(t *testing.T) {
 		{
 			name: "DefaultValidateSANsListResultsWithSANsEntries",
 			cfg: Config{
-				SANsEntries: []string{"tacos.example.com"},
+				SANsEntries: []string{sansEntriesExampleFQDN},
 			},
 			validateFunc: Config.ApplyCertSANsListValidationResults,
 			applyResults: defaultApplyCertSANsListValidationResults,
