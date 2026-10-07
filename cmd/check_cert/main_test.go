@@ -19,6 +19,11 @@ import (
 	"github.com/atc0005/go-nagios"
 )
 
+const (
+	webserverExampleFQDN   string = "www.example.com"
+	sansEntriesExampleFQDN string = "tacos.example.com"
+)
+
 // TestApplyIgnoreValidationFlagsForConfigValidationErrors asserts that the
 // apply and ignore CSV value flags operate as expected at a high level. The
 // config package tests are responsible for asserting specific internal
@@ -41,7 +46,7 @@ func TestApplyIgnoreValidationFlagsForConfigValidationErrors(t *testing.T) {
 	}{
 		{
 			name:   "ApplyValidationResult",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlags: []string{
 				"--" + config.ApplyValidationResultFlag,
 				config.ValidationKeywordExpiration,
@@ -50,7 +55,7 @@ func TestApplyIgnoreValidationFlagsForConfigValidationErrors(t *testing.T) {
 		},
 		{
 			name:   "IgnoreValidationResult",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlags: []string{
 				"--" + config.IgnoreValidationResultFlag,
 				config.ValidationKeywordExpiration,
@@ -59,7 +64,7 @@ func TestApplyIgnoreValidationFlagsForConfigValidationErrors(t *testing.T) {
 		},
 		{
 			name:   "IgnoreValidationResultMultipleKeywords",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlags: []string{
 				"--" + config.IgnoreValidationResultFlag,
 				strings.Join(
@@ -73,18 +78,18 @@ func TestApplyIgnoreValidationFlagsForConfigValidationErrors(t *testing.T) {
 		},
 		{
 			name:   "ApplySANsListValidationResultWithSANsEntries",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlags: []string{
 				"--" + config.ApplyValidationResultFlag,
 				config.ValidationKeywordSANsList,
 				"--" + config.SANsEntriesFlagLong,
-				"www.example.com",
+				webserverExampleFQDN,
 			},
 			err: nil,
 		},
 		{
 			name:   "ApplySANsListValidationResultWithoutSANsEntries",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlags: []string{
 				"--" + config.ApplyValidationResultFlag,
 				config.ValidationKeywordSANsList,
@@ -93,7 +98,7 @@ func TestApplyIgnoreValidationFlagsForConfigValidationErrors(t *testing.T) {
 		},
 		{
 			name:   "ApplyValidationResultMultipleKeywordsWithoutSANsEntriesFlag",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlags: []string{
 				"--" + config.ApplyValidationResultFlag,
 				strings.Join(
@@ -107,7 +112,7 @@ func TestApplyIgnoreValidationFlagsForConfigValidationErrors(t *testing.T) {
 		},
 		{
 			name:   "ApplyValidationResultMultipleKeywordsWithSANsEntriesFlag",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlags: []string{
 				"--" + config.ApplyValidationResultFlag,
 				strings.Join(
@@ -117,13 +122,13 @@ func TestApplyIgnoreValidationFlagsForConfigValidationErrors(t *testing.T) {
 						config.ValidationKeywordHostname,
 					}, ", "),
 				"--" + config.SANsEntriesFlagLong,
-				"www.example.com",
+				webserverExampleFQDN,
 			},
 			err: nil,
 		},
 		{
 			name:   "ApplyValidationResultAndIgnoreValidationResult",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlags: []string{
 				"--" + config.ApplyValidationResultFlag,
 				config.ValidationKeywordExpiration,
@@ -134,7 +139,7 @@ func TestApplyIgnoreValidationFlagsForConfigValidationErrors(t *testing.T) {
 		},
 		{
 			name:   "ApplyValidationResultUsingInvalidKeyword",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlags: []string{
 				"--" + config.ApplyValidationResultFlag,
 				"tacos",
@@ -143,7 +148,7 @@ func TestApplyIgnoreValidationFlagsForConfigValidationErrors(t *testing.T) {
 		},
 		{
 			name:   "IgnoreValidationResult",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlags: []string{
 				"--" + config.IgnoreValidationResultFlag,
 				"tacos",
@@ -232,7 +237,7 @@ func TestApplyValidationResults(t *testing.T) {
 	}{
 		{
 			name:                   "DefaultValidateExpirationResults",
-			server:                 "www.example.com",
+			server:                 webserverExampleFQDN,
 			validateFlagsAndValues: []string{},
 			validateFunc:           config.Config.ApplyCertExpirationValidationResults,
 
@@ -242,7 +247,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:   "IgnoreValidateExpirationResults",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlagsAndValues: []string{
 				"--" + config.IgnoreValidationResultFlag,
 				config.ValidationKeywordExpiration,
@@ -252,7 +257,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:   "ApplyValidateExpirationResults",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlagsAndValues: []string{
 				"--" + config.ApplyValidationResultFlag,
 				config.ValidationKeywordExpiration,
@@ -262,7 +267,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:                   "DefaultValidateHostnameResults",
-			server:                 "www.example.com",
+			server:                 webserverExampleFQDN,
 			validateFlagsAndValues: []string{},
 			validateFunc:           config.Config.ApplyCertHostnameValidationResults,
 
@@ -272,7 +277,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:   "IgnoreValidateHostnameResults",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlagsAndValues: []string{
 				"--" + config.IgnoreValidationResultFlag,
 				config.ValidationKeywordHostname,
@@ -282,7 +287,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:   "ApplyValidateHostnameResults",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlagsAndValues: []string{
 				"--" + config.ApplyValidationResultFlag,
 				config.ValidationKeywordHostname,
@@ -292,7 +297,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:                   "DefaultValidateSANsListResults",
-			server:                 "www.example.com",
+			server:                 webserverExampleFQDN,
 			validateFlagsAndValues: []string{},
 			validateFunc:           config.Config.ApplyCertSANsListValidationResults,
 
@@ -310,7 +315,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:   "IgnoreValidateSANsListResults",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlagsAndValues: []string{
 				"--" + config.IgnoreValidationResultFlag,
 				config.ValidationKeywordSANsList,
@@ -320,7 +325,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:   "ApplyValidateSANsListResults",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlagsAndValues: []string{
 				"--" + config.ApplyValidationResultFlag,
 				config.ValidationKeywordSANsList,
@@ -331,7 +336,7 @@ func TestApplyValidationResults(t *testing.T) {
 
 		{
 			name:                   "DefaultChainOrderResults",
-			server:                 "www.example.com",
+			server:                 webserverExampleFQDN,
 			validateFlagsAndValues: []string{},
 			validateFunc:           config.Config.ApplyCertChainOrderValidationResults,
 
@@ -341,7 +346,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:   "IgnoreValidateChainOrderResults",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlagsAndValues: []string{
 				"--" + config.IgnoreValidationResultFlag,
 				config.ValidationKeywordChainOrder,
@@ -351,7 +356,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:   "ApplyValidateChainOrderResults",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlagsAndValues: []string{
 				"--" + config.ApplyValidationResultFlag,
 				config.ValidationKeywordChainOrder,
@@ -362,7 +367,7 @@ func TestApplyValidationResults(t *testing.T) {
 
 		{
 			name:                   "DefaultRootResults",
-			server:                 "www.example.com",
+			server:                 webserverExampleFQDN,
 			validateFlagsAndValues: []string{},
 			validateFunc:           config.Config.ApplyCertRootValidationResults,
 
@@ -372,7 +377,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:   "IgnoreValidateRootResults",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlagsAndValues: []string{
 				"--" + config.IgnoreValidationResultFlag,
 				config.ValidationKeywordRoot,
@@ -382,7 +387,7 @@ func TestApplyValidationResults(t *testing.T) {
 		},
 		{
 			name:   "ApplyValidateRootResults",
-			server: "www.example.com",
+			server: webserverExampleFQDN,
 			validateFlagsAndValues: []string{
 				"--" + config.ApplyValidationResultFlag,
 				config.ValidationKeywordRoot,
@@ -424,7 +429,7 @@ func TestApplyValidationResults(t *testing.T) {
 				// We provide this flag & placeholder value in order to ensure
 				// that the list is available for when the SANs list
 				// validation is used.
-				"--" + config.SANsEntriesFlagLong, "tacos.example.com",
+				"--" + config.SANsEntriesFlagLong, sansEntriesExampleFQDN,
 			}
 
 			flagsAndValuesInOrder = append(flagsAndValuesInOrder, tt.validateFlagsAndValues...)
