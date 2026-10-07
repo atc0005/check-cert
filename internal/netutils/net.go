@@ -523,7 +523,7 @@ func ExpandHost(hostPattern string) (HostPattern, error) {
 
 				numDashes := strings.Count(octets[octIdx], "-")
 				return HostPattern{}, fmt.Errorf(
-					"%d dash separators in octet %q (%d of %d); expected one: %w",
+					"%d dash separators in octet %d (%d of %d); expected one: %w",
 					numDashes,
 					octIdx,
 					octIdx+1,
