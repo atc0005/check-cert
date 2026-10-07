@@ -1743,7 +1743,7 @@ func GenerateCertChainReport(
 	omitSANsEntries bool,
 ) string {
 
-	var certsReport string
+	var certsReport strings.Builder
 
 	certsTotal := len(certChain)
 
@@ -1807,7 +1807,7 @@ func GenerateCertChainReport(
 
 		switch {
 		case verboseDetails:
-			certsReport += fmt.Sprintf(
+			_, _ = fmt.Fprintf(&certsReport,
 				"Certificate %d of %d (%s):"+
 					"%s\tName: %s"+
 					"%s\t%s"+
@@ -1855,7 +1855,7 @@ func GenerateCertChainReport(
 				nagios.CheckOutputEOL,
 			)
 		default:
-			certsReport += fmt.Sprintf(
+			_, _ = fmt.Fprintf(&certsReport,
 				"Certificate %d of %d (%s):"+
 					"%s\tName: %s"+
 					"%s\t%s"+
@@ -1890,7 +1890,7 @@ func GenerateCertChainReport(
 		}
 	}
 
-	return strings.TrimSpace(certsReport)
+	return strings.TrimSpace(certsReport.String())
 
 }
 
