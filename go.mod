@@ -1,6 +1,6 @@
 module github.com/atc0005/check-cert
 
-go 1.25.0
+go 1.26.0
 
 // Go 1.23 removed default support for parsing certificates with negative
 // serial numbers. We need this support for parsing older certificates
