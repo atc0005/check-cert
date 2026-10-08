@@ -26,6 +26,26 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.25.9] - 2026-10-07
+
+### Changed
+
+- (GH-384) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.23.16 to go-ci-oldstable-build-v0.23.25 in /dependabot/docker/builds
+- (GH-378) CI Dependency: Bump actions/checkout from 6 to 7
+- (GH-373) Go Dependency: Bump github.com/mattn/go-colorable from 0.1.14 to 0.1.15
+- (GH-392) Go Dependency: Bump github.com/mattn/go-isatty from 0.0.20 to 0.0.24
+- (GH-360) Go Dependency: Bump github.com/rs/zerolog from 1.34.0 to 1.35.1
+- (GH-393) Go Dependency: Bump golang.org/x/sys from 0.42.0 to 0.48.0
+- (GH-391) go.mod: update minimum Go version to 1.26.0
+
+#### Fixed
+
+- (GH-395) Apply gofix and manual tweaks for string building
+- (GH-399) Fix goconst errors in test files
+- (GH-396) Fix govet fmt.Errorf format linting error
+- (GH-389) Remove advice to rebuild check_cert plugin
+- (GH-390) Remove unsupported GODEBUG tlsrsakex and tls3des
+
 ## [v0.25.8] - 2026-03-19
 
 ### Changed
@@ -2001,7 +2021,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.8...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.9...HEAD
+[v0.25.9]: https://github.com/atc0005/check-cert/releases/tag/v0.25.9
 [v0.25.8]: https://github.com/atc0005/check-cert/releases/tag/v0.25.8
 [v0.25.7]: https://github.com/atc0005/check-cert/releases/tag/v0.25.7
 [v0.25.6]: https://github.com/atc0005/check-cert/releases/tag/v0.25.6
