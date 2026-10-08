@@ -13,7 +13,7 @@ github.com/atc0005/go-nagios
 # github.com/grantae/certinfo v0.0.0-20170412194111-59d56a35515b
 ## explicit
 github.com/grantae/certinfo
-# github.com/mattn/go-colorable v0.1.14
+# github.com/mattn/go-colorable v0.1.15
 ## explicit; go 1.18
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.24
