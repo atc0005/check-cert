@@ -26,6 +26,14 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.25.10] - 2026-10-24
+
+### Changed
+
+- (GH-410) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.23.25 to go-ci-oldstable-build-v0.23.28 in /dependabot/docker/builds
+- (GH-405) Go Dependency: Bump github.com/mattn/go-colorable from 0.1.15 to 0.1.16
+- (GH-406) Go Dependency: Bump golang.org/x/sys from 0.48.0 to 0.49.0
+
 ## [v0.25.9] - 2026-10-07
 
 ### Changed
@@ -2021,7 +2029,8 @@ certificate chain, expiration dates, etc).
 
 - Go modules support (vs classic `GOPATH` setup)
 
-[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.9...HEAD
+[Unreleased]: https://github.com/atc0005/check-cert/compare/v0.25.10...HEAD
+[v0.25.10]: https://github.com/atc0005/check-cert/releases/tag/v0.25.10
 [v0.25.9]: https://github.com/atc0005/check-cert/releases/tag/v0.25.9
 [v0.25.8]: https://github.com/atc0005/check-cert/releases/tag/v0.25.8
 [v0.25.7]: https://github.com/atc0005/check-cert/releases/tag/v0.25.7
