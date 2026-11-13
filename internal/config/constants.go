@@ -45,6 +45,7 @@ const (
 	payloadFormatVersionFlagHelp                             string = "Specifies the format version to use when generating the (optional) certificate metadata payload. Version 0 is unstable."
 	payloadFlagHelp                                          string = "Toggles emission of encoded certificate chain payload. This output is disabled by default."
 	payloadWithFullChainFlagHelp                             string = "Toggles emission of encoded certificate chain payload with the full certificate chain included. This option is disabled by default due to the significant increase in payload size."
+	ownersFlagHelp                                           string = "List of comma-separated team names that have a stake or interest in a certificate's evaluation. Included in the certificate metadata payload or an empty list otherwise."
 	verboseOutputFlagHelp                                    string = "Toggles emission of detailed certificate metadata. This level of output is disabled by default."
 	omitSANsListFlagHelp                                     string = "Toggles listing of SANs entries list items in certificate metadata output. This list is included by default."
 	omitSANsEntriesFlagHelp                                  string = "Alias for \"" + OmitSANsListFlagLong + "\" flag"
@@ -99,6 +100,7 @@ const (
 	PayloadFlag              string = "payload"
 	PayloadWithFullChainFlag string = "payload-with-full-chain"
 	PayloadFormatVersionFlag string = "payload-format"
+	OwnersFlag               string = "owners"
 	ServerFlagLong           string = "server"
 	ServerFlagShort          string = "s"
 	PortFlagLong             string = "port"
@@ -181,7 +183,7 @@ const (
 	defaultBranding              bool   = false
 	defaultPayload               bool   = false
 	defaultPayloadWithFullChain  bool   = false
-	defaultPayloadFormatVersion  int    = 1 // corresponds to payload.MinStablePayloadVersion
+	defaultPayloadFormatVersion  int    = 2 // see https://github.com/atc0005/cert-payload/blob/master/format/CHANGES.md for details
 	defaultVerboseOutput         bool   = false
 	defaultOmitSANsEntriesList   bool   = false
 	defaultDisplayVersionAndExit bool   = false
@@ -315,4 +317,8 @@ const (
 	tcpUserPortEnd             int = 49151
 	tcpDynamicPrivatePortStart int = 49152
 	tcpDynamicPrivatePortEnd   int = 65535
+)
+
+const (
+	minimumPayloadFormatVersionForOwnersFlagUse int = 2
 )

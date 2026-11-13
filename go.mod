@@ -10,7 +10,7 @@ go 1.26.0
 godebug x509negativeserial=1
 
 require (
-	github.com/atc0005/cert-payload v0.8.0
+	github.com/atc0005/cert-payload v0.9.0-alpha.3
 	github.com/atc0005/go-nagios v0.20.0
 	github.com/grantae/certinfo v0.0.0-20170412194111-59d56a35515b
 	github.com/rs/zerolog v1.35.1

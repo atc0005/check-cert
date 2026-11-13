@@ -63,11 +63,22 @@ func validatePort(c Config) error {
 func validatePayloadFormatVersion(c Config) error {
 	// Format version 0 is valid, but anything less than that is not; in order
 	// to have the value set to less than zero someone has to explicitly
-	// choose that value (0 is the default).
+	// choose that value.
 	if c.PayloadFormatVersion < 0 {
 		return fmt.Errorf(
-			"invalid certificate metadata payload format version %d",
+			"%w: %d",
+			ErrInvalidCertificateMetadataPayloadFormatVersion,
 			c.PayloadFormatVersion,
+		)
+	}
+
+	if c.PayloadFormatVersion < minimumPayloadFormatVersionForOwnersFlagUse && len(c.owners) > 0 {
+		return fmt.Errorf(
+			"%w: %d; '%s' flag requires a minimum format version of %d",
+			ErrIncompatibleCertificateMetadataPayloadFormatVersion,
+			c.PayloadFormatVersion,
+			OwnersFlag,
+			minimumPayloadFormatVersionForOwnersFlagUse,
 		)
 	}
 
