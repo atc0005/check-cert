@@ -129,6 +129,12 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 			supportedValuesFlagHelpText(applyValidationResultsFlagHelp, supportedValidationCheckResultKeywords()),
 		)
 
+		flag.Var(
+			&c.owners,
+			OwnersFlag,
+			ownersFlagHelp,
+		)
+
 		flag.IntVar(&c.AgeWarning, AgeWarningFlagShort, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp+shorthandFlagSuffix)
 		flag.IntVar(&c.AgeWarning, AgeWarningFlagLong, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)
 
