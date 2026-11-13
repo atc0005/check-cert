@@ -24,8 +24,8 @@ type Server struct {
 
 // Values is a collection of input data values that was provided to the plugin
 // (e.g., CLI flags), gathered by the plugin (e.g., CertChain) without any
-// sysadmin-specified filtering applied (e.g., "ignore expiring intermediates"
-// to create a certificate metadata payload.
+// sysadmin-specified filtering applied (e.g., "ignore expiring
+// intermediates") to create a certificate metadata payload.
 type Values struct {
 	// CertChainOriginal is the original certificate chain entries as-is
 	// without any "problematic" entries removed.
@@ -34,6 +34,23 @@ type Values struct {
 	// Errors represents a potential collection of errors encountered while
 	// retrieving a certificate chain from a service.
 	Errors []error
+
+	// Owners is a collection of "owners" or teams with a stake or interest in
+	// a certificate's evaluation. This collection may represent both those
+	// responsible for ensuring correct replacement of a certificate chain
+	// along with those responsible for the service using the certificate
+	// chain.
+	//
+	// NOTE: Duplicate entries are ignored. The first appearance of an entry
+	// is preserved with later occurrences (regardless of case) removed.
+	Owners []string
+
+	// Purpose is used to identify the classification or impact for a faulty
+	// certificate chain. As an example, a sysadmin could identify the
+	// monitored certificate chain as belonging to a system/service with
+	// "Production", "Development" or "Test" classification, or simply "prod"
+	// and "non-prod".
+	Purpose string
 
 	// IncludeFullCertChain indicates that the full certificate chain should
 	// be included in the generated metadata payload. This is not included by

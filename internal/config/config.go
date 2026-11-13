@@ -8,7 +8,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -22,19 +21,6 @@ import (
 // something resembling a version string will be provided for non-Makefile
 // builds.
 var version = "x.y.z"
-
-var (
-	// ErrVersionRequested indicates that the user requested application
-	// version information.
-	ErrVersionRequested = errors.New("version information requested")
-
-	// ErrInvalidPosArgPattern indicates that the user provided an invalid
-	// pattern for a positional argument.
-	ErrInvalidPosArgPattern = errors.New("invalid positional argument pattern")
-
-	// ErrUnsupportedOption indicates that an unsupported option was specified.
-	ErrUnsupportedOption = errors.New("unsupported option")
-)
 
 // AppType represents the type of application that is being
 // configured/initialized. Not all application types will use the same
@@ -214,7 +200,6 @@ func (mvs *multiValueStringFlag) Set(value string) error {
 // Config represents the application configuration as specified via
 // command-line flags.
 type Config struct {
-
 	// SANsEntries is the list of Subject Alternate Names (SANs) to verify are
 	// present on the examined certificate. This value is provided as a
 	// comma-separated list.
@@ -249,6 +234,16 @@ type Config struct {
 	// certTypesToKeep is the list of certificate types to keep from a given
 	// input certificate chain.
 	certTypesToKeep multiValueStringFlag
+
+	// owners is a collection of team names that have a stake or interest in a
+	// certificate's evaluation. This collection may represent both those
+	// responsible for ensuring correct replacement of a certificate chain
+	// along with those responsible for the service using the certificate
+	// chain.
+	//
+	// NOTE: Duplicate entries are ignored. The first appearance of an entry
+	// is preserved with later occurrences (regardless of case) removed.
+	owners multiValueStringFlag
 
 	// ScanRateLimit is the maximum number of concurrent port scan attempts.
 	ScanRateLimit int

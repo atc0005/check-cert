@@ -57,6 +57,17 @@ func (c Config) Hosts() []netutils.HostPattern {
 	return []netutils.HostPattern{}
 }
 
+// Owners returns a list of comma-separated team names that have a stake or
+// interest in a certificate's evaluation.
+func (c Config) Owners() []string {
+	c.Log.Debug().Int("owners_field_length", len(c.owners)).Msg("Length of owners field")
+	if len(c.owners) > 0 {
+		return c.owners
+	}
+
+	return []string{}
+}
+
 // CertTypesToKeep returns the user-specified list of certificate types to
 // keep when copying a given certificates chain or the default value if not
 // specified.
