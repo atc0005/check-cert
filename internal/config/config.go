@@ -193,15 +193,20 @@ func (mvi *multiValueIntFlag) Set(value string) error {
 // Set is called once by the flag package, in command line order, for each
 // flag present.
 func (mvs *multiValueStringFlag) Set(value string) error {
-
-	// split comma-separated string into multiple values, toss whitespace
-	items := strings.Split(value, ",")
-	for index, item := range items {
-		items[index] = strings.TrimSpace(item)
+	// Strip all whitespace before attempting to process.
+	if strings.TrimSpace(value) == "" {
+		return nil
 	}
 
-	// add them to the collection
-	*mvs = append(*mvs, items...)
+	// Split comma-separated string into multiple values, toss whitespace,
+	// only include in the collection if non-whitespace.
+	items := strings.SplitSeq(value, ",")
+	for item := range items {
+		trimmed := strings.TrimSpace(item)
+		if trimmed != "" {
+			*mvs = append(*mvs, trimmed)
+		}
+	}
 
 	return nil
 }
