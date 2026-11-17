@@ -36,6 +36,7 @@ func addCertChainPayload(certChain []*x509.Certificate, plugin *nagios.Plugin, c
 		CertChain:                            certChain,
 		Errors:                               plugin.Errors,
 		Owners:                               cfg.Owners(), // format2 specific
+		PurposeUsage:                         cfg.Usage,    // format2 specific
 		IncludeFullCertChain:                 cfg.EmitPayloadWithFullChain,
 		OmitSANsEntries:                      cfg.OmitSANsEntries,
 		ExpirationAgeInDaysWarningThreshold:  cfg.AgeWarning,
