@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/rs/zerolog"
 
@@ -288,6 +289,16 @@ func main() {
 		// less important, but for a host with multiple certificate chains
 		// having the correct host value is crucial.
 		var hostVal string
+
+		// If specified, include the purpose/usage description alongside the
+		// service details (e.g., "prod", "dev" or "test").
+		usage := func() string {
+			if strings.TrimSpace(cfg.Usage) == "" {
+				return ""
+			}
+
+			return fmt.Sprintf("%s ", cfg.Usage)
+		}
 		switch {
 
 		// We have a resolved IP Address and a sysadmin-specified DNS Name
@@ -295,7 +306,8 @@ func main() {
 		case expandedHost.Resolved && cfg.DNSName != "":
 			hostVal = cfg.DNSName
 			certChainSource = fmt.Sprintf(
-				"service running on %s (%s) at port %d using host value %q",
+				"%sservice running on %s (%s) at port %d using host value %q",
+				usage(),
 				expandedHost.Given,
 				ipAddr,
 				cfg.Port,
@@ -308,7 +320,8 @@ func main() {
 		case cfg.DNSName != "":
 			hostVal = cfg.DNSName
 			certChainSource = fmt.Sprintf(
-				"service running on %s at port %d using host value %q",
+				"%sservice running on %s at port %d using host value %q",
+				usage(),
 				ipAddr,
 				cfg.Port,
 				hostVal,
@@ -320,7 +333,8 @@ func main() {
 		case expandedHost.Resolved && cfg.DNSName == "":
 			hostVal = expandedHost.Given
 			certChainSource = fmt.Sprintf(
-				"service running on %s (%s) at port %d using host value %q",
+				"%sservice running on %s (%s) at port %d using host value %q",
+				usage(),
 				expandedHost.Given,
 				ipAddr,
 				cfg.Port,

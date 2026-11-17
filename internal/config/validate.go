@@ -82,6 +82,16 @@ func validatePayloadFormatVersion(c Config) error {
 		)
 	}
 
+	if c.PayloadFormatVersion < minimumPayloadFormatVersionForOwnersFlagUse && c.Usage != "" {
+		return fmt.Errorf(
+			"%w: %d; '%s' flag requires a minimum format version of %d",
+			ErrIncompatibleCertificateMetadataPayloadFormatVersion,
+			c.PayloadFormatVersion,
+			UsageFlagLong,
+			minimumPayloadFormatVersionForUsageFlagUse,
+		)
+	}
+
 	return nil
 }
 
