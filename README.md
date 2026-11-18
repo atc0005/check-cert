@@ -2688,13 +2688,13 @@ This replaced the stock `notify-service-by-email` command which did not expose
 After swapping `/bin/mail` for `/usr/bin/mutt` the command definition looks
 like:
 
-`/usr/bin/printf "%b" "\n***** Nagios Monitor XI Alert *****\n\nNotification Type: $NOTIFICATIONTYPE$\n\nService: $SERVICEDESC$\nHost: $HOSTNAME$\nHost Description: $HOSTALIAS$\nHost Notes: $HOSTNOTES$\nService Notes: $SERVICENOTES$\nAddress: $HOSTADDRESS$\nState: $SERVICESTATE$\n\nDate/Time: $LONGDATETIME$\n\nService Output:\n\n$SERVICEOUTPUT$\n\nAdditional Service Output (if available):\n\n$LONGSERVICEOUTPUT$\n" | /usr/bin/mutt -e 'my_hdr From:sender@example.com' -e 'set content_type=text/plain' -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$`
+`/usr/bin/printf "%b" '\n***** Nagios Monitor XI Alert *****\n\nNotification Type: $NOTIFICATIONTYPE$\n\nService: $SERVICEDESC$\nHost: $HOSTNAME$\nHost Description: $HOSTALIAS$\nHost Notes: $HOSTNOTES$\nService Notes: $SERVICENOTES$\nAddress: $HOSTADDRESS$\nState: $SERVICESTATE$\n\nDate/Time: $LONGDATETIME$\n\nService Output:\n\n$SERVICEOUTPUT$\n\nAdditional Service Output (if available):\n\n$LONGSERVICEOUTPUT$\n' | /usr/bin/mutt -e 'my_hdr From:sender@example.com' -e 'set content_type=text/plain' -e 'set send_charset="utf-8"' -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$`
 
 Specifically, this is the replacement command for `/bin/mail`:
 
 ```diff
 -/bin/mail -r "sender@example.com" -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$
-+/usr/bin/mutt -e 'my_hdr From:sender@example.com' -e 'set content_type=text/plain' -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$
++/usr/bin/mutt -e 'my_hdr From:sender@example.com' -e 'set content_type=text/plain' -e 'set send_charset="utf-8"' -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$
 ```
 
 ## License
