@@ -135,7 +135,7 @@ func (c *Config) handleFlagsConfig(appType AppType) {
 			ownersFlagHelp,
 		)
 
-		flag.StringVar(&c.Usage, UsageFlagLong, defaultUsage, usageFlagHelp)
+		flag.StringVar(&c.ServiceEnvironment, EnvironmentFlagLong, defaultEnvironment, environmentFlagHelp)
 
 		flag.IntVar(&c.AgeWarning, AgeWarningFlagShort, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp+shorthandFlagSuffix)
 		flag.IntVar(&c.AgeWarning, AgeWarningFlagLong, defaultCertExpireAgeWarning, certExpireAgeWarningFlagHelp)

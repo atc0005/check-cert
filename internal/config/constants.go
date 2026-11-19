@@ -46,7 +46,7 @@ const (
 	payloadFlagHelp                                          string = "Toggles emission of encoded certificate chain payload. This output is disabled by default."
 	payloadWithFullChainFlagHelp                             string = "Toggles emission of encoded certificate chain payload with the full certificate chain included. This option is disabled by default due to the significant increase in payload size."
 	ownersFlagHelp                                           string = "List of comma-separated team names that have a stake or interest in a certificate's evaluation. Included in the certificate metadata payload or an empty list otherwise."
-	usageFlagHelp                                            string = "Specifies the usage type for a certificate chain to help communicate the impact of a faulty certificate. Included in the plugin output and (if enabled) certificate metadata payload."
+	environmentFlagHelp                                      string = "Specifies the environment for the service associated with the certificate chain to help communicate the impact of a faulty certificate. Included in the plugin output and (if enabled) certificate metadata payload."
 	verboseOutputFlagHelp                                    string = "Toggles emission of detailed certificate metadata. This level of output is disabled by default."
 	omitSANsListFlagHelp                                     string = "Toggles listing of SANs entries list items in certificate metadata output. This list is included by default."
 	omitSANsEntriesFlagHelp                                  string = "Alias for \"" + OmitSANsListFlagLong + "\" flag"
@@ -102,7 +102,7 @@ const (
 	PayloadWithFullChainFlag string = "payload-with-full-chain"
 	PayloadFormatVersionFlag string = "payload-format"
 	OwnersFlag               string = "owners"
-	UsageFlagLong            string = "usage"
+	EnvironmentFlagLong      string = "environment"
 	ServerFlagLong           string = "server"
 	ServerFlagShort          string = "s"
 	PortFlagLong             string = "port"
@@ -191,7 +191,7 @@ const (
 	defaultVerboseOutput         bool   = false
 	defaultOmitSANsEntriesList   bool   = false
 	defaultDisplayVersionAndExit bool   = false
-	defaultUsage                 string = ""
+	defaultEnvironment           string = ""
 
 	// Default WARNING threshold is 30 days
 	defaultCertExpireAgeWarning int = 30
@@ -350,6 +350,6 @@ const (
 )
 
 const (
-	minimumPayloadFormatVersionForOwnersFlagUse int = 2
-	minimumPayloadFormatVersionForUsageFlagUse  int = 2
+	minimumPayloadFormatVersionForOwnersFlagUse      int = 2
+	minimumPayloadFormatVersionForEnvironmentFlagUse int = 2
 )

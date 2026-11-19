@@ -290,14 +290,14 @@ func main() {
 		// having the correct host value is crucial.
 		var hostVal string
 
-		// If specified, include the purpose/usage description alongside the
+		// If specified, include the environment description alongside the
 		// service details (e.g., "prod", "dev" or "test").
-		usage := func() string {
-			if strings.TrimSpace(cfg.Usage) == "" {
+		environment := func() string {
+			if strings.TrimSpace(cfg.ServiceEnvironment) == "" {
 				return ""
 			}
 
-			return fmt.Sprintf("%s ", cfg.Usage)
+			return fmt.Sprintf("%s ", cfg.ServiceEnvironment)
 		}
 		switch {
 
@@ -307,7 +307,7 @@ func main() {
 			hostVal = cfg.DNSName
 			certChainSource = fmt.Sprintf(
 				"%sservice running on %s (%s) at port %d using host value %q",
-				usage(),
+				environment(),
 				expandedHost.Given,
 				ipAddr,
 				cfg.Port,
@@ -321,7 +321,7 @@ func main() {
 			hostVal = cfg.DNSName
 			certChainSource = fmt.Sprintf(
 				"%sservice running on %s at port %d using host value %q",
-				usage(),
+				environment(),
 				ipAddr,
 				cfg.Port,
 				hostVal,
@@ -334,7 +334,7 @@ func main() {
 			hostVal = expandedHost.Given
 			certChainSource = fmt.Sprintf(
 				"%sservice running on %s (%s) at port %d using host value %q",
-				usage(),
+				environment(),
 				expandedHost.Given,
 				ipAddr,
 				cfg.Port,
