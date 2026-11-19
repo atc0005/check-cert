@@ -82,13 +82,13 @@ func validatePayloadFormatVersion(c Config) error {
 		)
 	}
 
-	if c.PayloadFormatVersion < minimumPayloadFormatVersionForOwnersFlagUse && c.Usage != "" {
+	if c.PayloadFormatVersion < minimumPayloadFormatVersionForOwnersFlagUse && c.ServiceEnvironment != "" {
 		return fmt.Errorf(
 			"%w: %d; '%s' flag requires a minimum format version of %d",
 			ErrIncompatibleCertificateMetadataPayloadFormatVersion,
 			c.PayloadFormatVersion,
-			UsageFlagLong,
-			minimumPayloadFormatVersionForUsageFlagUse,
+			EnvironmentFlagLong,
+			minimumPayloadFormatVersionForEnvironmentFlagUse,
 		)
 	}
 

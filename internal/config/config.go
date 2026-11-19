@@ -235,11 +235,10 @@ type Config struct {
 	// input certificate chain.
 	certTypesToKeep multiValueStringFlag
 
-	// Usage identifies the classification or impact for a faulty certificate
-	// chain. The intent is to provide a way to identify the usage type for a
-	// certificate chain so that the impact of a faulty certificate can be
-	// determined by a reporting tool.
-	Usage string
+	// ServiceEnvironment identifies the environment for the service
+	// associated with the certificate chain. This helps communicate the
+	// impact for a faulty certificate chain.
+	ServiceEnvironment string
 
 	// owners is a collection of team names that have a stake or interest in a
 	// certificate's evaluation. This collection may represent both those
